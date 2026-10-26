@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useClassifyText, useListModelExamples, type Classification } from "@workspace/api-client-react";
 import { errorMessage, HAZARD_LABEL, isHazard, placeLabel, prob } from "@/lib/format";
 import { HazardDot, btnPrimary } from "@/components/kit";
 import { Textarea } from "@/components/ui/textarea";
 import { Dial } from "@/components/instruments/dial";
 
-export function ClassifierDemo() {
+/** `seed` loads a text into the bench from outside (the model page's examples); `n` changes on every load. */
+export function ClassifierDemo({ seed, showExamples = true }: { seed?: { text: string; n: number } | null; showExamples?: boolean } = {}) {
   const [text, setText] = useState("");
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!seed) return;
+    setText(seed.text);
+    areaRef.current?.focus();
+  }, [seed]);
   const examples = useListModelExamples();
   const classify = useClassifyText();
   const [result, setResult] = useState<Classification | null>(null);
@@ -24,6 +31,7 @@ export function ClassifierDemo() {
         <p className="text-[12px] leading-4 text-muted-foreground">3 to 1000 characters. Nothing you type is stored.</p>
         <Textarea
           id="classify-text"
+          ref={areaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           maxLength={1000}
@@ -37,7 +45,7 @@ export function ClassifierDemo() {
           </button>
           <span className="num text-[12px] text-muted-foreground">{text.length}/1000</span>
         </div>
-        {examples.data && examples.data.length > 0 && (
+        {showExamples && examples.data && examples.data.length > 0 && (
           <div className="mt-4">
             <p className="text-[12px] leading-4 text-muted-foreground">Or try an example</p>
             <ul className="mt-1 space-y-1">

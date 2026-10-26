@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { keepPreviousData } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -17,7 +17,8 @@ import {
 } from "@workspace/api-client-react";
 import { HAZARD_LABEL, LEVEL_RANK, num, placeLabel, signed, TREND_LABEL, utcDateTime, utcTime } from "@/lib/format";
 import { EmptyState, ErrorState, ExperimentalNote, HazardDot, LevelBadge, LevelGlyph, LoadingRows, btn } from "@/components/kit";
-import { HazardMap, type MapSelection } from "@/components/map/hazard-map";
+import type { MapSelection } from "@/components/map/hazard-map";
+import { StaticMap } from "@/components/map/static-map";
 import { FrameMarks } from "@/components/instruments/frame-marks";
 import { LegendPlate } from "@/components/instruments/legend";
 import { Ledger, useNewIds } from "@/components/instruments/ledger";
@@ -25,6 +26,9 @@ import { PlateLabel } from "@/components/instruments/plate";
 import { Recorder } from "@/components/instruments/recorder";
 import { AlertRow, PostRow, scopeQuery } from "./rows";
 import { cn } from "@/lib/utils";
+
+/** MapLibre is the largest dependency in the app; it loads after the first paint, behind the paper plotting sheet. */
+const HazardMap = lazy(() => import("@/components/map/hazard-map").then((m) => ({ default: m.HazardMap })));
 
 type BoardTab = "alerts" | "feed" | "places" | "hazards";
 const TABS: readonly BoardTab[] = ["alerts", "feed", "places", "hazards"];
@@ -170,7 +174,9 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
           <div className="relative">
             <FrameMarks />
             <div className="relative border border-rule-strong bg-sheet h-[min(70vw,440px)] min-h-[300px] lg:h-[620px] overflow-hidden">
-              <HazardMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} fitKey={fitKey} className="absolute inset-0" />
+              <Suspense fallback={<StaticMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} />}>
+                <HazardMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} fitKey={fitKey} className="absolute inset-0" />
+              </Suspense>
               {data && places.length === 0 && events.length === 0 && (
                 <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 mx-auto max-w-[44ch] text-center text-[14px] leading-5 bg-sheet border border-rule-strong p-4">
                   <NoDataHint replay={replay} />

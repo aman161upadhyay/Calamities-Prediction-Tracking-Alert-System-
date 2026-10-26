@@ -13,7 +13,7 @@ export type ListOfficialEventsParams = {
 hazard?: Hazard;
 /**
  * @minimum 1
- * @maximum 720
+ * @maximum 2160
  */
 hours?: number;
 /**

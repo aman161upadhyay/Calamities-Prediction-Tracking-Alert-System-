@@ -104,6 +104,7 @@ export function Recorder({
   controls,
   shade,
   mark,
+  cursor: playhead,
 }: {
   lanes: RecorderLane[];
   live?: boolean;
@@ -117,6 +118,8 @@ export function Recorder({
   shade?: { from: string; to: string; label?: string };
   /** Optional marked moment (an alert opening), drawn as a pen tick with a label. */
   mark?: { at: string; label: string };
+  /** Optional playhead (a replay clock), drawn as an ink rule with a mono label. */
+  cursor?: { at: string; label?: string };
 }) {
   const { ref, w: ow } = useWidth<HTMLDivElement>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -148,18 +151,27 @@ export function Recorder({
   const drawKey = lanes.map((l) => `${l.hazard}:${l.timeline?.points[0]?.hour ?? ""}:${l.timeline?.points.length ?? 0}`).join("|");
 
   const [cursor, setCursor] = useState<number | null>(null);
-  const idx = cursor ?? Math.max(0, hours.length - 1);
+  // Under a replay the readout rests on the last hour complete at the playhead (the hour the board reads), not on the end of the tape.
+  const playheadIdx = useMemo(() => {
+    if (!playhead) return null;
+    const t = +new Date(playhead.at);
+    let i = -1;
+    for (let k = 0; k < hours.length; k++) if (hours[k] + 3_600_000 <= t) i = k;
+    return i >= 0 ? i : null;
+  }, [playhead, hours]);
+  const idx = cursor ?? playheadIdx ?? Math.max(0, hours.length - 1);
 
   useEffect(() => {
     if (!narrow || !scrollRef.current) return;
-    // With a shaded window, start with the window about 24 px inside the visible area; otherwise at the latest hour.
-    scrollRef.current.scrollLeft = shade ? Math.max(0, x(+new Date(shade.from)) - 24) : scrollRef.current.scrollWidth;
+    // With a shaded window, start with the window about 24 px inside the visible area; with a playhead, keep it a third of the way in; otherwise at the latest hour.
+    const el = scrollRef.current;
+    el.scrollLeft = shade ? Math.max(0, x(+new Date(shade.from)) - 24) : playhead ? Math.max(0, x(+new Date(playhead.at)) - el.clientWidth / 3) : el.scrollWidth;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [narrow, drawKey, shade?.from]);
+  }, [narrow, drawKey, shade?.from, playhead?.at]);
 
   const sixes: number[] = [];
-  // Tick spacing is the finest of 3, 6, 12 or 24 h that leaves at least 56 px between labels, so an 88 h dossier at 1024 wide still reads in 6 h steps while a 168 h week falls back to days.
-  const step = ([3, 6, 12, 24] as const).find((h) => (plotW / span) * h >= 56 && !(compact && h < 6)) ?? 24;
+  // Tick spacing is the finest of 3 h to 7 days that leaves at least 56 px between labels, so an 88 h dossier at 1024 wide still reads in 6 h steps, a 168 h week falls back to days, and a whole replay tape on a phone to weeks.
+  const step = ([3, 6, 12, 24, 48, 72, 168] as const).find((h) => (plotW / span) * h >= 56 && !(compact && h < 6)) ?? 168;
   for (let t = Math.ceil(t0 / (step * HOUR)) * step * HOUR; t <= t1; t += step * HOUR) sixes.push(t);
 
   // Per-lane official records: every record is a tick; the strongest per bin gets the stamp label.
@@ -244,7 +256,7 @@ export function Recorder({
                 {sixes.map((t) => (
                   <g key={t}>
                     <line x1={x(t)} x2={x(t)} y1={M.t} y2={H - M.b + 4} stroke="rgba(31,77,184,0.26)" strokeWidth={new Date(t).getUTCHours() === 0 ? 1.25 : 0.75} />
-                    <text x={x(t) + 3} y={H - 22} fontSize={10.5} fill="#5B5A54" fontFamily="Martian Mono, monospace">{`${String(new Date(t).getUTCHours()).padStart(2, "0")}h`}</text>
+                    {step < 24 && <text x={x(t) + 3} y={H - 22} fontSize={10.5} fill="#5B5A54" fontFamily="Martian Mono, monospace">{`${String(new Date(t).getUTCHours()).padStart(2, "0")}h`}</text>}
                     {new Date(t).getUTCHours() < step && <text x={x(t) + 3} y={H - 8} fontSize={10.5} fill="#15140F" fontFamily="Martian Mono, monospace">{axisLabel(Math.floor(t / (24 * HOUR)) * 24 * HOUR)}</text>}
                   </g>
                 ))}
@@ -281,6 +293,17 @@ export function Recorder({
                     <g data-testid="recorder-mark">
                       <line x1={mx} x2={mx} y1={M.t} y2={H - M.b + 4} stroke="#C8102E" strokeWidth={1.5} />
                       <text x={mx + 4} y={H - M.b - 4} fontSize={10} fill="#C8102E" fontWeight={600} fontFamily="Martian Mono, monospace">{mark.label}</text>
+                    </g>
+                  );
+                })()}
+                {playhead && (() => {
+                  const cx = x(+new Date(playhead.at));
+                  if (cx < M.l || cx > W - M.r) return null;
+                  return (
+                    <g data-testid="recorder-cursor">
+                      <line x1={cx} x2={cx} y1={M.t} y2={H - M.b + 4} stroke="#15140F" strokeWidth={1.5} />
+                      <path d={`M${cx - 5} ${M.t} L${cx + 5} ${M.t} L${cx} ${M.t + 7}Z`} fill="#15140F" />
+                      <text x={cx > W - M.r - 90 ? cx - 4 : cx + 4} textAnchor={cx > W - M.r - 90 ? "end" : "start"} y={H - M.b - 4} fontSize={10} fill="#15140F" fontWeight={600} fontFamily="Martian Mono, monospace">{playhead.label ?? "playhead"}</text>
                     </g>
                   );
                 })()}
@@ -374,13 +397,13 @@ export function Recorder({
             </span>
           ))}
         </div>
-        <Readout lanes={lanes} idx={idx} pinned={cursor !== null} onKey={onKey} t={cursorT} />
+        <Readout lanes={lanes} idx={idx} word={cursor !== null ? "cursor" : playheadIdx !== null ? "playhead" : "latest"} onKey={onKey} t={cursorT} />
       </div>
     </div>
   );
 }
 
-function Readout({ lanes, idx, pinned, onKey, t }: { lanes: RecorderLane[]; idx: number; pinned: boolean; onKey: (e: KeyboardEvent<HTMLDivElement>) => void; t?: number }) {
+function Readout({ lanes, idx, word, onKey, t }: { lanes: RecorderLane[]; idx: number; onKey: (e: KeyboardEvent<HTMLDivElement>) => void; t?: number; word: "cursor" | "playhead" | "latest"; }) {
   const official = t === undefined ? [] : lanes.flatMap((l) => (l.timeline?.officialMarkers ?? []).filter((m) => { const a = +new Date(m.at); return a >= t && a < t + HOUR; }));
   const uniq = [...new Map(official.map((m) => [m.eventId, m])).values()];
   const aggregate = lanes.length > 0 && lanes.every((l) => l.timeline && l.timeline.placeId == null);
@@ -396,7 +419,7 @@ function Readout({ lanes, idx, pinned, onKey, t }: { lanes: RecorderLane[]; idx:
     >
       <p className="mono text-ink whitespace-nowrap" aria-live="polite">
         {aggregate && <span className="text-ink-muted">All places, </span>}
-        <span className="text-ink-muted">{pinned ? "cursor" : "latest"}</span> {t !== undefined ? utcDateTime(new Date(t).toISOString()) : "no hours yet"}
+        <span className="text-ink-muted">{word}</span> {t !== undefined ? utcDateTime(new Date(t).toISOString()) : "no hours yet"}
       </p>
       <div>
         <ul className="flex flex-wrap gap-x-6 gap-y-1">

@@ -16,7 +16,7 @@ export type GetHazardTimelineParams = {
 placeId?: number;
 /**
  * @minimum 6
- * @maximum 720
+ * @maximum 2160
  */
 hours?: number;
 /**

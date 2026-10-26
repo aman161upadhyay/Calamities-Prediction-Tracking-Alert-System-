@@ -316,7 +316,7 @@ export const getHazardTimelineQueryPlaceIdMax = 2147483647;
 
 export const getHazardTimelineQueryHoursDefault = 72;
 export const getHazardTimelineQueryHoursMin = 6;
-export const getHazardTimelineQueryHoursMax = 720;
+export const getHazardTimelineQueryHoursMax = 2160;
 
 
 
@@ -713,7 +713,7 @@ export const GetAlertResponse = zod.object({
  * @summary Recent events from official feeds (GDACS, USGS, NWS, FIRMS)
  */
 export const listOfficialEventsQueryHoursDefault = 72;
-export const listOfficialEventsQueryHoursMax = 720;
+export const listOfficialEventsQueryHoursMax = 2160;
 
 export const listOfficialEventsQueryLimitDefault = 200;
 export const listOfficialEventsQueryLimitMax = 500;

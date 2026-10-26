@@ -50,7 +50,8 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
   const [loc] = useLocation();
   const search = useSearch();
   // A page scoped to a replay scenario (the console itself, or an evidence page opened from it) reads as "Replay", not as the live clock.
-  const replay = loc.startsWith("/replay") || new URLSearchParams(search).has("scenario");
+  const sp = new URLSearchParams(search);
+  const replay = (loc.startsWith("/replay") && sp.has("s")) || sp.has("scenario");
   const all = status ? [...status.sources, ...status.officialFeeds] : [];
   const ok = all.filter((s) => s.state === "ok").length;
   return (
@@ -71,7 +72,8 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
               {status.isStale ? <span aria-hidden className="text-ochre">◆</span> : <span aria-hidden className="text-ink">●</span>}
               <span className={status.isStale && !replay ? "text-ochre" : "text-ink"}>{replay ? "Replay" : status.isStale ? "Stale" : "Live"}</span>
             </span>
-            <span className="mono text-ink-muted hidden sm:inline" data-testid="text-status-asof">as of {utcTime(status.now)}</span>
+            {/* Under a replay the clock belongs to the transport or the page's scope note; the live time would disagree with it. */}
+            {!replay && <span className="mono text-ink-muted hidden sm:inline" data-testid="text-status-asof">as of {utcTime(status.now)}</span>}
           </>
         )}
         <span aria-hidden className={cn("text-[9px] transition-transform duration-150", open && "rotate-180")}>▼</span>
@@ -165,7 +167,7 @@ export function Footer() {
         <div className="max-w-[56ch]">
           <p className="display text-[26px] leading-7">Experimental research system. Not an official warning source.</p>
           <p className="mt-3 text-[14px] leading-5 text-ink-muted">
-            Calamity Watch is built by Aman. Its alerts come from public posts and statistical models and can be wrong in both directions. For warnings, follow your national meteorological service and local authorities.
+            Calamity Watch is built by Aman Upadhyay. Its alerts come from public posts and statistical models and can be wrong in both directions. For warnings, follow your national meteorological service and local authorities.
           </p>
         </div>
         <div className="text-[14px] leading-6">

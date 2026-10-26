@@ -93,21 +93,21 @@ function windowText(a: Alert) {
   return `${h} h`;
 }
 
-const COLS = "grid gap-x-4 items-baseline grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[140px_minmax(0,1fr)_124px_60px_minmax(180px,240px)] lg:grid-cols-[140px_minmax(0,1fr)_124px_60px_56px_56px_minmax(184px,250px)]";
+const COLS = "grid gap-x-4 items-baseline grid-cols-[minmax(0,1fr)_auto] @3xl:grid-cols-[140px_minmax(0,1fr)_124px_60px_minmax(180px,240px)] @4xl:grid-cols-[140px_minmax(0,1fr)_124px_60px_56px_56px_minmax(184px,250px)]";
 
 /** The printed ledger of alerts: one hairline row per alert, the whole row opens the dossier. */
 export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace = true, atEnd = false }: { alerts: Alert[]; scope: Scope; testId?: string; showPlace?: boolean; atEnd?: boolean }) {
   /** Each level names its own observation time: closed alerts keep the level at closing. */
   const when = (a: Alert) => a.status !== "open" || a.closedAt ? "at close" : !scope ? "now" : atEnd ? "at end" : "at playhead";
   return (
-    <div data-testid={testId}>
-      <div className={cn(COLS, "hidden md:grid px-4 h-8 items-center border-b border-rule-strong text-[12px] text-ink-muted")} aria-hidden>
+    <div data-testid={testId} className="@container">
+      <div className={cn(COLS, "hidden @3xl:grid px-4 h-8 items-center border-b border-rule-strong text-[12px] text-ink-muted")} aria-hidden>
         <span>Opened, UTC</span>
         <span>{showPlace ? "Place and hazard" : "Hazard"}</span>
         <span>Level</span>
         <span>Open for</span>
-        <span className="hidden lg:block text-right">Peak z</span>
-        <span className="hidden lg:block text-right">Posts</span>
+        <span className="hidden @4xl:block text-right">Peak z</span>
+        <span className="hidden @4xl:block text-right">Posts</span>
         <span>Official record</span>
       </div>
       <ol className="divide-y divide-rule">
@@ -116,21 +116,21 @@ export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace
           return (
             <li key={a.id} data-testid={`ledger-alert-${a.id}`}>
               <Link href={`/alerts/${a.id}${scopeQuery(scope ?? (a.scenario ? { scenario: a.scenario } : null))}`} className={cn(COLS, "group px-4 py-3 hover:bg-paper focus-visible:bg-paper")} data-testid={`link-alert-${a.id}`}>
-                <span className="mono text-[12px] text-ink-muted hidden md:block">{utcDateTime(a.openedAt)}</span>
+                <span className="mono text-[12px] text-ink-muted hidden @3xl:block">{utcDateTime(a.openedAt)}</span>
                 <span className="min-w-0">
                   <span className="inline-flex items-center gap-2 font-semibold text-[15px] leading-5 group-hover:underline underline-offset-2">
                     <HazardDot hazard={a.hazard} />
                     {showPlace ? a.placeName : HAZARD_LABEL[a.hazard]}
                     {showPlace && <span className="font-normal text-ink-muted">{HAZARD_LABEL[a.hazard].toLowerCase()}</span>}
                   </span>
-                  <span className="block md:hidden mono text-[11px] text-ink-muted mt-0.5">{utcDateTime(a.openedAt)} · {windowText(a)}</span>
-                  <span className="block md:hidden mt-1 text-[12px] leading-4"><StampGlyph state={c.state} />{c.state === "corroborated" && <span className="mono text-[11px] text-ink-muted"> · {stampLead(c, a.openedAt)}</span>}</span>
+                  <span className="block @3xl:hidden mono text-[11px] text-ink-muted mt-0.5">{utcDateTime(a.openedAt)} · {windowText(a)}</span>
+                  <span className="block @3xl:hidden mt-1 text-[12px] leading-4"><StampGlyph state={c.state} />{c.state === "corroborated" && <span className="mono text-[11px] text-ink-muted"> · {stampLead(c, a.openedAt)}</span>}</span>
                 </span>
-                <span className="text-right md:text-left"><LevelBadge level={a.currentLevel} testId={`status-alert-level-${a.id}`} /> <span className="mono text-[11px] text-ink-muted whitespace-nowrap md:block md:mt-0.5" data-testid={`text-alert-level-when-${a.id}`}>{when(a)}</span></span>
-                <span className="mono text-[12px] hidden md:block">{windowText(a)}</span>
-                <span className="mono text-[12px] text-right hidden lg:block">{num(a.peakZ, 1)}</span>
-                <span className="mono text-[12px] text-right hidden lg:block">{num(a.postCount)}</span>
-                <span className="text-[12px] leading-4 hidden md:block">
+                <span className="text-right @3xl:text-left"><LevelBadge level={a.currentLevel} testId={`status-alert-level-${a.id}`} /> <span className="mono text-[11px] text-ink-muted whitespace-nowrap block mt-0.5" data-testid={`text-alert-level-when-${a.id}`}>{when(a)}</span></span>
+                <span className="mono text-[12px] hidden @3xl:block">{windowText(a)}</span>
+                <span className="mono text-[12px] text-right hidden @4xl:block">{num(a.peakZ, 1)}</span>
+                <span className="mono text-[12px] text-right hidden @4xl:block">{num(a.postCount)}</span>
+                <span className="text-[12px] leading-4 hidden @3xl:block">
                   <StampGlyph state={c.state} />
                   {c.state === "corroborated" && <span className="block mono text-[11px] text-ink-muted mt-0.5">{stampLead(c, a.openedAt)}</span>}
                 </span>
