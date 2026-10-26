@@ -1,0 +1,26 @@
+id: design-006
+agent: design-agent
+title: Interruptible detail-panel feedback
+task: Add feedback motion when a CRM record panel opens.
+inputs:
+  stack: Existing React Motion package and accessible sheet primitive.
+  behavior: At most 12px translation around 160ms; stationary table; repeated open and close.
+  conditions: Reduced motion, Escape, narrow screen and route change.
+gold:
+  criteria: Animation reverses or cancels cleanly; focus restores; reduced motion switches state immediately.
+rubric:
+  - criterion: Interaction lifecycle
+    weight: 40
+    pass_if: Repeated input and route change do not leave stale panels or focus.
+  - criterion: Reduced motion
+    weight: 35
+    pass_if: Static state changes preserve information and access.
+  - criterion: Purpose and measurement
+    weight: 25
+    pass_if: Motion explains panel state and measured results are separated from guesses.
+judge: human
+anti_patterns:
+  - Staggering all table rows.
+  - Reporting a guessed frame rate.
+source: Research 05 Motion example, Emil Kowalski and Rauno Freiberg.
+as_of: '2026-10-25'

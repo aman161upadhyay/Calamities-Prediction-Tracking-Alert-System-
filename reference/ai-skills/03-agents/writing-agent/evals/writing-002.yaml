@@ -1,0 +1,26 @@
+id: writing-002
+agent: writing-agent
+title: Slop diagnostics preserve technical language
+task: Edit the paragraph and report confirmed warning events and justified exceptions.
+inputs:
+  draft: "Certainly! Here is the update. The estimator uses robust regression. The export now accepts empty files. That changes everything. In summary, the export now accepts empty files."
+  facts: The estimator uses robust regression. The export now accepts empty files. No other result is supplied.
+gold:
+  reference: "The estimator uses robust regression. The export now accepts empty files."
+  diagnostic: Preserve the statistical term. Report raw events for this short text, not a normalized humanity score.
+rubric:
+  - criterion: Claims
+    weight: 50
+    pass_if: Both supported facts remain with no new result.
+  - criterion: Editing
+    weight: 30
+    pass_if: Wrapper, empty closer, and redundant summary are removed.
+  - criterion: Diagnostic integrity
+    weight: 20
+    pass_if: The technical term is suppressed with a reason and no authorship verdict is made.
+judge: human
+anti_patterns:
+  - Removing a correct statistical term because it matches a list.
+  - Claiming a detector percentage proves humanity.
+source: Research dossier 04 section 5f; original synthetic fixture.
+as_of: "2026-10-25"

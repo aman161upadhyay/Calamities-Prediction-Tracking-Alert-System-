@@ -1,0 +1,25 @@
+id: writing-008
+agent: writing-agent
+title: Expand a dense paragraph without changing its claim
+task: Rewrite this fictional dense paragraph for an engineer. Name relevant readability checks separately.
+inputs:
+  paragraph: "The change the migration script applies deletes old rows. The model response quality regression triage workflow needs repair. The API bullies callers into retries because it returns no status."
+gold:
+  reference: "The change that the migration script applies deletes old rows. We need to fix how we investigate declines in model response quality. Callers must retry because the API returns no status."
+  checks: Helpful relativizer, noun-stack expansion, and replacement of an animate metaphor.
+rubric:
+  - criterion: Meaning
+    weight: 50
+    pass_if: Row deletion, investigation repair, and the retry reason all remain unchanged.
+  - criterion: Readability
+    weight: 30
+    pass_if: The three specified constructions are made easier to parse.
+  - criterion: Measurement honesty
+    weight: 20
+    pass_if: No computed perplexity or comprehension gain is fabricated.
+judge: human
+anti_patterns:
+  - Removing the deletion warning to shorten the paragraph.
+  - Inventing an API timeout or retry count.
+source: Original exercise based on research dossier 04 section 5a and Clark feature families; not a quotation from the paper.
+as_of: "2026-10-25"

@@ -1,0 +1,44 @@
+id: coding-agent-010
+agent: coding-agent
+title: Prevent normalization leakage into the training split
+task: >-
+  Fix normalization so the mean is fitted only from training values and reused
+  for validation. Preserve output shape. Reject an empty training split.
+  No training jobs or dependency changes are authorized.
+inputs:
+  max_total_tokens: 120000
+  files:
+    normalize.cjs: |
+      exports.normalize = (train, validation) => {
+        const all = train.concat(validation);
+        const mean = all.reduce((a,b) => a+b,0) / all.length;
+        return {mean, train: train.map(x => x-mean), validation: validation.map(x => x-mean)};
+      };
+  writable_paths: [normalize.cjs, normalize.test.cjs]
+  command: node --test normalize.test.cjs
+  fixture: Training values [0, 2]; validation values [100].
+  tolerance: Absolute numeric error at most 1e-12.
+gold:
+  criteria:
+    - Mean equals 1; normalized train is [-1, 1]; normalized validation is [99].
+    - Changing validation values does not change fitted mean or normalized train.
+    - Empty train throws an explicit error; input arrays remain unchanged.
+rubric:
+  - criterion: Leakage prevention
+    weight: 40
+    pass_if: Gold values and validation-perturbation hidden checks pass within tolerance.
+  - criterion: Schema and errors
+    weight: 25
+    pass_if: Shape, empty-training and no-mutation checks pass.
+  - criterion: Sensitivity
+    weight: 20
+    pass_if: Leakage assertion fails before the fix and passes after.
+  - criterion: Resource scope and report
+    weight: 15
+    pass_if: No training/install occurs and evidence is accurate.
+judge: human
+anti_patterns:
+  - Fitting separate validation statistics or changing fixtures to hide leakage.
+  - Running an expensive model job to validate a deterministic arithmetic fix.
+source: Original ML/data task from coding research section 5g and ML verification adaptations.
+as_of: "2026-10-25"

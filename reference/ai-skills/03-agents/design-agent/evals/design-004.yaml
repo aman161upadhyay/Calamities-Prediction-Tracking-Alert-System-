@@ -1,0 +1,45 @@
+id: design-004
+agent: design-agent
+title: Morning support queue decisions
+task: Design a manager's support queue page using an approved aggregate fixture.
+inputs:
+  schema: Queue, backlog count, oldest waiting age, response breaches, updated_at, permission.
+  fixture:
+    - queue: General
+      backlog_count: 12
+      oldest_waiting_minutes: 45
+      response_breaches: 2
+      updated_at: '2026-10-25T08:00:00Z'
+      permission: allowed
+    - queue: Billing
+      backlog_count: 4
+      oldest_waiting_minutes: 90
+      response_breaches: 1
+      updated_at: '2026-10-25T07:00:00Z'
+      permission: allowed
+    - queue: Restricted
+      permission: denied
+  fixture_notice: Synthetic evaluation-only records, never production evidence.
+  test_clock: '2026-10-25T08:15:00Z'
+  freshness_rule: Older than 20 minutes is stale.
+  refresh_scenario: Refresh fails after the initial fixture loads.
+  adverse_states: Stale timestamp, denied queue, partial refresh and failed refresh.
+  constraint: No live customer tickets or guessed trends.
+gold:
+  criteria: Queue table leads; General is fresh and Billing is stale; denied metrics are not guessed; failed refresh preserves the last successful result.
+rubric:
+  - criterion: Decision fit
+    weight: 35
+    pass_if: Staffing decisions can be made from queue rows before secondary charts.
+  - criterion: State correctness
+    weight: 40
+    pass_if: Stale, partial, denied and failed refresh states differ and do not fabricate data.
+  - criterion: Accessible density
+    weight: 25
+    pass_if: Values remain readable with keyboard-accessible detail and a narrow-screen plan.
+judge: human
+anti_patterns:
+  - Giant KPI cards displace queues.
+  - Animated count-up or fake positive trends.
+source: Research 05 support operations prompt and evaluation protocol.
+as_of: '2026-10-25'

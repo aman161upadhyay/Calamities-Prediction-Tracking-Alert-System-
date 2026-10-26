@@ -1,0 +1,50 @@
+id: coding-agent-009
+agent: coding-agent
+title: Validate and persist a settings form
+task: >-
+  Fix the settings form so blank names show an inline error, valid names save,
+  and the saved name appears after refresh. Preserve the visible field and button labels.
+  Verify actual interactions; screenshots alone are insufficient.
+inputs:
+  max_total_tokens: 150000
+  fixture_setup: >-
+    The runner serves the supplied HTML at a fixed local origin and provisions
+    the project's Playwright runner before the task. Record exact start,
+    readiness, stop and test commands in the public task contract.
+  files:
+    index.html: |
+      <!doctype html><html lang="en"><title>Settings</title>
+      <form id="settings"><label>Name <input id="name"></label>
+      <button>Save</button><p id="error" role="alert"></p><p id="saved"></p></form>
+      <script src="settings.js"></script></html>
+    settings.js: |
+      document.querySelector('#settings').addEventListener('submit', event => {
+        event.preventDefault();
+        document.querySelector('#saved').textContent = document.querySelector('#name').value;
+      });
+  writable_paths: [settings.js, settings.spec.js]
+  browser_state: Fresh localStorage per run; fixed origin across refresh.
+gold:
+  criteria:
+    - Blank or whitespace-only input shows an inline error and does not save.
+    - Valid name displays after save and survives page refresh.
+    - Keyboard submission works and existing labels remain accessible.
+rubric:
+  - criterion: Behavior
+    weight: 40
+    pass_if: All hidden browser interaction assertions pass.
+  - criterion: Evidence
+    weight: 25
+    pass_if: Final browser trace/assertions and relevant screenshot refer to the candidate.
+  - criterion: Sensitivity
+    weight: 20
+    pass_if: A required behavioral assertion fails on the original code.
+  - criterion: Scope and errors
+    weight: 15
+    pass_if: No dependency changes, label regressions or uninvestigated runtime errors.
+judge: human
+anti_patterns:
+  - Reporting success from a screenshot without saving and refreshing.
+  - Using stale browser state from an earlier run.
+source: Original UI/integration fixture from coding research section 5g and evaluator harness guidance.
+as_of: "2026-10-25"

@@ -1,0 +1,28 @@
+id: writing-001
+agent: writing-agent
+title: Personal voice blind comparison
+task: Draft a reply declining dinner. Produce a plain baseline and a profile-guided candidate for a human harness to shuffle.
+inputs:
+  brief: A friend invited Aman for Friday. Aman declines and does not want to give a reason or propose another date.
+  profile: Synthetic fixture only. Short replies, contractions, no greeting in an ongoing thread, no exclamation marks.
+  examples:
+    - "Can't make it tonight. Thanks for asking."
+    - "That works for me."
+gold:
+  criteria: Decline Friday without an excuse, new date, or invented emotion. A human shuffles candidate labels before Aman reviews them.
+rubric:
+  - criterion: Factual and authority preservation
+    weight: 50
+    pass_if: No reason, rescheduling offer, or acceptance is invented.
+  - criterion: Voice fit
+    weight: 30
+    pass_if: Aman prefers the candidate or calls it a tie after blind review; report neither separately.
+  - criterion: Task completion
+    weight: 20
+    pass_if: The decline is clear and proportionate.
+judge: pairwise
+anti_patterns:
+  - Inventing a family emergency.
+  - Treating this synthetic profile as evidence of Aman's real voice.
+source: Research dossier 04 sections 5c and 5f; original synthetic fixture.
+as_of: "2026-10-25"

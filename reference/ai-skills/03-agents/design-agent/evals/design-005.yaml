@@ -1,0 +1,36 @@
+id: design-005
+agent: design-agent
+title: Android inspection during disconnection
+task: Design a Material 3 checklist for an outdoor technician.
+inputs:
+  approved_fixture: Asset A, visual inspection item, note field and required review before submission.
+  fixture_notice: Synthetic evaluation-only data, not real inspection evidence.
+  checklist:
+    asset_id: asset-a
+    item: Inspect casing for visible cracks
+    required: true
+    note: Small crack at lower edge
+    local_state: saved
+    remote_state: pending
+    connection: offline
+  conflict_scenario: Server has a newer draft after reconnection; preserve local note and offer explicit conflict review.
+  adverse_states: Offline draft, denied camera permission, sync conflict and server rejection.
+  privacy: Photos need contextual approval; no production upload.
+gold:
+  criteria: Distinguish saved-on-device from synced; preserve drafts; use scalable text, platform back and 48dp targets.
+rubric:
+  - criterion: State truth
+    weight: 45
+    pass_if: Local save never appears as server confirmation and conflict recovery preserves input.
+  - criterion: Platform and accessibility
+    weight: 35
+    pass_if: Back, large text, targets and TalkBack labels are specified and tested or marked unverified.
+  - criterion: Permission handling
+    weight: 20
+    pass_if: Denial does not block unrelated checklist work and no upload happens without approval.
+judge: human
+anti_patterns:
+  - Web sidebar squeezed onto a phone.
+  - Red and green as the only state indicators.
+source: Research 05 Android field inspection prompt.
+as_of: '2026-10-25'

@@ -1,0 +1,46 @@
+id: coding-agent-011
+agent: coding-agent
+title: Refactor duplicate parsing without changing observable errors
+task: >-
+  Remove duplicate parsing logic while preserving public functions and exact
+  error messages. Do not add behavior or dependencies. Establish contract
+  tests before the refactor.
+inputs:
+  max_total_tokens: 160000
+  files:
+    parse.cjs: |
+      exports.parseA = text => {
+        if (text === '') throw new Error('A requires input');
+        return JSON.parse(text);
+      };
+      exports.parseB = text => {
+        if (text === '') throw new Error('B requires input');
+        return JSON.parse(text);
+      };
+  writable_paths: [parse.cjs, parse.test.cjs]
+  command: node --test parse.test.cjs
+gold:
+  criteria:
+    - Existing exports and parsed values remain unchanged.
+    - Empty A and B errors retain exact messages.
+    - Malformed JSON still throws; valid scalar JSON remains supported.
+    - Shared parsing logic is extracted without an unrelated abstraction.
+rubric:
+  - criterion: Contract preservation
+    weight: 40
+    pass_if: Public API and hidden input/error checks pass before and after.
+  - criterion: Refactor value
+    weight: 25
+    pass_if: Duplicate logic is reduced without new modes or dependencies.
+  - criterion: Verification
+    weight: 20
+    pass_if: Contract tests precede refactor and pass on final candidate.
+  - criterion: Scope and report
+    weight: 15
+    pass_if: Only approved files change and behavior-preservation evidence is accurate.
+judge: human
+anti_patterns:
+  - Changing both errors to a generic message.
+  - Rejecting scalar JSON as an unsolicited new requirement.
+source: Original refactor task from coding research section 5g.
+as_of: "2026-10-25"

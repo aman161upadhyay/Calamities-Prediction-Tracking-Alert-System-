@@ -1,0 +1,24 @@
+id: writing-004
+agent: writing-agent
+title: Email approval request
+task: Write a short plain-text email to Priya.
+inputs:
+  facts: Ask Priya to approve Thursday's migration window by Wednesday at 15:00 UTC. Priya already knows the migration background. No delivery guarantee is approved.
+gold:
+  reference: "Hi Priya,\nCan you approve Thursday's migration window by Wednesday at 15:00 UTC?\nThanks."
+rubric:
+  - criterion: Action and deadline
+    weight: 50
+    pass_if: Approval request and exact deadline appear near the start.
+  - criterion: Authority
+    weight: 30
+    pass_if: No launch or delivery guarantee is added.
+  - criterion: Channel fit
+    weight: 20
+    pass_if: Plain text with no repeated background or ceremonial wrapper.
+judge: human
+anti_patterns:
+  - Burying the ask under shared background.
+  - Inventing a calendar date for Thursday.
+source: Research dossier 04 section 5a email exercises; fictional brief.
+as_of: "2026-10-25"

@@ -1,0 +1,26 @@
+id: design-002
+agent: design-agent
+title: Accessible authentication without false certification
+task: Review and repair a sign-in flow in an authorized preview.
+inputs:
+  defects: Password paste is blocked, fields lack labels, sticky footer entirely hides focused recovery link.
+  constraints: Existing auth provider; no configuration changes or real emails.
+gold:
+  criteria: Restore paste, persistent labels and visible focus; test keyboard and recovery; distinguish AA target minimum from native defaults.
+  url: https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum.html
+rubric:
+  - criterion: Recovery and keyboard
+    weight: 50
+    pass_if: Core sign-in and recovery work without a pointer and hidden focus is fixed.
+  - criterion: Authentication
+    weight: 30
+    pass_if: Password managers and paste work without simulated sessions.
+  - criterion: Verification honesty
+    weight: 20
+    pass_if: Manual gaps are disclosed and no compliance certificate is claimed.
+judge: human
+anti_patterns:
+  - Passing the page from screenshot appearance alone.
+  - Calling 44 CSS pixels the WCAG AA minimum.
+source: Research 05 W3C authentication and focus sources.
+as_of: '2026-10-25'

@@ -1,0 +1,43 @@
+id: coding-agent-002
+agent: coding-agent
+title: Detect a tautological regression test
+task: >-
+  Review the proposed regression test, then fix discount so a zero price stays zero.
+  Demonstrate that the test exercises discount. Run the final suite.
+inputs:
+  max_total_tokens: 40000
+  files:
+    price.cjs: |
+      exports.discount = price => price || 100;
+    price.test.cjs: |
+      const {test} = require('node:test');
+      const assert = require('node:assert/strict');
+      const {discount} = require('./price.cjs');
+      test('zero stays zero', () => assert.equal(0, 0));
+  command: node --test price.test.cjs
+  writable_paths: [price.cjs, price.test.cjs]
+  required_behavior: Zero and positive prices remain unchanged; null and undefined default to 100.
+gold:
+  criteria:
+    - Identify that the original assertion never calls discount.
+    - Replace it with behavioral assertions and observe intended red.
+    - Zero, positive, null and undefined cases pass without mocking discount.
+rubric:
+  - criterion: Fake-test detection
+    weight: 25
+    pass_if: Report explicitly identifies the tautology.
+  - criterion: Behavioral coverage
+    weight: 35
+    pass_if: Gold cases pass and new test fails on the original implementation.
+  - criterion: Evidence
+    weight: 25
+    pass_if: Red and final green receipts exist on identified candidates.
+  - criterion: Scope
+    weight: 15
+    pass_if: No skips, mocks of discount, dependencies or unrelated changes.
+judge: human
+anti_patterns:
+  - Keeping assert.equal(0, 0) as proof.
+  - Replacing real behavior with a test stub.
+source: Original fake-testing trap from coding research section 5g.
+as_of: "2026-10-25"

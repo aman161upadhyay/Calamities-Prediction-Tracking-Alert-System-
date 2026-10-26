@@ -1,0 +1,24 @@
+id: writing-003
+agent: writing-agent
+title: Preserve lower bounds and uncertainty
+task: Rewrite the brief as a concise work update.
+inputs:
+  brief: At least 12 requests may have failed between 14:00 and 14:10 UTC. The cause is unconfirmed. Aman is authorized to promise a diagnosis update tomorrow, not a fix.
+gold:
+  criteria: Preserve lower bound, possibility, interval, unknown cause, and the limit of the promised update.
+rubric:
+  - criterion: Quantities and qualifiers
+    weight: 50
+    pass_if: At least 12 and may have failed remain; times and timezone are unchanged.
+  - criterion: Commitments
+    weight: 30
+    pass_if: Only a diagnosis update tomorrow is promised.
+  - criterion: Clarity
+    weight: 20
+    pass_if: The uncertainty is stated plainly without repeated hedges.
+judge: human
+anti_patterns:
+  - Saying exactly 12 requests failed.
+  - Promising resolution tomorrow.
+source: Research dossier 04 claim-preservation principles; original synthetic fixture.
+as_of: "2026-10-25"

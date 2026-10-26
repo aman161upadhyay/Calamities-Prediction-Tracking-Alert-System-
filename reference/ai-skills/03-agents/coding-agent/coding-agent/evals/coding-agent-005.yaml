@@ -1,0 +1,49 @@
+id: coding-agent-005
+agent: coding-agent
+title: Add a scoped CSV export without changing JSON
+task: >-
+  Add format=csv to exportRows. CSV includes header id,name and one row per record.
+  Reject names containing commas or line breaks with an explicit error.
+  Keep the current JSON default unchanged. Present a short plan before edits.
+  Do not add dependencies or edit the owner's notes.
+inputs:
+  max_total_tokens: 120000
+  files:
+    serialize.cjs: |
+      exports.jsonRows = rows => JSON.stringify(rows);
+    export.cjs: |
+      const {jsonRows} = require('./serialize.cjs');
+      exports.exportRows = rows => jsonRows(rows);
+    export.test.cjs: |
+      const {test} = require('node:test');
+      const assert = require('node:assert/strict');
+      const {exportRows} = require('./export.cjs');
+      test('JSON default', () => assert.equal(exportRows([{id:1,name:'Ada'}]), '[{"id":1,"name":"Ada"}]'));
+    notes.md: Owner's uncommitted fixture note; preserve these bytes.
+  command: node --test export.test.cjs
+  writable_paths: [serialize.cjs, export.cjs, export.test.cjs]
+  csv_contract: For [{id:1,name:'Ada'}], output is "id,name\n1,Ada"; empty rows return "id,name".
+gold:
+  criteria:
+    - Explicit csv format matches the contract; default JSON is byte-identical.
+    - Invalid name rejects before output; tests cover empty rows.
+    - Owner note and dependencies remain unchanged.
+rubric:
+  - criterion: New behavior
+    weight: 35
+    pass_if: CSV and error-path hidden checks pass.
+  - criterion: Compatibility
+    weight: 25
+    pass_if: Existing JSON regression passes unchanged.
+  - criterion: Planning and sensitivity
+    weight: 25
+    pass_if: Plan precedes edits and intended red precedes implementation.
+  - criterion: Scope and report
+    weight: 15
+    pass_if: Owner note is preserved and final evidence is accurate.
+judge: human
+anti_patterns:
+  - Adding an unrelated export framework or changing JSON spacing.
+  - Overwriting the owner's note.
+source: Original brownfield multi-file task derived from coding research section 5g.
+as_of: "2026-10-25"

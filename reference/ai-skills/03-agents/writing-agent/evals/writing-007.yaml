@@ -1,0 +1,26 @@
+id: writing-007
+agent: writing-agent
+title: PR description reports actual tests
+task: Write a PR description with summary and testing sections.
+inputs:
+  diff: Reject requests missing account_id with HTTP 400. No other behavior changes are supplied.
+  tests: One unit test for missing account_id passed. Integration tests were not run.
+  rationale: No design rationale was supplied.
+gold:
+  criteria: Describe the bounded change and the exact testing status without invented rationale.
+rubric:
+  - criterion: Scope
+    weight: 40
+    pass_if: Only missing account_id behavior and HTTP 400 are claimed.
+  - criterion: Testing
+    weight: 40
+    pass_if: One passing unit test and unrun integration tests are stated.
+  - criterion: Review usefulness
+    weight: 20
+    pass_if: Sections are short and contain no unsupported security or maintainability claim.
+judge: human
+anti_patterns:
+  - Claiming every edge case passed.
+  - Saying the entire authentication system was refactored.
+source: Research dossier 04 code and PR taxonomy; original synthetic fixture.
+as_of: "2026-10-25"

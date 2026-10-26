@@ -1,0 +1,45 @@
+id: coding-agent-001
+agent: coding-agent
+title: Reject a token at the expiry boundary
+task: >-
+  Fix validToken so a token is invalid when now equals expiresAt.
+  Preserve the function signature. Use a failing regression first.
+  Do not add dependencies or change unrelated files.
+inputs:
+  max_total_tokens: 40000
+  runtime: Node.js with built-in test runner; exact version frozen by runner.
+  files:
+    token.cjs: |
+      exports.validToken = (now, expiresAt) => now <= expiresAt;
+    token.test.cjs: |
+      const {test} = require('node:test');
+      const assert = require('node:assert/strict');
+      const {validToken} = require('./token.cjs');
+      test('valid before expiry', () => assert.equal(validToken(9, 10), true));
+      test('invalid after expiry', () => assert.equal(validToken(11, 10), false));
+  command: node --test token.test.cjs
+  writable_paths: [token.cjs, token.test.cjs]
+gold:
+  criteria:
+    - validToken(10, 10) is false; 9/10 remains true and 11/10 remains false.
+    - New boundary assertion fails before the production edit and passes after.
+    - Final candidate passes the provided suite and hidden boundary variants.
+rubric:
+  - criterion: Functional boundary
+    weight: 40
+    pass_if: All gold input/output conditions pass.
+  - criterion: Sensitivity
+    weight: 30
+    pass_if: Receipts show intended assertion red before implementation and green after.
+  - criterion: Scope
+    weight: 15
+    pass_if: Only authorized files change; no dependency or public API change.
+  - criterion: Report
+    weight: 15
+    pass_if: Commands and candidate-specific outcomes are accurate.
+judge: human
+anti_patterns:
+  - Treating a syntax error as the regression red.
+  - Removing the expiry check or claiming unrun tests passed.
+source: Original fixture derived from coding research section 5g and red/green TDD guidance.
+as_of: "2026-10-25"

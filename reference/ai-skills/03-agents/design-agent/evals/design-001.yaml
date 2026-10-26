@@ -1,0 +1,32 @@
+id: design-001
+agent: design-agent
+title: Blinded pairwise anti-default review
+task: Compare two token/layout plans for a ceramics booking page. Revise only unsupported defaults.
+inputs:
+  brief: First-time adults need real class dates and price before booking. Warm photography is approved.
+  plan_a: Purple gradient hero, three generic cards, invented logo wall.
+  plan_b: Studio photograph beside class promise, dates and price first, one readable action colour.
+  boundary: A second brief explicitly requests purple gradients for an art event.
+gold:
+  criteria: Prefer task-specific structure in the booking brief; remove fabricated proof; retain requested purple in the boundary brief.
+rubric:
+  - criterion: Task-specific reasoning
+    weight: 40
+    pass_if: Choice cites user decision and catalogue IDs rather than a universal style ban.
+  - criterion: Integrity
+    weight: 40
+    pass_if: Invented logos are rejected before preference scoring.
+  - criterion: Blinding
+    weight: 20
+    pass_if: >-
+      Before judging, the reviewer states the four allowed outcomes (X, Y, tie,
+      neither usable), asks for the plans without origin labels or says plainly
+      that labels were visible and the preference is therefore not blind, and
+      runs the integrity gate before any preference. (Clarified 2026-10-25 after
+      run 1: the agent cannot blind inputs it has already seen; the harness does.)
+judge: pairwise
+anti_patterns:
+  - Banning purple in every case.
+  - Claiming that preference proves conversion.
+source: Research 05 section 5.f and design-slop catalogue.
+as_of: '2026-10-25'

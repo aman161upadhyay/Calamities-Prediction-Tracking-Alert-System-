@@ -1,0 +1,26 @@
+id: writing-006
+agent: writing-agent
+title: Article introduction respects preprint scope
+task: Write an article introduction of at most 100 words from Aman's supplied thesis.
+inputs:
+  thesis: Editors should sometimes add words to make dense generated prose easier to read.
+  evidence: Clark, Martin, and Mahowald measure linguistic features associated with processing difficulty. Their 2026 preprint is not a new human comprehension experiment.
+  source_url: https://arxiv.org/abs/2610.29162
+gold:
+  criteria: Lead with the narrow thesis and distinguish measured proxies from direct reader outcomes.
+rubric:
+  - criterion: Evidence scope
+    weight: 50
+    pass_if: No claim of proven incomprehensibility or new reader experiment.
+  - criterion: Argument
+    weight: 30
+    pass_if: The introduction explains why removing every optional word can be a poor editing policy.
+  - criterion: Form
+    weight: 20
+    pass_if: At most 100 words with no invented scene or sweeping historical setup.
+judge: human
+anti_patterns:
+  - Attributing commercial model training causes as proven.
+  - Inventing a reader-comprehension percentage.
+source: Research dossier 04 Clark evidence summary and article eval design.
+as_of: "2026-10-25"

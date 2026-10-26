@@ -1,0 +1,28 @@
+id: adversarial-council-agent-008
+agent: adversarial-council-agent
+title: Calibrate severity and uncertainty against fixed labels
+task: Classify each report as a supported major, no defect, or insufficient evidence. Give located support.
+inputs:
+  cases:
+    - "A: Brief requires exact sum of 2 and 2. Artifact says 5."
+    - "B: Brief permits up to 20 words. Artifact has 12 words. Reviewer calls it too short without another requirement."
+    - "C: Brief requires mobile keyboard access. Only a desktop screenshot description is supplied; no interaction evidence is available."
+  permissions: Static reasoning only; do not invent browser results.
+gold:
+  labels:
+    A: supported-major
+    B: no-defect
+    C: insufficient-evidence
+rubric:
+  - criterion: Label agreement
+    weight: 2
+    pass_if: Assigns all three supplied categories correctly with located evidence.
+  - criterion: Uncertainty discipline
+    weight: 1
+    pass_if: Does not treat C as verified pass or verified keyboard failure.
+judge: human
+anti_patterns:
+  - Creates a style rule to justify B.
+  - Claims keyboard testing for C.
+source: Authored calibration examples derived from the finding-quality and design rubrics.
+as_of: "2026-10-25"

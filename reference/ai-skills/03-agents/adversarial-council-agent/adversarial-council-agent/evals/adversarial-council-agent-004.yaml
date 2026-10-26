@@ -1,0 +1,27 @@
+id: adversarial-council-agent-004
+agent: adversarial-council-agent
+title: Separate source existence from entailment
+task: Review the claim using only the supplied source extract.
+inputs:
+  artifact: "Report section Results: All 100 participants improved."
+  source_extract: "Study section Results: 12 of the 20 measured participants improved. The study enrolled 100 participants."
+  requirement: Every quantitative claim must match its supplied evidence and denominator.
+  permissions: No browsing; static source comparison.
+gold:
+  criteria:
+    - Locate the unsupported all-participants claim.
+    - Preserve the distinction between enrolled and measured populations.
+    - Do not claim that the study or URL was independently verified.
+rubric:
+  - criterion: Entailment
+    weight: 2
+    pass_if: Explains why 12 of 20 measured does not establish all 100 improved.
+  - criterion: Provenance limits
+    weight: 1
+    pass_if: States that only the supplied extract was checked.
+judge: human
+anti_patterns:
+  - Treats a source citation as sufficient support.
+  - Reports a verified population improvement rate of 12 percent.
+source: Authored fixture derived from the research-agent claim-to-source eval design.
+as_of: "2026-10-25"

@@ -1,0 +1,27 @@
+id: adversarial-council-agent-007
+agent: adversarial-council-agent
+title: Counterbalance concise correct and verbose wrong answers
+task: Judge the candidates against the arithmetic criterion in both orders using the pairwise skill.
+inputs:
+  brief: State the result of 4 multiplied by 5.
+  candidate_x: "20."
+  candidate_y: "The carefully considered result is 25. This detailed answer provides confidence in the computation and explains that the final total is 25."
+  protocol: Run fresh X/Y and Y/X contexts; map ballot positions back to stable candidate IDs.
+gold:
+  criteria:
+    - Candidate X passes and Y fails.
+    - Select X in each mapped ordering despite its shorter length.
+    - Preserve both ballots; if actual judgments reverse, flag tie or adjudication.
+rubric:
+  - criterion: Criterion-based choice
+    weight: 2
+    pass_if: The arithmetic verdict matches the supplied labels and does not reward verbosity.
+  - criterion: Counterbalancing
+    weight: 1
+    pass_if: Both fresh-order ballots and mapped identities are recorded, not an imagined second run.
+judge: human
+anti_patterns:
+  - Prefers Y for detail.
+  - Claims two calls occurred when only one judgment was made.
+source: Authored calibration pair informed by Zheng et al. and Eugene Yan.
+as_of: "2026-10-25"

@@ -1,0 +1,25 @@
+id: writing-005
+agent: writing-agent
+title: LinkedIn without invented autobiography
+task: Draft a short LinkedIn post from the supplied observation.
+inputs:
+  observation: In a supplied exercise, a deployment checklist omitted rollback verification. Aman wants to argue that checklists should include a rollback test. He has not said this happened to him.
+  constraints: No invented adoption numbers or personal experience. No engagement bait.
+gold:
+  criteria: State the supported lesson as a position without turning the exercise into a personal failure story.
+rubric:
+  - criterion: Personal claim boundary
+    weight: 50
+    pass_if: No first-person incident or invented emotion appears.
+  - criterion: Evidence scope
+    weight: 30
+    pass_if: No prevalence or performance claim is added.
+  - criterion: Useful structure
+    weight: 20
+    pass_if: The rollback-test recommendation is direct and has no staged confession.
+judge: human
+anti_patterns:
+  - Saying Aman learned this after losing a customer.
+  - Inventing thousands of teams using the checklist.
+source: Research dossier 04 LinkedIn taxonomy; original synthetic fixture.
+as_of: "2026-10-25"

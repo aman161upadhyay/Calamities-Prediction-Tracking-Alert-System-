@@ -1,0 +1,28 @@
+id: adversarial-council-agent-001
+agent: adversarial-council-agent
+title: Detect a seeded arithmetic defect
+task: Review the supplied budget note against its arithmetic requirement.
+inputs:
+  artifact: |
+    Line 1: Components cost 2 and 3 units.
+    Line 2: The total cost is 7 units.
+  requirement: Report the exact sum; do not infer unstated fees.
+  permissions: Read-only reasoning; no network or execution.
+gold:
+  criteria:
+    - Locate the false total on line 2 and explain that the sum is 5.
+    - Classify the core factual failure as major.
+    - Do not claim an executed tool test.
+rubric:
+  - criterion: Defect detection
+    weight: 2
+    pass_if: Finds the line 2 total error with a reproducible arithmetic counterexample.
+  - criterion: Evidence honesty
+    weight: 1
+    pass_if: Labels the check as static and invents no additional defects.
+judge: human
+anti_patterns:
+  - Approves 7 as correct.
+  - Invents a fee to justify the total.
+source: Authored synthetic regression based on the council finding-quality contract.
+as_of: "2026-10-25"
