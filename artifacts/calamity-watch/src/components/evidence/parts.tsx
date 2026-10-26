@@ -76,7 +76,7 @@ export function RadioRow({ label, value, options, onChange, testId }: { label: s
               tabIndex={tabbable ? 0 : -1}
               onClick={() => onChange(o.value)}
               data-testid={`button-${testId}-${o.value || "all"}`}
-              className={cn("press inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[3px] border text-[13px] leading-none", on ? "bg-ink text-paper border-ink" : "bg-sheet border-rule-strong text-ink hover:border-ink")}
+              className={cn("press inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[var(--r-control)] border text-[13px] leading-none", on ? "bg-ink text-paper border-ink" : "bg-sheet border-rule-strong text-ink hover:border-ink")}
             >
               {o.label}
             </button>
@@ -155,7 +155,7 @@ export function OfficialLedger({ events, testId = "ledger-official" }: { events:
         <li key={e.id} className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-1 px-4 py-3" data-testid={`ledger-official-${e.id}`}>
           <span className="mono text-[12px] text-ink-muted">{officialTime(e.startsAt, e.timePrecision)}</span>
           <div className="min-w-0 text-[14px] leading-5 break-words">
-            <span className="stamp inline-block max-w-full break-words border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px mr-2 align-[1px] font-semibold">{e.feed}{e.severity ? ` ${e.severity}` : ""}</span>
+            <span className="inline-block max-w-full break-words border border-ink text-ink mono text-[11px] px-1.5 py-px mr-2 align-[1px] font-medium">{e.feed}{e.severity ? ` ${e.severity}` : ""}</span>
             {e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="ink-link" data-testid={`link-official-${e.id}`}>{e.title}</a> : e.title}
             <span className="block text-[12px] text-ink-muted mt-0.5">{e.feedLabel}{e.country ? `, ${e.country}` : ""}{e.lat != null && e.lon != null ? <span className="mono"> · {e.lat.toFixed(2)}, {e.lon.toFixed(2)}</span> : null}</span>
           </div>
@@ -179,7 +179,7 @@ export function Figure({ label, children, testId }: { label: ReactNode; children
 export function Part({ id, title, note, children, className }: { id: string; title: string; note?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section aria-labelledby={`${id}-h`} className={cn("mt-12 md:mt-16", className)}>
-      <div className="border-t border-ink pt-4 mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+      <div className="border-t border-rule-strong pt-4 mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
         <h2 id={`${id}-h`} className="h3-station">{title}</h2>
         {note && <p className="text-[13px] leading-5 text-ink-muted max-w-[64ch]">{note}</p>}
       </div>

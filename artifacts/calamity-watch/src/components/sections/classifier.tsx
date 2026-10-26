@@ -36,7 +36,7 @@ export function ClassifierDemo({ seed, showExamples = true }: { seed?: { text: s
           onChange={(e) => setText(e.target.value)}
           maxLength={1000}
           rows={5}
-          className="mt-2 bg-sheet border-rule-strong rounded-[3px] text-[16px]"
+          className="mt-2 bg-sheet border-rule-strong rounded-[var(--r-control)] text-[16px]"
           data-testid="input-classify-text"
         />
         <div className="mt-2 flex items-center gap-3">
@@ -62,7 +62,7 @@ export function ClassifierDemo({ seed, showExamples = true }: { seed?: { text: s
         {examples.isError && <p className="mt-3 text-[12px] text-muted-foreground">Examples could not load.</p>}
       </div>
       <div aria-live="polite" data-testid="panel-classify-result">
-        <div className="flex flex-wrap gap-6 mb-5 bg-sheet border border-rule-strong p-4" data-testid="panel-dials">
+        <div className="flex flex-wrap gap-6 mb-5 plate p-4" data-testid="panel-dials">
           <Dial label="Relevance" value={result?.pRelevant ?? null} testId="dial-relevance" />
           <Dial label="Fear" value={result?.pFear ?? null} pen testId="dial-fear" />
         </div>
@@ -94,17 +94,17 @@ function ClassificationTable({ r }: { r: Classification }) {
       <p className="max-w-[60ch]" data-testid="text-classify-explanation">{r.explanation}</p>
       <table className="mt-3 w-full">
         <tbody>
-          <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Hazard-relevant</th><td className="text-right num" data-testid="text-p-relevant">{prob(r.pRelevant)}</td><td className="pl-3 w-28"><Bar v={r.pRelevant} color="#15140F" /></td></tr>
+          <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Hazard-relevant</th><td className="text-right num" data-testid="text-p-relevant">{prob(r.pRelevant)}</td><td className="pl-3 w-28"><Bar v={r.pRelevant} color="var(--cr-ink)" /></td></tr>
           {hazards.map(([k, v]) => (
             <tr key={k} className="border-t border-line">
               <th scope="row" className="text-left font-normal py-1.5"><span className="inline-flex items-center gap-1.5">{isHazard(k) && <HazardDot hazard={k} />}{isHazard(k) ? HAZARD_LABEL[k] : k}</span></th>
-              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color="#5B5A54" /></td>
+              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color="var(--cr-ink-muted)" /></td>
             </tr>
           ))}
           {emotions.map(([k, v]) => (
             <tr key={k} className="border-t border-line">
               <th scope="row" className="text-left font-normal py-1.5 capitalize">{k}</th>
-              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color={k === "fear" ? "#C8102E" : "#5B5A54"} /></td>
+              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color={k === "fear" ? "var(--cr-pen)" : "var(--cr-ink-muted)"} /></td>
             </tr>
           ))}
           <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Sentiment</th><td className="text-right num" colSpan={2}>{r.sentiment} ({r.sentimentScore.toFixed(2)})</td></tr>

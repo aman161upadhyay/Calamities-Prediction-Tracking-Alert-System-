@@ -1,7 +1,7 @@
 [project]
 name = "calamity-watch-ml"
 version = "0.1.0"
-description = "Calamity Watch model service: hazard relevance, emotion, sentiment and geoparsing for social posts."
+description = "Calamity Watch Post model service: hazard relevance, emotion, sentiment and geoparsing for social posts."
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115",

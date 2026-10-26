@@ -19,7 +19,6 @@ import { HAZARD_LABEL, LEVEL_RANK, num, placeLabel, signed, TREND_LABEL, utcDate
 import { EmptyState, ErrorState, ExperimentalNote, HazardDot, LevelBadge, LevelGlyph, LoadingRows, btn } from "@/components/kit";
 import type { MapSelection } from "@/components/map/hazard-map";
 import { StaticMap } from "@/components/map/static-map";
-import { FrameMarks } from "@/components/instruments/frame-marks";
 import { LegendPlate } from "@/components/instruments/legend";
 import { Ledger, useNewIds } from "@/components/instruments/ledger";
 import { PlateLabel } from "@/components/instruments/plate";
@@ -191,11 +190,11 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
       )}
       <div className="grid gap-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[256px_minmax(0,1fr)_360px]">
         <div className="hidden lg:flex flex-col gap-6 min-w-0">
-          <section className="bg-sheet border border-rule-strong">
+          <section className="plate">
             <PlateLabel parts={["Hazards", "fear, last 60 min"]} />
             {hazardRail}
           </section>
-          <section className="bg-sheet border border-rule-strong">
+          <section className="plate">
             <PlateLabel parts={picked ? ["Places", HAZARD_LABEL[picked].toLowerCase()] : ["Places", "by z"]} right={picked ? <button type="button" className="ink-link mono text-ink" onClick={() => { const h = picked; setPicked(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-testid="button-hazard-${h}"]`)?.focus()); }} data-testid="button-places-all-hazards">all hazards</button> : undefined} />
             {placeList}
           </section>
@@ -203,13 +202,12 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
 
         <div className="flex flex-col gap-6 min-w-0">
           <div className="relative">
-            <FrameMarks />
             <div className="relative border border-rule-strong bg-sheet h-[min(70vw,440px)] min-h-[300px] lg:h-[620px] overflow-hidden">
               <Suspense fallback={<StaticMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} />}>
                 <HazardMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} fitKey={fitKey} className="absolute inset-0" />
               </Suspense>
               {data && places.length === 0 && events.length === 0 && (
-                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 mx-auto max-w-[44ch] text-center text-[14px] leading-5 bg-sheet border border-rule-strong p-4">
+                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 mx-auto max-w-[44ch] text-center text-[14px] leading-5 plate p-4">
                   <NoDataHint replay={replay} />
                 </div>
               )}
@@ -219,7 +217,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
             </div>
           </div>
           <p className="sm:hidden text-[12px] leading-4 text-ink-muted" data-testid="text-map-legend-compact">
-            Fill is the hazard, size is relevant posts per hour, the <span className="text-pen font-semibold">red ring</span> fills at fear z 3, a <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg] align-middle" /> stamp square marks an official event within 300 km in 72 h.
+            Fill is the hazard, size is relevant posts per hour, the <span className="text-pen font-semibold">ring</span> fills with fear z and is full at 3; a <span aria-hidden className="inline-block size-2.5 border border-ink align-middle" /> square marks an official event within 300 km in 72 h.
           </p>
           <div className="xl:hidden">
             {/* The tab indicator is an ink copy of the row clipped to the selected tab; the clip slides in 200 ms (none under reduced motion). */}
@@ -259,11 +257,11 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
         </div>
 
         <div className="hidden xl:flex flex-col gap-6 min-w-0">
-          <section className="bg-sheet border border-rule-strong">
+          <section className="plate">
             <PlateLabel parts={["Ledger", "open alerts"]} right={alerts.data ? <span className="mono">{openAlerts.length} open</span> : undefined} />
             {alertList}
           </section>
-          <section className="bg-sheet border border-rule-strong flex-1 min-h-0">
+          <section className="plate flex-1 min-h-0">
             <PlateLabel parts={["Signal feed", "rel ≥ .5"]} />
             <div className="max-h-[440px] overflow-auto">{feed}</div>
           </section>
@@ -275,7 +273,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
           {hazards.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Hazard on the recorder">
               {hazards.map((h) => (
-                <button key={h.hazard} type="button" onClick={() => setPicked(h.hazard)} aria-pressed={h.hazard === selected} data-testid={`button-timeline-${h.hazard}`} className={cn("press inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[3px] border text-[13px]", h.hazard === selected ? "border-ink bg-sheet font-semibold" : "border-rule-strong text-ink-muted hover:text-ink")}>
+                <button key={h.hazard} type="button" onClick={() => setPicked(h.hazard)} aria-pressed={h.hazard === selected} data-testid={`button-timeline-${h.hazard}`} className={cn("press inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[var(--r-control)] border text-[13px]", h.hazard === selected ? "border-ink bg-sheet font-semibold" : "border-rule-strong text-ink-muted hover:text-ink")}>
                   <HazardDot hazard={h.hazard} />{h.label}
                 </button>
               ))}
@@ -312,7 +310,7 @@ function HazardRailRow({ h, active, onPick, scope }: { h: HazardSummary; active:
           <HazardDot hazard={h.hazard} />
           <span className={cn("text-[14px] leading-5 truncate", active && "font-semibold")}>{h.label}</span>
         </button>
-        <svg width="64" height="16" aria-hidden className="shrink-0"><path d={d} fill="none" stroke="#C8102E" strokeWidth="1.2" /></svg>
+        <svg width="64" height="16" aria-hidden className="shrink-0"><path d={d} fill="none" stroke="var(--cr-pen)" strokeWidth="1.2" /></svg>
       </div>
       <div className="px-4 pb-2.5 pt-1 flex items-center gap-3 text-[12px] leading-4 text-ink-muted">
         <span className="mono text-ink" title="fear mass in the last 60 minutes">{num(h.fearIndexNow, 1)}</span>
@@ -343,7 +341,7 @@ function Readout({ sel, onClose, scope }: { sel: MapSelection; onClose: () => vo
     };
   }, [selKey]);
   return (
-    <div ref={ref} tabIndex={-1} role="dialog" aria-label="Map readout" className="fade-in absolute right-3 top-3 w-[min(320px,calc(100%-24px))] bg-sheet border border-ink text-[13px] leading-5 shadow-[0_8px_24px_rgba(21,20,15,.12)] outline-none" data-testid="panel-map-readout">
+    <div ref={ref} tabIndex={-1} role="dialog" aria-label="Map readout" className="fade-in absolute right-3 top-3 w-[min(320px,calc(100%-24px))] bg-sheet border border-ink text-[13px] leading-5 shadow-lg outline-none" data-testid="panel-map-readout">
       <div className="flex items-center justify-between h-8 pl-3 border-b border-rule-strong">
         <span className="plate-label">{sel.kind === "place" ? "Station readout" : "Official record"}</span>
         <button type="button" onClick={onClose} aria-label="Close readout" className="size-8 flex items-center justify-center hover:bg-paper" data-testid="button-close-readout"><X size={14} /></button>
@@ -368,7 +366,7 @@ function Readout({ sel, onClose, scope }: { sel: MapSelection; onClose: () => vo
           </>
         ) : (
           <>
-            <p><span className="stamp inline-block border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px font-semibold tracking-[0.06em]">{sel.event.feedLabel}</span></p>
+            <p><span className="inline-block border border-ink text-ink mono text-[11px] px-1.5 py-px font-medium">{sel.event.feedLabel}</span></p>
             <p className="font-semibold">{sel.event.title}</p>
             <p className="text-ink-muted">{HAZARD_LABEL[sel.event.hazard]}, severity {sel.event.severity}{sel.event.country ? `, ${sel.event.country}` : ""}</p>
             <p className="mono text-[12px] mt-1">from {utcDateTime(sel.event.startsAt)}</p>

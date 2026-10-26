@@ -15,28 +15,37 @@ import {
 } from "@workspace/api-client-react";
 import { StatusBar } from "@/components/board/status-bar";
 import { Board } from "@/components/board/board";
+import { Hero } from "@/components/hero/hero";
 import { PipelineList, ModelSummary } from "@/components/sections/model-blocks";
 import { ClassifierDemo } from "@/components/sections/classifier";
 import { SubscribeForm } from "@/components/sections/subscribe-form";
 import { Recorder, WindowSwitch, type RecorderLane } from "@/components/instruments/recorder";
-import { ErrorState, LoadingRows, TextLink, btn, btnPrimary } from "@/components/kit";
-import { HAZARD_LABEL, LEVEL_RANK, utcDateTime } from "@/lib/format";
+import { ErrorState, LoadingRows, TextLink } from "@/components/kit";
+import { HAZARD_LABEL, LEVEL_RANK, utcDateTime, utcTime } from "@/lib/format";
+import { useVariant } from "@/lib/variant";
 
 export function useTitle(t: string) {
   useEffect(() => {
-    document.title = t ? `${t} · Calamity Watch` : "Calamity Watch";
+    document.title = t ? `${t} · Calamity Watch Post` : "Calamity Watch Post";
   }, [t]);
 }
 
-function Section({ id, n, title, lead, children }: { id: string; n: string; title: string; lead?: ReactNode; children: ReactNode }) {
+/**
+ * A home-page section. Version A separates sections with space; version B rules each one above with a dateline
+ * (kicker left, UTC right), as a newspaper page would. Neither numbers its headings.
+ */
+export function Section({ id, title, kicker, lead, now, children, wide = true }: { id: string; title: string; kicker: string; lead?: ReactNode; now?: string; children: ReactNode; wide?: boolean }) {
   return (
-    <section id={id} aria-labelledby={`${id}-h`} className="mx-auto max-w-[1440px] px-4 md:px-8 mt-[72px] md:mt-[120px]">
-      <div className="border-t border-ink pt-6 grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-end mb-8">
-        <h2 id={`${id}-h`} className="display h2-station">
-          <span className="mono text-[13px] font-normal tracking-normal text-ink-muted align-top mr-3">{n}</span>
-          {title}
-        </h2>
-        {lead && <p className="text-ink-muted max-w-[64ch] lg:justify-self-end">{lead}</p>}
+    <section id={id} aria-labelledby={`${id}-h`} className={`mx-auto px-4 md:px-8 mt-[72px] md:mt-[120px] ${wide ? "max-w-[1440px]" : "max-w-[1200px]"}`}>
+      <div className="section-head">
+        <div className="dateline items-center justify-between mono text-[12px] leading-4 text-ink-muted mb-5">
+          <span>{kicker}</span>
+          <span>{now ? utcTime(now) : ""}</span>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] items-end mb-8">
+          <h2 id={`${id}-h`} className="display h2-station">{title}</h2>
+          {lead && <p className="text-ink-muted max-w-[64ch] lg:justify-self-end">{lead}</p>}
+        </div>
       </div>
       {children}
     </section>
@@ -53,6 +62,7 @@ const LINEAGE = [
 
 export default function Home() {
   useTitle("");
+  const variant = useVariant();
   const status = useGetSystemStatus({ query: { queryKey: getGetSystemStatusQueryKey(), refetchInterval: 60_000 } });
   const model = useGetModelInfo();
   const board = useGetBoard(undefined, { query: { queryKey: getGetBoardQueryKey(undefined), refetchInterval: 60_000 } });
@@ -69,78 +79,77 @@ export default function Home() {
     return [...d.hazards].sort((a, b) => LEVEL_RANK[b.maxLevel] - LEVEL_RANK[a.maxLevel] || b.fearIndexNow - a.fearIndexNow).slice(0, 3).map((h) => h.hazard);
   }, [board.data]);
 
-  const [win, setWin] = useState<24 | 72>(24);
+  const [win, setWin] = useState<24 | 72>(72);
   const traces = useQueries({ queries: laneHazards.map((h) => ({ ...getGetHazardTimelineQueryOptions(h, { hours: win }), refetchInterval: 60_000 })) });
   const lanes: RecorderLane[] = laneHazards.map((h, i) => ({ hazard: h, label: HAZARD_LABEL[h], timeline: traces[i]?.data, failed: traces[i]?.isError }));
   const hasOpen = (board.data?.openAlerts.length ?? 0) > 0;
   const latestAlert = latest.data?.[0];
+  const now = status.data?.now;
 
   return (
     <>
+      <Hero
+        variant={variant}
+        kerala={kerala?.id}
+        latest={latestAlert ? { id: latestAlert.id, text: `${latestAlert.placeName}, ${HAZARD_LABEL[latestAlert.hazard].toLowerCase()}, opened ${utcDateTime(latestAlert.openedAt)}` } : undefined}
+      />
       <StatusBar status={status.data} isLoading={status.isLoading} isError={status.isError} onRetry={() => status.refetch()} />
 
-      <section className="mx-auto max-w-[1440px] px-4 md:px-8 pt-10 md:pt-16" aria-labelledby="hero-h">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,9fr)_minmax(0,3fr)] items-end">
-          <h1 id="hero-h" className="display h1-station lg:max-w-[14ch]">Hazard warnings read from what people post, before the sirens.</h1>
-          <div className="text-[15px] leading-[22px] text-ink-muted max-w-[40ch]" data-testid="text-statement">
-            Public posts about floods, fires, storms and quakes, scored for relevance and fear. An alert opens when a place breaks from its own 7-day baseline, and every alert is checked against the official record within 300 km and 72 h: whether the posts came first is measured, and the lag is printed when they did not. <a href="#how" className="ink-link text-ink" data-testid="link-how">How it works</a>
-          </div>
+      <Section
+        id="recorder"
+        kicker="Live · all places"
+        title="Fear mass, hour by hour"
+        now={now}
+        lead={hasOpen ? "One lane per hazard with an open alert, summed over every place, against that hazard's own 7-day baseline." : "No alert is open, so the lanes are the hazards with the most fear in the last hour, summed over every place against each hazard's own 7-day baseline."}
+      >
+        {board.isError && !board.data ? (
+          <div className="plate"><ErrorState what="the recorder" onRetry={() => board.refetch()} /></div>
+        ) : (
+          <Recorder
+            lanes={lanes.length ? lanes : [{ hazard: "flood", label: "Flood" }]}
+            live
+            loading={board.isLoading || traces.some((t) => t.isLoading)}
+            label={["Recorder", "fear mass", "all places", `last ${win} h`, "UTC"]}
+            controls={<WindowSwitch value={win} options={WINDOWS} onChange={(v) => setWin(v === 72 ? 72 : 24)} />}
+            testId="recorder-hero"
+            empty={<>No relevant posts in the last {win} hours, so every hour sits at zero. <Link href={kerala ? `/replay?s=${kerala.id}` : "/replay"} className="ink-link text-ink">Replay a past flood</Link> to see a trace under load.</>}
+          />
+        )}
+        <div className="mt-3 grid gap-x-8 gap-y-1 md:grid-cols-2 text-[12px] leading-[17px] text-ink-muted max-w-[1100px]" data-testid="text-recorder-caption">
+          <p>
+            Each dot is one hour: its height is fear mass, the sum over relevant posts of p_relevant × p_fear, and its glow widens with it. The dashed line is the hazard's 7-day baseline for that hour.
+          </p>
+          <p>
+            A lane's level mark is the total crossing its thresholds, not an alert: alerts open per place and are listed in the ledger below. The chips are the official feeds' records for that hazard in the window, from anywhere, shown as context; they are not matches to this trace.
+          </p>
         </div>
-
-        <div className="mt-10">
-          {board.isError && !board.data ? (
-            <div className="bg-sheet border border-rule-strong"><ErrorState what="the recorder" onRetry={() => board.refetch()} /></div>
-          ) : (
-            <Recorder
-              lanes={lanes.length ? lanes : [{ hazard: "flood", label: "Flood" }]}
-              live
-              loading={board.isLoading || traces.some((t) => t.isLoading)}
-              label={["Recorder", "fear mass", "all places", `last ${win} h`, "UTC"]}
-              controls={<WindowSwitch value={win} options={WINDOWS} onChange={(v) => setWin(v === 72 ? 72 : 24)} />}
-              testId="recorder-hero"
-              empty={<>No relevant posts in the last {win} hours, so the pen rests at zero. <Link href={kerala ? `/replay?s=${kerala.id}` : "/replay"} className="ink-link text-ink">Replay a past flood</Link> to see a trace under load.</>}
-            />
-          )}
-          <div className="mt-2 grid gap-x-8 gap-y-1 md:grid-cols-2 text-[12px] leading-[17px] text-ink-muted max-w-[1100px]" data-testid="text-recorder-caption">
-            <p>
-              {hasOpen ? "One lane per hazard with an open alert." : "No alert is open; showing the hazards with the most fear in the last hour."} Each lane sums every place for one hazard against that hazard's own 7-day baseline (dashed). Fear mass per hour is the sum over relevant posts of p_relevant × p_fear.
-            </p>
-            <p>
-              A lane's level mark is the total crossing its thresholds, not an alert: alerts open per place and are listed in the ledger below. The stamps are the official feeds' records for that hazard in the window, from anywhere, shown as context; they are not matches to this trace.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          {latestAlert ? (
-            <Link href={`/alerts/${latestAlert.id}`} className={`${btnPrimary} h-11 text-[15px] px-5`} data-testid="link-latest-alert">Open the latest alert</Link>
-          ) : (
-            <a href="#board" className={`${btnPrimary} h-11 text-[15px] px-5`} data-testid="link-see-board">See the board</a>
-          )}
-          <Link href={kerala ? `/replay?s=${kerala.id}` : "/replay"} className={`${btn} h-11 text-[15px] px-5`} data-testid="link-replay-kerala">Replay Kerala floods 2018</Link>
-          {latestAlert && <span className="text-[13px] text-ink-muted">{latestAlert.placeName}, {HAZARD_LABEL[latestAlert.hazard].toLowerCase()}, opened <span className="mono">{utcDateTime(latestAlert.openedAt)}</span></span>}
-        </div>
-      </section>
+      </Section>
 
       <section id="board" aria-labelledby="board-h" className="mt-[72px] md:mt-[120px]">
         <div className="mx-auto max-w-[1440px] px-4 md:px-8">
-          <div className="border-t border-ink pt-6 mb-8 flex flex-wrap items-end justify-between gap-4">
-            <h2 id="board-h" className="display h2-station"><span className="mono text-[13px] font-normal tracking-normal text-ink-muted align-top mr-3">01</span>The board</h2>
-            <p className="text-ink-muted max-w-[56ch]">Every place with a relevant post in the last 24 hours, drawn as a station plot. Pick one to read it.</p>
+          <div className="section-head">
+            <div className="dateline items-center justify-between mono text-[12px] leading-4 text-ink-muted mb-5">
+              <span>Live · by place</span>
+              <span>{now ? utcTime(now) : ""}</span>
+            </div>
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <h2 id="board-h" className="display h2-station">The board</h2>
+              <p className="text-ink-muted max-w-[56ch]">Every place with a relevant post in the last 24 hours, drawn as a station plot. Pick one to read it.</p>
+            </div>
           </div>
         </div>
         <Board mode={{}} status={status.data} poll recorder={false} />
       </section>
 
-      <Section id="how" n="02" title="How it works" lead="The pipeline runs every few minutes and the official feeds are read alongside it.">
+      <Section id="how" kicker="Pipeline" title="How it works" now={now} lead="The pipeline runs every few minutes and the official feeds are read alongside it.">
         {status.isLoading && <LoadingRows rows={3} />}
         {status.isError && !status.data && <ErrorState what="pipeline counts" onRetry={() => status.refetch()} />}
-        {status.data && <PipelineList stages={status.data.pipeline} asOf={utcDateTime(status.data.now)} />}
+        {status.data && <div className="max-w-[1100px]"><PipelineList stages={status.data.pipeline} asOf={utcDateTime(status.data.now)} /></div>}
       </Section>
 
-      <Section id="model" n="03" title="The models" lead={<>A trained hazard classifier decides whether a post is about a hazard and which; a pretrained emotion model scores fear. The full calibration certificate is on the <TextLink href="/model" testId="link-model-page">model page</TextLink>.</>}>
-        <div className="bg-sheet border border-rule-strong">
-          <p className="plate-label px-4 h-8 flex items-center border-b border-rule-strong">Calibration / held-out and cross-dataset</p>
+      <Section id="model" kicker="Calibration" title="The models" now={now} lead={<>A trained hazard classifier decides whether a post is about a hazard and which; a pretrained emotion model scores fear. The full calibration certificate is on the <TextLink href="/model" testId="link-model-page">model page</TextLink>.</>}>
+        <div className="plate">
+          <p className="plate-label px-4 h-8 flex items-center border-b border-rule">Calibration · held-out and cross-dataset</p>
           <div className="p-4 md:p-6">
             {model.isLoading && <LoadingRows rows={3} />}
             {model.isError && <ErrorState what="model metrics" onRetry={() => model.refetch()} />}
@@ -149,10 +158,10 @@ export default function Home() {
         </div>
       </Section>
 
-      <Section id="lineage" n="04" title="From a 2018 hackathon to a measured system">
-        <ol className="grid md:grid-cols-3 border-t border-rule-strong">
+      <Section id="lineage" kicker="History" title="From a 2018 hackathon to a measured system" now={now}>
+        <ol className="grid md:grid-cols-3 border-t border-rule">
           {LINEAGE.map((l, i) => (
-            <li key={l.year} className={`pt-4 pb-2 md:pr-8 ${i ? "md:pl-8 md:border-l border-rule-strong" : ""} border-b md:border-b-0 border-rule`}>
+            <li key={l.year} className={`pt-4 pb-2 md:pr-8 ${i ? "md:pl-8 md:border-l border-rule" : ""} border-b md:border-b-0 border-rule`}>
               <p className="mono text-[13px] text-ink-muted">{l.year}</p>
               <p className="h3-station mt-1">{l.head}</p>
               <p className="mt-2 text-[15px] leading-[22px] text-ink-muted max-w-[44ch]">{l.body}</p>
@@ -162,12 +171,12 @@ export default function Home() {
         <p className="mt-4"><TextLink href="/about" testId="link-about-lineage">Read what changed and what the system is not</TextLink></p>
       </Section>
 
-      <Section id="try" n="05" title="Try the classifier" lead="Paste a post or write one. The same models score it that score the live feed.">
+      <Section id="try" kicker="Interactive" title="Try the classifier" now={now} lead="Paste a post or write one. The same models score it that score the live feed.">
         <ClassifierDemo />
       </Section>
 
-      <Section id="subscribe" n="06" title="Get alerts by email" lead="Choose a place, a hazard and the lowest level worth an email.">
-        <div className="bg-sheet border border-rule-strong p-4 md:p-6 max-w-[760px]">
+      <Section id="subscribe" kicker="Email" title="Get alerts by email" now={now} lead="Choose a place, a hazard and the lowest level worth an email.">
+        <div className="plate p-4 md:p-6 max-w-[760px]">
           <SubscribeForm />
         </div>
       </Section>

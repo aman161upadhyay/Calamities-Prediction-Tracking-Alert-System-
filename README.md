@@ -1,8 +1,8 @@
-# Calamity Watch
+# Calamity Watch Post
 
 Hazard warnings read from what people post, before the sirens.
 
-Calamity Watch pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are checked against GDACS, USGS, NWS and NASA FIRMS, and the time between the social signal and the official record is kept, whichever came first (in the replays the official record usually did).
+Calamity Watch Post pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are checked against GDACS, USGS, NWS and NASA FIRMS, and the time between the social signal and the official record is kept, whichever came first (in the replays the official record usually did).
 
 This is the 2026 rebuild of [sacredgamers_codefundoMS](https://github.com/aman161upadhyay/sacredgamers_codefundoMS), a Microsoft CodeFunDo++ 2018 hackathon entry. The original is kept unchanged; a redacted copy of its sources is in `reference/original-2018/` and the audit is in `docs/research/01-original-system-audit.md`.
 
@@ -65,4 +65,4 @@ After a model, detector or gazetteer change, rebuild the replays with `pnpm --fi
 
 ## Not an official warning source
 
-Calamity Watch is an experimental research system. It does not replace national meteorological, geological or civil-protection services. Every alert in the interface carries this notice.
+Calamity Watch Post is an experimental research system. It does not replace national meteorological, geological or civil-protection services. Every alert in the interface carries this notice.

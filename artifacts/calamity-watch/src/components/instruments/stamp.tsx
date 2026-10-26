@@ -18,7 +18,7 @@ function useOnceInView<T extends Element>() {
   return { ref, seen };
 }
 
-/** The official corroboration mark: green border, mono caps, slight rotation. Only official records are green. */
+/** The official corroboration mark: an ink-ruled chip in mono. It fades in once when it first enters view. */
 export function Stamp({ c, openedAt, size = "md", testId }: { c: Corroboration; openedAt: string; size?: "sm" | "md"; testId?: string }) {
   const { ref, seen } = useOnceInView<HTMLDivElement>();
   if (c.state !== "corroborated") return null;
@@ -26,11 +26,11 @@ export function Stamp({ c, openedAt, size = "md", testId }: { c: Corroboration; 
     <div
       ref={ref}
       data-testid={testId ?? "stamp-official"}
-      className={cn("stamp inline-block border-[1.5px] border-stamp text-stamp mono uppercase leading-tight", size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-1.5 text-[12px]", seen && "stamp-press")}
+      className={cn("inline-block border border-stamp text-stamp mono leading-tight", size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2.5 py-1.5 text-[12px]", seen && "stamp-press")}
     >
-      <span className="block font-semibold tracking-[0.06em]">{c.feed ?? "Official"}{c.hazardRelation === "related" && c.officialHazard ? ` · ${c.officialHazard}` : ""}</span>
+      <span className="block font-semibold">{c.feed ?? "Official"}{c.hazardRelation === "related" && c.officialHazard ? ` · ${c.officialHazard}` : ""}</span>
       {size === "md" && <span className="block">{utcDateTime(c.officialAt)}</span>}
-      <span className="block normal-case">{stampLead(c, openedAt)}</span>
+      <span className="block">{stampLead(c, openedAt)}</span>
     </div>
   );
 }
@@ -40,7 +40,7 @@ export function StampGlyph({ state }: { state: Corroboration["state"] }) {
   if (state === "corroborated")
     return (
       <span className="inline-flex items-center gap-1.5 text-ink">
-        <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg]" />
+        <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp" />
         Official match
       </span>
     );

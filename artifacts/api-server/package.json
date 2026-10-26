@@ -8,6 +8,7 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "replay:rebuild": "node --enable-source-maps ./dist/cli/replay-rebuild.mjs",
+    "live:backfill": "node --enable-source-maps ./dist/cli/live-backfill.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -1,21 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-variant="a">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Calamity Watch</title>
+    <title>Calamity Watch Post</title>
     <meta name="description" content="Reads public posts about floods, fires, storms and earthquakes, scores them for hazard relevance and fear, and compares each alert with official records. An experimental research system, not an official warning source." />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#F3F2EE" />
-    <meta property="og:title" content="Calamity Watch" />
+    <meta name="theme-color" content="#0A0B0D" />
+    <meta property="og:title" content="Calamity Watch Post" />
     <meta property="og:description" content="Reads public posts about floods, fires, storms and earthquakes, scores them for hazard relevance and fear, and compares each alert with official records. An experimental research system, not an official warning source." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Calamity Watch" />
+    <meta name="twitter:title" content="Calamity Watch Post" />
     <meta name="twitter:description" content="Reads public posts about floods, fires, storms and earthquakes, scores them for hazard relevance and fear, and compares each alert with official records. An experimental research system, not an official warning source." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/archivo-latin.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/martian-mono-latin.woff2" crossorigin />
+    <script>
+      // Two candidate themes are under review: ?v=a or ?v=b picks one and is remembered; the choice is applied before
+      // the first paint and only that version's type is preloaded.
+      (function () {
+        var q = new URLSearchParams(location.search).get('v');
+        var v = q === 'a' || q === 'b' ? q : null;
+        try {
+          if (v) localStorage.setItem('cwp-variant', v);
+          else v = localStorage.getItem('cwp-variant');
+        } catch (e) {}
+        if (v !== 'a' && v !== 'b') v = 'a';
+        document.documentElement.setAttribute('data-variant', v);
+        var theme = document.querySelector('meta[name="theme-color"]');
+        if (theme) theme.setAttribute('content', v === 'a' ? '#0A0B0D' : '#111814');
+        var fonts = v === 'a' ? ['inter-tight-latin', 'geist-mono-latin'] : ['schibsted-grotesk-latin', 'fragment-mono-latin'];
+        for (var i = 0; i < fonts.length; i++) {
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'font';
+          l.type = 'font/woff2';
+          l.crossOrigin = '';
+          l.href = '/fonts/' + fonts[i] + '.woff2';
+          document.head.appendChild(l);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

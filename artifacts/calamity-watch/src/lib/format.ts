@@ -13,16 +13,20 @@ export const HAZARD_LABEL: Record<Hazard, string> = {
   tsunami: "Tsunami",
 };
 
-/** Hazard hues from the chart-room brief. The UI always uses these (the API colours belong to the retired dark theme). */
+/**
+ * Hazard hues as theme tokens: each resolves to the active version's day or night value (see index.css), so a lane,
+ * a marker or a halo drawn in SVG follows the theme without any script. The API's own colours belong to the retired
+ * dark dashboard and are not used.
+ */
 export const HAZARD_FALLBACK_COLOR: Record<Hazard, string> = {
-  flood: "#1D5FBF",
-  tsunami: "#1D5FBF",
-  storm: "#6D4CC4",
-  cyclone: "#6D4CC4",
-  wildfire: "#E25822",
-  earthquake: "#7C4A1E",
-  landslide: "#7C4A1E",
-  heat: "#B45309",
+  flood: "var(--hz-flood)",
+  tsunami: "var(--hz-tsunami)",
+  storm: "var(--hz-storm)",
+  cyclone: "var(--hz-cyclone)",
+  wildfire: "var(--hz-wildfire)",
+  earthquake: "var(--hz-earthquake)",
+  landslide: "var(--hz-landslide)",
+  heat: "var(--hz-heat)",
 };
 
 export function isHazard(v: string | undefined | null): v is Hazard {
@@ -37,12 +41,13 @@ export const LEVEL_LABEL: Record<RiskLevel, string> = {
   severe: "Severe",
 };
 
+/** Levels are told apart by glyph and word, in ink; hazard hue and risk level never share a channel. */
 export const LEVEL_COLOR: Record<RiskLevel, string> = {
-  insufficient: "#5B5A54",
-  low: "#5B5A54",
-  elevated: "#875A00",
-  high: "#C8102E",
-  severe: "#7A0C1E",
+  insufficient: "var(--cr-ink-muted)",
+  low: "var(--cr-ink-muted)",
+  elevated: "var(--cr-ink)",
+  high: "var(--cr-ink)",
+  severe: "var(--cr-ink)",
 };
 
 export const LEVEL_RANK: Record<RiskLevel, number> = { insufficient: 0, low: 1, elevated: 2, high: 3, severe: 4 };

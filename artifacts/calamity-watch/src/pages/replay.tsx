@@ -63,13 +63,13 @@ function ScenarioIndex({ onPick }: { onPick: (id: string) => void }) {
           Each tape is the posts recorded during a real disaster, run again through today's classifier and detector on a clock you control. The official record sits beside it, so you can judge whether the signal moved first. On these five tapes it did not: every collection begins after the earliest official record on its tape, so every first alert opens after it too; the console prints the gap either way.
         </p>
       </header>
-      {list.isLoading && <div className="bg-sheet border border-rule-strong"><LoadingRows rows={5} label="Reading the tapes" /></div>}
-      {list.isError && <div className="bg-sheet border border-rule-strong"><ErrorState what="replay scenarios" onRetry={() => list.refetch()} /></div>}
-      {list.data && list.data.length === 0 && <div className="bg-sheet border border-rule-strong"><EmptyState>No replay scenarios are installed on this deployment.</EmptyState></div>}
+      {list.isLoading && <div className="plate"><LoadingRows rows={5} label="Reading the tapes" /></div>}
+      {list.isError && <div className="plate"><ErrorState what="replay scenarios" onRetry={() => list.refetch()} /></div>}
+      {list.data && list.data.length === 0 && <div className="plate"><EmptyState>No replay scenarios are installed on this deployment.</EmptyState></div>}
       {list.data && list.data.length > 0 && (
         <ol className="grid gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="list-scenarios">
           {list.data.map((s, i) => (
-            <li key={s.id} className={"bg-sheet border border-rule-strong flex flex-col min-w-0"} data-testid={`plate-scenario-${s.id}`}>
+            <li key={s.id} className={"plate flex flex-col min-w-0"} data-testid={`plate-scenario-${s.id}`}>
               <PlateLabel parts={[`Tape ${String(i + 1).padStart(2, "0")}`, HAZARD_LABEL[s.hazard], String(new Date(s.startsAt).getUTCFullYear())]} right={<span className="mono" data-testid={`status-scenario-${s.id}`}>{STATE_WORD[s.state]}{s.state === "preparing" && s.progress != null ? ` ${Math.round(s.progress * 100)}%` : ""}</span>} />
               <div className="p-4 md:p-5 flex flex-col gap-3 flex-1">
                 <h2 className="h3-station">{s.name}</h2>
@@ -131,8 +131,8 @@ function ScenarioRunner({ id, startAt, onBack }: { id: string; startAt: string |
   }, [s, id, qc]);
 
   const back = <button type="button" className={cn(btn, "mt-4")} onClick={onBack} data-testid="button-back-scenarios">Choose another scenario</button>;
-  if (sc.isLoading) return <Page><div className="bg-sheet border border-rule-strong"><LoadingRows rows={4} label="Loading the tape" /></div></Page>;
-  if (sc.isError || !s) return <Page><div className="bg-sheet border border-rule-strong"><ErrorState what="this scenario" onRetry={() => sc.refetch()} /></div>{back}</Page>;
+  if (sc.isLoading) return <Page><div className="plate"><LoadingRows rows={4} label="Loading the tape" /></div></Page>;
+  if (sc.isError || !s) return <Page><div className="plate"><ErrorState what="this scenario" onRetry={() => sc.refetch()} /></div>{back}</Page>;
 
   if (s.state !== "ready") {
     const p = s.progress ?? 0;
@@ -287,14 +287,14 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
       </Page>
 
       {/* Transport: sticky under the header on wide screens, docked to the bottom (compact, opaque, the only shadow) on narrow ones. */}
-      <div ref={dockRef} className="fixed md:sticky bottom-0 md:bottom-auto md:top-16 inset-x-0 z-30 bg-paper border-t md:border-t-0 md:border-b border-ink shadow-[0_-6px_18px_rgba(21,20,15,.14)] md:shadow-none" data-testid="panel-replay-controls">
+      <div ref={dockRef} className="fixed md:sticky bottom-0 md:bottom-auto md:top-16 inset-x-0 z-30 bg-paper border-t md:border-t-0 md:border-b border-ink shadow-[0_-6px_18px_rgba(0,0,0,0.12)] md:shadow-none" data-testid="panel-replay-controls">
         <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-2 md:py-3 grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-x-3 gap-y-1 md:gap-y-2 items-center">
           <button type="button" className={cn(btnPrimary, "order-1 w-[104px] md:w-[112px]")} onClick={togglePlay} data-testid="button-play-pause" aria-label={playing ? "Pause the replay" : "Play the replay"}>
             {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}
             {playing ? "Pause" : clock >= end ? "Play again" : "Play"}
           </button>
           <div className="order-4 col-span-2 md:order-2 md:col-span-1 flex items-center gap-2">
-            <div role="group" aria-label="Playback speed" className="inline-flex border border-rule-strong rounded-[3px] overflow-hidden">
+            <div role="group" aria-label="Playback speed" className="inline-flex border border-rule-strong rounded-[var(--r-control)] overflow-hidden">
               {SPEEDS.map((sp) => (
                 <button key={sp.id} type="button" aria-pressed={speed.id === sp.id} onClick={() => setSpeed(sp)} data-testid={`button-speed-${sp.id}`} className={cn("mono text-[11px] h-6 md:h-8 px-2 md:px-2.5", speed.id === sp.id ? "bg-ink text-paper" : "bg-sheet text-ink-muted hover:text-ink")}>
                   {sp.id} h<span className="hidden md:inline"> / 2 s</span>
@@ -334,7 +334,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
                 setClock((c) => Math.min(end, Math.max(start, Math.floor(c / HOUR) * HOUR + delta)));
               }}
               aria-valuetext={utcDateTime(asOf)}
-              className="relative block w-full h-6 appearance-none bg-transparent cursor-pointer accent-[#15140F] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:rounded-none"
+              className="relative block w-full h-6 appearance-none bg-transparent cursor-pointer accent-ink [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:rounded-none"
               data-testid="input-scrub"
             />
           </div>
@@ -344,7 +344,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
 
       <div className="mx-auto max-w-[1440px] px-4 md:px-8 mt-8">
         {tl.isError && !tl.data ? (
-          <div className="bg-sheet border border-rule-strong"><ErrorState what="the scenario trace" onRetry={() => tl.refetch()} /></div>
+          <div className="plate"><ErrorState what="the scenario trace" onRetry={() => tl.refetch()} /></div>
         ) : (
           <Recorder
             lanes={[{ hazard: s.hazard, label: `${HAZARD_LABEL[s.hazard]}, all places`, timeline: tl.data }]}
@@ -356,12 +356,12 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
             empty="The tape stored no hourly trace for this hazard."
           />
         )}
-        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once{leadH > 0 ? `, with the ${leadH} hours before the collection that hold its earliest official record` : ""}; the black rule is the playhead. Red trace is fear mass per hour summed over every place, dashed is its 7-day baseline, green stamps are the scenario's official records. Hours are named by their start, so with the playhead at 11:00 the readout gives the 10:00 hour, the last complete one.</p>
+        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once{leadH > 0 ? `, with the ${leadH} hours before the collection that hold its earliest official record` : ""}; the ink rule is the playhead. Each dot is an hour of fear mass summed over every place, dashed is its 7-day baseline, the chips are the scenario's official records. Hours are named by their start, so with the playhead at 11:00 the readout gives the 10:00 hour, the last complete one.</p>
       </div>
 
       <section aria-labelledby="board-h" className="mt-12 md:mt-16">
         <div className="mx-auto max-w-[1440px] px-4 md:px-8">
-          <div className="border-t border-ink pt-4 mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+          <div className="border-t border-rule-strong pt-4 mb-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
             <h2 id="board-h" className="h3-station">The board at the playhead</h2>
             <p className="text-[13px] text-ink-muted">Read as of <span className="mono text-ink">{utcDateTime(asOf)}</span>, re-read every 15 tape minutes.</p>
           </div>
@@ -371,8 +371,8 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
 
       <div className="mx-auto max-w-[1440px] px-4 md:px-8 mt-12 md:mt-16 grid gap-8 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-start">
         <section aria-labelledby="opened-h">
-          <div className="border-t border-ink pt-4 mb-4"><h2 id="opened-h" className="h3-station">Alerts opened so far</h2></div>
-          <div className="bg-sheet border border-rule-strong">
+          <div className="border-t border-rule-strong pt-4 mb-4"><h2 id="opened-h" className="h3-station">Alerts opened so far</h2></div>
+          <div className="plate">
             <PlateLabel parts={["Ledger", "alerts", "to playhead", "UTC"]} right={alerts.data ? <span className="mono" data-testid="text-alerts-sofar">{alerts.data.length}{s.alertsOpened != null ? ` of ${s.alertsOpened}` : ""}</span> : null} />
             {alerts.isLoading && <LoadingRows rows={4} label="Reading the ledger" />}
             {alerts.isError && !alerts.data && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
@@ -387,8 +387,8 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
         </section>
 
         <section aria-labelledby="moments-h">
-          <div className="border-t border-ink pt-4 mb-4"><h2 id="moments-h" className="h3-station">Signal against the record</h2></div>
-          <div className="bg-sheet border border-rule-strong">
+          <div className="border-t border-rule-strong pt-4 mb-4"><h2 id="moments-h" className="h3-station">Signal against the record</h2></div>
+          <div className="plate">
             <PlateLabel parts={["Chronology", "UTC"]} />
             <div className="p-4 border-b border-rule text-[14px] leading-5" data-testid="text-replay-outcome">
               {s.firstAlertAt ? (
@@ -412,7 +412,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
                       {r.when}
                     </button>
                     <div className="py-2.5 pr-4 text-[13px] leading-5 min-w-0 break-words">
-                      {r.kind === "official" && <span className="stamp inline-block border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px mr-2 font-semibold">Official</span>}
+                      {r.kind === "official" && <span className="inline-block border border-ink text-ink mono text-[11px] px-1.5 py-px mr-2 font-medium">Official</span>}
                       {r.kind === "alert" && <span className="inline-block w-[2px] h-3 bg-pen mr-2 align-[-1px]" aria-hidden />}
                       <span className={r.kind === "alert" ? "font-semibold text-pen" : r.kind === "moment" ? "font-semibold" : ""}>{r.label}</span>
                       {r.sub && <span className="block text-[12px] text-ink-muted">{r.sub}</span>}
@@ -429,8 +429,8 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
 
       {official.data && official.data.length > 0 && (
         <section className="mx-auto max-w-[1440px] px-4 md:px-8 mt-12" aria-labelledby="official-h">
-          <div className="border-t border-ink pt-4 mb-4"><h2 id="official-h" className="h3-station">Official records on this tape</h2></div>
-          <div className="bg-sheet border border-rule-strong"><PlateLabel parts={["Ledger", "official", "UTC"]} /><OfficialLedger events={official.data} /></div>
+          <div className="border-t border-rule-strong pt-4 mb-4"><h2 id="official-h" className="h3-station">Official records on this tape</h2></div>
+          <div className="plate"><PlateLabel parts={["Ledger", "official", "UTC"]} /><OfficialLedger events={official.data} /></div>
         </section>
       )}
     </div>

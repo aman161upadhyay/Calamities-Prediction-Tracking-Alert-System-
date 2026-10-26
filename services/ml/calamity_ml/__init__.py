@@ -1,4 +1,4 @@
-"""Calamity Watch model service.
+"""Calamity Watch Post model service.
 
 Stage one: hazard relevance and hazard type (trained here on HumAID).
 Stage two: emotion (fear, anger, sadness, ...) and sentiment from Cardiff NLP models.

@@ -14,24 +14,12 @@ const NAV = [
   { href: "/about", label: "About" },
 ];
 
-/** Wordmark glyph: a pen trace breaking from its baseline, with one ink tick. */
-function Mark() {
-  return (
-    <svg width="30" height="22" viewBox="0 0 30 22" aria-hidden className="shrink-0">
-      <rect x="0.75" y="0.75" width="28.5" height="20.5" fill="#FCFBF8" stroke="#15140F" strokeWidth="1.5" />
-      <line x1="3" x2="27" y1="15.5" y2="15.5" stroke="#5B5A54" strokeDasharray="2 2" strokeWidth="0.8" />
-      <path d="M3 15 L9 14 L12 15 L15 12 L17 4 L19 13 L22 11 L27 12" fill="none" stroke="#C8102E" strokeWidth="1.6" strokeLinejoin="round" />
-      <line x1="17" x2="17" y1="2" y2="6" stroke="#15140F" strokeWidth="1" />
-    </svg>
-  );
-}
-
 function stateMark(s: SourceHealth["state"]) {
-  if (s === "ok") return { glyph: "●", color: "#15140F" };
-  if (s === "idle") return { glyph: "○", color: "#5B5A54" };
+  if (s === "ok") return { glyph: "●", color: "var(--cr-ink)" };
+  if (s === "idle") return { glyph: "○", color: "var(--cr-ink-muted)" };
   // Operational states are ink (the brief keeps red for fear and alert readings and ochre for the elevated level); the glyph and the state word carry the message.
-  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#15140F" };
-  return { glyph: "▲", color: "#15140F" };
+  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "var(--cr-ink)" };
+  return { glyph: "▲", color: "var(--cr-ink)" };
 }
 
 function SourceLine({ s }: { s: SourceHealth }) {
@@ -90,7 +78,7 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
         aria-expanded={open}
         aria-controls="status-sheet"
         data-testid="button-status-details"
-        className="press flex items-center gap-3 h-9 whitespace-nowrap shrink-0 pl-2.5 pr-3 border border-rule-strong bg-sheet text-[12px] leading-4 hover:border-ink"
+        className="press flex items-center gap-3 h-9 whitespace-nowrap shrink-0 pl-2.5 pr-3 border border-rule-strong rounded-[var(--r-control)] text-[12px] leading-4 hover:border-ink"
       >
         {isLoading && <span className="mono text-ink-muted">Reading status</span>}
         {isError && !status && <span className="text-ink font-semibold">▲ Status unavailable</span>}
@@ -107,8 +95,8 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
         <span aria-hidden className={cn("text-[9px] transition-transform duration-150", open && "rotate-180")}>▼</span>
       </button>
       {open && (
-        <div id="status-sheet" className="fade-in absolute right-0 top-11 z-50 w-[min(560px,calc(100vw-24px))] bg-sheet border border-rule-strong shadow-[0_8px_24px_rgba(21,20,15,.12)]" data-testid="panel-status-sheet">
-          <p className="plate-label px-3 h-8 flex items-center border-b border-rule-strong">Station status / UTC</p>
+        <div id="status-sheet" className="fade-in absolute right-0 top-11 z-50 w-[min(560px,calc(100vw-24px))] plate rounded-[var(--r-control)] shadow-lg" data-testid="panel-status-sheet">
+          <p className="plate-label px-3 h-8 flex items-center border-b border-rule">System status, UTC</p>
           {isError && !status && (
             <div className="p-3 text-[13px]">
               The status endpoint did not answer.{" "}
@@ -136,6 +124,11 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
   );
 }
 
+/**
+ * The top bar. It is not sticky: a page's own instruments keep their time basis in view, so the bar need not follow.
+ * On the landing page it belongs to the night hero (the hero wordmark is the masthead, so the bar carries no second
+ * wordmark there); everywhere else it is the day bar with the wordmark as the way home.
+ */
 export function TopNav() {
   const [loc] = useLocation();
   const [open, setOpen] = useState(false);
@@ -152,22 +145,26 @@ export function TopNav() {
   }, [open]);
   const status = useGetSystemStatus({ query: { queryKey: getGetSystemStatusQueryKey(), refetchInterval: 60_000 } });
   const active = (h: string) => (h === "/" ? loc === "/" : loc.startsWith(h));
+  const home = loc === "/";
   return (
-    <header className="border-b border-ink bg-paper sticky top-0 z-40">
-      <div className="mx-auto max-w-[1440px] px-4 md:px-8 h-16 flex items-center gap-6">
-        <Link href="/" data-testid="link-home" className="flex items-center gap-2.5 shrink-0">
-          <Mark />
-          <span className="display text-[19px] leading-none tracking-[-0.02em]">Calamity Watch</span>
-        </Link>
+    <header className={cn("relative z-40", home ? "night" : "border-b border-rule bg-paper")} data-testid="topnav">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8 h-16 flex items-center gap-8">
+        {home ? (
+          <span className="sr-only">Calamity Watch Post</span>
+        ) : (
+          <Link href="/" data-testid="link-home" className="display text-[17px] leading-none shrink-0 tracking-[-0.02em]">
+            Calamity Watch Post
+          </Link>
+        )}
         <nav aria-label="Main" className="hidden md:block">
-          <ul className="flex items-center gap-0.5 text-[14px]">
+          <ul className="flex items-center gap-1 text-[14px]">
             {NAV.map((n) => (
               <li key={n.href}>
                 <Link
                   href={n.href}
                   data-testid={`link-nav-${n.label.toLowerCase()}`}
                   aria-current={active(n.href) ? "page" : undefined}
-                  className={cn("relative px-2.5 py-2 text-ink-muted hover:text-ink", active(n.href) && "text-ink font-semibold after:absolute after:left-2.5 after:right-2.5 after:-bottom-[13px] after:h-[3px] after:bg-ink")}
+                  className={cn("px-2.5 py-2 text-ink-muted hover:text-ink", active(n.href) && "text-ink font-semibold underline decoration-[1.5px] underline-offset-[6px]")}
                 >
                   {n.label}
                 </Link>
@@ -177,13 +174,13 @@ export function TopNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <StatusPlate status={status.data} isLoading={status.isLoading} isError={status.isError} onRetry={() => status.refetch()} />
-          <button type="button" ref={menuRef} className="md:hidden press size-9 flex items-center justify-center border border-rule-strong bg-sheet" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} data-testid="button-menu" onClick={() => setOpen((o) => !o)}>
+          <button type="button" ref={menuRef} className="md:hidden press size-9 flex items-center justify-center border border-rule-strong rounded-[var(--r-control)]" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} data-testid="button-menu" onClick={() => setOpen((o) => !o)}>
             {open ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>
       </div>
       {open && (
-        <nav aria-label="Main" className="md:hidden border-t border-rule bg-paper">
+        <nav aria-label="Main" className="md:hidden border-t border-rule">
           <ul className="px-4 py-2">
             {NAV.map((n) => (
               <li key={n.href}>
@@ -199,18 +196,50 @@ export function TopNav() {
   );
 }
 
+type Variant = "a" | "b";
+function readVariant(): Variant {
+  if (typeof document === "undefined") return "a";
+  return document.documentElement.getAttribute("data-variant") === "b" ? "b" : "a";
+}
+
+/**
+ * While two themes are under review, a small fixed control flips between them on any page. The choice is kept in
+ * localStorage and mirrored into the address (?v=) so a link carries it. It goes when one theme is chosen.
+ */
+export function VariantSwitch() {
+  const [v, setV] = useState<Variant>(readVariant);
+  const pick = (next: Variant) => {
+    document.documentElement.setAttribute("data-variant", next);
+    try { localStorage.setItem("cwp-variant", next); } catch { /* private mode */ }
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", next);
+    window.history.replaceState(window.history.state, "", url);
+    setV(next);
+  };
+  return (
+    <div role="radiogroup" aria-label="Theme under review" data-testid="switch-variant" className="fixed bottom-3 left-3 z-50 inline-flex items-center h-8 border border-rule-strong bg-sheet text-ink mono text-[12px] leading-none rounded-[var(--r-control)] shadow-lg">
+      <span className="pl-2.5 pr-1.5 text-ink-muted">theme</span>
+      {(["a", "b"] as Variant[]).map((o) => (
+        <button key={o} type="button" role="radio" aria-checked={v === o} onClick={() => pick(o)} data-testid={`button-variant-${o}`} className={cn("h-8 px-2.5 uppercase", v === o ? "bg-ink text-paper" : "text-ink-muted hover:text-ink")}>
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Footer() {
   return (
-    <footer className="border-t border-ink mt-[72px] md:mt-[120px]">
-      <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-12 grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="border-t border-rule mt-[72px] md:mt-[120px]">
+      <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-10 grid gap-8 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="max-w-[56ch]">
-          <p className="display text-[26px] leading-7">Experimental research system. Not an official warning source.</p>
-          <p className="mt-3 text-[14px] leading-5 text-ink-muted">
-            Calamity Watch is built by Aman Upadhyay. Its alerts come from public posts and statistical models and can be wrong in both directions. For warnings, follow your national meteorological service and local authorities.
+          <p className="text-[15px] leading-6 font-semibold">Experimental research system. Not an official warning source.</p>
+          <p className="mt-2 text-[14px] leading-5 text-ink-muted">
+            Calamity Watch Post is built by Aman Upadhyay. Its alerts come from public posts and statistical models and can be wrong in both directions. For warnings, follow your national meteorological service and local authorities.
           </p>
         </div>
         <div className="text-[14px] leading-6">
-          <p className="plate-label text-ink-muted mb-2">Sources</p>
+          <p className="text-ink-muted mb-1">Sources</p>
           <ul>
             <li>Posts: X API, Bluesky public search</li>
             <li>Official: GDACS, USGS, NWS, NASA FIRMS</li>
@@ -218,17 +247,18 @@ export function Footer() {
           </ul>
         </div>
         <div className="text-[14px] leading-6">
-          <p className="plate-label text-ink-muted mb-2">Licences</p>
+          <p className="text-ink-muted mb-1">Licences</p>
           <ul>
             <li>Map: OpenFreeMap, OpenMapTiles, OpenStreetMap contributors (ODbL)</li>
-            <li>Type: Archivo and Martian Mono, self-hosted under the SIL OFL</li>
-            <li>Land outlines: Natural Earth (public domain)</li>
+            <li>Type: Inter Tight and Geist Mono (theme A), Schibsted Grotesk and Fragment Mono (theme B), self-hosted under the SIL OFL</li>
+            <li>Land and boundaries: Natural Earth (public domain)</li>
             <li>
               Datasets and model cards: <Link href="/model" className="ink-link" data-testid="link-footer-model">model page</Link>
             </li>
           </ul>
         </div>
       </div>
+      <VariantSwitch />
     </footer>
   );
 }

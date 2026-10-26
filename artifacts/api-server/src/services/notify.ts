@@ -44,7 +44,7 @@ export async function notifySubscribers(alerts: Alert[]): Promise<void> {
       if (already.has(sub.id)) continue;
       const url = `${config.publicBaseUrl}/alerts/${alert.id}`;
       const text = [
-        `Calamity Watch (experimental, not an official warning source)`,
+        `Calamity Watch Post (experimental, not an official warning source)`,
         ``,
         `${label} signal for ${place?.name ?? "a tracked place"} is ${alert.currentLevel}.`,
         alert.summary,

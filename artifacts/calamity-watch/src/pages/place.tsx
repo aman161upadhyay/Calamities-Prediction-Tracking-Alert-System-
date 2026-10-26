@@ -37,8 +37,8 @@ export default function PlacePage() {
   return (
     <Page wide>
       <ScopeNote atEnd={atEnd} scope={scope} what="The signals, alerts and posts" />
-      {(q.isPending || !ready) && <><Skel className="h-[92px] max-w-[700px]" /><div className="mt-8 h-[260px] bg-sheet border border-rule-strong"><LoadingRows rows={4} label="Reading the place" /></div></>}
-      {q.isError && !d && <div className="bg-sheet border border-rule-strong"><ErrorState what="this place" onRetry={() => q.refetch()} /></div>}
+      {(q.isPending || !ready) && <><Skel className="h-[92px] max-w-[700px]" /><div className="mt-8 h-[260px] plate"><LoadingRows rows={4} label="Reading the place" /></div></>}
+      {q.isError && !d && <div className="plate"><ErrorState what="this place" onRetry={() => q.refetch()} /></div>}
       {d && (
         <>
           <header className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-end">
@@ -61,12 +61,12 @@ export default function PlacePage() {
               testId="recorder-place"
               empty={<>No relevant posts placed at {d.place.name} in this window, so the pen rests at zero.</>}
             />
-            <p className="mt-2 text-[12px] text-ink-muted">One lane per hazard with signal here in the last 24 hours. Red is fear mass per hour, dashed is the 7-day baseline, green stamps are official records.</p>
+            <p className="mt-2 text-[12px] text-ink-muted">One lane per hazard with signal here in the last 24 hours. Each dot is an hour of fear mass, dashed is the 7-day baseline, the chips are official records nearby.</p>
           </div>
 
           <Part id="levels" title="Signal by hazard" note="Each hazard against this place's own 7-day baseline, last 24 hours.">
             {d.hazards.length === 0 ? <EmptyState>No hazard posts resolved to {d.place.name} in the last 24 hours.</EmptyState> : (
-              <div className="bg-sheet border border-rule-strong overflow-hidden sm:overflow-x-auto">
+              <div className="plate overflow-hidden sm:overflow-x-auto">
                 <ol className="sm:hidden divide-y divide-rule" data-testid="list-place-hazards">
                   {[...d.hazards].sort((a, b) => LEVEL_RANK[b.level] - LEVEL_RANK[a.level]).map((h) => (
                     <li key={h.hazard} className="px-4 py-2.5 min-w-0">
@@ -94,7 +94,7 @@ export default function PlacePage() {
           </Part>
 
           <Part id="alerts" title="Alerts for this place">
-            <div className="bg-sheet border border-rule-strong min-h-[120px]">
+            <div className="plate min-h-[120px]">
               {alerts.isPending && <LoadingRows rows={3} />}
               {alerts.isError && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
               {alerts.data && alerts.data.length === 0 && <EmptyState>No alert has opened for {d.place.name} in this record.</EmptyState>}
@@ -104,18 +104,18 @@ export default function PlacePage() {
 
           <div className="grid gap-8 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             <Part id="posts" title="Recent posts">
-              <div className="bg-sheet border border-rule-strong">
+              <div className="plate">
                 {d.recentPosts.length === 0 ? <EmptyState>No recent posts mention {d.place.name}.</EmptyState> : <ol className="divide-y divide-rule" data-testid="ledger-place-posts">{d.recentPosts.map((p) => <PostRow key={p.id} post={p} full scope={scope} />)}</ol>}
               </div>
             </Part>
             <div>
               <Part id="official" title="Nearby official records">
-                <div className="bg-sheet border border-rule-strong">
+                <div className="plate">
                   {d.nearbyOfficialEvents.length === 0 ? <EmptyState>No official record near {d.place.name} in the current window.</EmptyState> : <OfficialLedger events={d.nearbyOfficialEvents} testId="ledger-place-official" />}
                 </div>
               </Part>
               <Part id="weather" title="Weather context" note={d.weather ? <>{d.weather.provider}, fetched <span className="mono">{utcDateTime(d.weather.fetchedAt)}</span></> : undefined}>
-                <div className="bg-sheet border border-rule-strong">
+                <div className="plate">
                   {d.weather ? (
                     <dl className="grid grid-cols-2 gap-px bg-rule" data-testid="list-weather">
                       <Figure label="River discharge today"><span className="mono">{d.weather.riverDischargeM3s == null ? "n/a" : `${num(d.weather.riverDischargeM3s, 1)} m³/s`}</span></Figure>

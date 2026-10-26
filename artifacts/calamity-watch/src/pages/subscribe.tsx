@@ -100,7 +100,7 @@ function Specimen() {
   const level = a ? a.peakLevel : "<level>";
   const subject = `${label} signal ${level} for ${place}`;
   const body = [
-    "Calamity Watch (experimental, not an official warning source)",
+    "Calamity Watch Post (experimental, not an official warning source)",
     "",
     `${label} signal for ${place} is ${level}.`,
     a ? a.summary : "<summary>",

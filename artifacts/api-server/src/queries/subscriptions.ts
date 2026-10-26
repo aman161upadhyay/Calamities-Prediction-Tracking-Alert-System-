@@ -45,19 +45,19 @@ export async function createSubscription(input: Input) {
   if (duplicate) {
     if (duplicate.status === "pending") {
       // Resend the original confirmation link rather than say that one exists.
-      await sendEmail(email, "Confirm your Calamity Watch subscription", confirmationBody(scopeText, `${config.publicBaseUrl}/subscribe/verify?token=${duplicate.token}`));
+      await sendEmail(email, "Confirm your Calamity Watch Post subscription", confirmationBody(scopeText, `${config.publicBaseUrl}/subscribe/verify?token=${duplicate.token}`));
     }
     return reply(`If ${email} is not already confirmed for these filters (${scopeText}), a confirmation link is on its way.`);
   }
   const token = randomBytes(24).toString("hex");
   await db.insert(subscriptionsTable).values({ email, placeId: input.placeId ?? null, hazard: input.hazard ?? null, minLevel: input.minLevel, status: "pending", token });
-  const result = await sendEmail(email, "Confirm your Calamity Watch subscription", confirmationBody(scopeText, `${config.publicBaseUrl}/subscribe/verify?token=${token}`));
+  const result = await sendEmail(email, "Confirm your Calamity Watch Post subscription", confirmationBody(scopeText, `${config.publicBaseUrl}/subscribe/verify?token=${token}`));
   if (!result.ok) throw new ApiError(502, `Could not send the confirmation email: ${result.detail}`);
   return reply(`If ${email} is not already confirmed for these filters (${scopeText}), a confirmation link is on its way.`);
 }
 
 function confirmationBody(scopeText: string, verifyUrl: string): string {
-  return [`Confirm this subscription (${scopeText}):`, verifyUrl, "", "Calamity Watch is experimental and not an official warning source.", "If you did not ask for this, ignore this message."].join("\n");
+  return [`Confirm this subscription (${scopeText}):`, verifyUrl, "", "Calamity Watch Post is experimental and not an official warning source.", "If you did not ask for this, ignore this message."].join("\n");
 }
 
 export async function verifySubscription(token: string) {

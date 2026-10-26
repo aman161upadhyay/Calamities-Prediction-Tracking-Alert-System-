@@ -39,8 +39,8 @@ export default function ModelPage() {
         <p className="text-ink-muted max-w-[56ch]">What scores each post, what it learned from, how it does on data it never trained on, and where it fails. Every figure below is read from the API as the running service reports it.</p>
       </header>
 
-      {q.isLoading && <div className="bg-sheet border border-rule-strong"><LoadingRows rows={8} label="Reading the certificate" /></div>}
-      {q.isError && <div className="bg-sheet border border-rule-strong"><ErrorState what="model information" onRetry={() => q.refetch()} /></div>}
+      {q.isLoading && <div className="plate"><LoadingRows rows={8} label="Reading the certificate" /></div>}
+      {q.isError && <div className="plate"><ErrorState what="model information" onRetry={() => q.refetch()} /></div>}
 
       {m && (
         <>
@@ -69,7 +69,7 @@ export default function ModelPage() {
           </section>
 
           <Part id="datasets" title="What it learned from" note="Datasets, their role and their licence. Rows as each dataset was loaded.">
-            <div className="bg-sheet border border-rule-strong overflow-x-auto">
+            <div className="plate overflow-x-auto">
               <table className="w-full text-[14px] leading-5" data-testid="table-datasets">
                 <thead className="border-b border-rule-strong"><tr><th className={th}>Dataset</th><th className={`${th} hidden md:table-cell`}>Role</th><th className={`${th} hidden md:table-cell`}>Licence</th><th className={`${th} text-right hidden md:table-cell`}>Rows</th></tr></thead>
                 <tbody className="divide-y divide-rule">{m.stageOne.datasets.map((d) => (
@@ -97,7 +97,7 @@ export default function ModelPage() {
               <p>The shipped candidate was chosen by macro F1 on the five held-out replay events, so those events are a <span className="font-semibold">selection set, not a blind test</span>. The Kaggle set played no part in training or selection.</p>
               <p className="mt-2 text-[13px] text-ink-muted">Hazard-type metrics are computed on relevant posts only and relevance metrics on all rows, so each line reports the rows actually scored.</p>
             </div>
-            <div className="bg-sheet border border-rule-strong">
+            <div className="plate">
               <Plate label={["Cross-dataset", "rows scored"]} className="border-0">
                 <ul className="divide-y divide-rule" data-testid="table-cross-dataset">
                   {m.stageOne.crossDataset.map((c, i) => (
@@ -127,7 +127,7 @@ export default function ModelPage() {
               </div>
             )}
             {m.stageOne.candidates && m.stageOne.candidates.length > 0 && (
-              <div className="mt-8 bg-sheet border border-rule-strong overflow-x-auto">
+              <div className="mt-8 plate overflow-x-auto">
                 <Plate label={["Candidates compared"]} className="border-0">
                   <table className="w-full text-[14px] min-w-[520px]" data-testid="table-candidates">
                     <thead className="border-b border-rule-strong"><tr><th className={th}>Model</th><th className={`${th} text-right`}>Accuracy</th><th className={`${th} text-right`}>Macro F1</th><th className={th}>Shipped</th></tr></thead>
@@ -185,10 +185,10 @@ export default function ModelPage() {
       )}
 
       <Part id="examples" title="Examples" note="Each has a note on what it tests. Load one into the bench below.">
-        {examples.isLoading && <div className="bg-sheet border border-rule-strong"><LoadingRows rows={4} label="Reading examples" /></div>}
-        {examples.isError && <div className="bg-sheet border border-rule-strong"><ErrorState what="the examples" onRetry={() => examples.refetch()} /></div>}
+        {examples.isLoading && <div className="plate"><LoadingRows rows={4} label="Reading examples" /></div>}
+        {examples.isError && <div className="plate"><ErrorState what="the examples" onRetry={() => examples.refetch()} /></div>}
         {examples.data && (
-          <ol className="bg-sheet border border-rule-strong divide-y divide-rule" data-testid="list-examples">
+          <ol className="plate divide-y divide-rule" data-testid="list-examples">
             {examples.data.map((ex, i) => (
               <li key={i} className="grid gap-3 px-4 py-3 md:grid-cols-[36px_minmax(0,1fr)_auto] items-start">
                 <span className="mono text-[12px] text-ink-muted pt-0.5 hidden md:block">{String(i + 1).padStart(2, "0")}</span>
@@ -259,7 +259,7 @@ function Confusion({ c, testId, label }: { c: ConfusionMatrix; testId: string; l
                     const share = total > 0 ? v / total : 0;
                     return (
                       <td key={j} className="p-0 border border-rule">
-                        <span className={`block min-w-[44px] sm:min-w-[64px] px-1.5 sm:px-2 py-1.5 sm:py-2 text-right ${i === j ? "outline outline-[1.5px] -outline-offset-[3px] outline-ink" : ""}`} style={{ background: `rgba(21,20,15,${(share * 0.55).toFixed(3)})`, color: share > 0.45 ? "#F3F2EE" : "#15140F" }}>
+                        <span className={`block min-w-[44px] sm:min-w-[64px] px-1.5 sm:px-2 py-1.5 sm:py-2 text-right ${i === j ? "outline outline-[1.5px] -outline-offset-[3px] outline-ink" : ""}`} style={{ background: `rgba(21,20,15,${(share * 0.55).toFixed(3)})`, color: share > 0.45 ? "var(--cr-paper)" : "var(--cr-ink)" }}>
                           {num(v)}
                         </span>
                       </td>

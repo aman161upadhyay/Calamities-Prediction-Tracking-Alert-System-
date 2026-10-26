@@ -63,7 +63,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
 
       <div className="mt-10">
         {tl.isError && !tl.data ? (
-          <div className="bg-sheet border border-rule-strong"><ErrorState what="the trace" onRetry={() => tl.refetch()} /></div>
+          <div className="plate"><ErrorState what="the trace" onRetry={() => tl.refetch()} /></div>
         ) : (
           <Recorder
             lanes={[{ hazard, label: `${label}, all places`, timeline: tl.data }]}
@@ -76,12 +76,12 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
             empty={<>No relevant {label.toLowerCase()} posts anywhere in this window.</>}
           />
         )}
-        <p className="mt-2 text-[12px] text-ink-muted">Hourly fear mass across every place combined. Dashed is the 7-day baseline, green stamps are official {label.toLowerCase()} records.</p>
+        <p className="mt-2 text-[12px] text-ink-muted">Hourly fear mass across every place combined. Each dot is an hour and its glow widens with fear mass; dashed is the 7-day baseline; the chips are official {label.toLowerCase()} records.</p>
         {d && d.keywords.length > 0 && <p className="mt-1 text-[12px] text-ink-muted">Search terms: <span className="mono">{d.keywords.join(", ")}</span></p>}
       </div>
 
       <Part id="places" title="Places with the most signal" note="Ranked by z against each place's own baseline, last 24 hours.">
-        <div className="bg-sheet border border-rule-strong min-h-[120px] overflow-hidden sm:overflow-x-auto">
+        <div className="plate min-h-[120px] overflow-hidden sm:overflow-x-auto">
           {detail.isPending && <LoadingRows rows={4} />}
           {d && places.length === 0 && <EmptyState>No place has a relevant {label.toLowerCase()} post in the last 24 hours.</EmptyState>}
           {places.length > 0 && (<>
@@ -116,7 +116,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
       </Part>
 
       <Part id="alerts" title={`${label} alerts`}>
-        <div className="bg-sheet border border-rule-strong min-h-[120px]">
+        <div className="plate min-h-[120px]">
           {alerts.isPending && <LoadingRows rows={3} />}
           {alerts.isError && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
           {alerts.data && alerts.data.length === 0 && <EmptyState>No {label.toLowerCase()} alert has opened in this record.{!scope && <> <Link href={`/alerts?hazard=${hazard}`} className="ink-link text-ink">Read the ledger</Link> to switch to a replay.</>}</EmptyState>}
@@ -125,7 +125,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
       </Part>
 
       <Part id="official" title="Official records" note="Last 7 days of the record, newest first.">
-        <div className="bg-sheet border border-rule-strong min-h-[120px]">
+        <div className="plate min-h-[120px]">
           {events.isPending && <LoadingRows rows={3} />}
           {events.isError && <ErrorState what="official records" onRetry={() => events.refetch()} />}
           {events.data && events.data.length === 0 && <EmptyState>No official {label.toLowerCase()} record in the last 7 days of this record.</EmptyState>}
@@ -139,7 +139,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
       </Part>
 
       <Part id="posts" title="Recent posts">
-        <div className="bg-sheet border border-rule-strong">
+        <div className="plate">
           {d && d.recentPosts.length === 0 && <EmptyState>No recent {label.toLowerCase()} posts.</EmptyState>}
           {d && d.recentPosts.length > 0 && <ol className="divide-y divide-rule" data-testid="ledger-hazard-posts">{d.recentPosts.slice(0, 20).map((p) => <PostRow key={p.id} post={p} full scope={scope} />)}</ol>}
           {detail.isPending && <LoadingRows rows={3} />}

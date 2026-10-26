@@ -73,7 +73,7 @@ export default function AlertsPage() {
       </div>
 
       {unknown && <p className="mb-3 text-[13px] text-ink" data-testid="text-unknown-replay">Unknown replay <span className="mono">{urlScenario}</span>; showing live alerts. <Link href="/alerts" className="ink-link" data-testid="link-alerts-live">Clear it</Link></p>}
-      <div className="bg-sheet border border-rule-strong">
+      <div className="plate">
         <PlateLabel
           parts={["Ledger", "alerts", scope ? (scen?.name.split(",")[0] ?? scope.scenario) : "live", "UTC"]}
           right={q.data ? <span className="mono" data-testid="text-alert-counts">{rows.length} rows · {nOpen} open · {nStamped} stamped</span> : null}

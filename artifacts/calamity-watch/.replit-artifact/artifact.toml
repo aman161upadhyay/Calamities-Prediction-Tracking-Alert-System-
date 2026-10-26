@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Calamity Watch"
+title = "Calamity Watch Post"
 description = "A social-sensing hazard alert system. Pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two ML models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are corroborated against GDACS, USGS, NWS and NASA FIRMS feeds. Map-first situation board, hazard/place/alert evidence pages, a model page with a live classifier demo, historical replay and email subscriptions. The 2026 rebuild of a 2018 Microsoft CodeFunDo++ hackathon project, built as a portfolio showcase."
 version = "1.0.0"
 id = "artifacts/calamity-watch"

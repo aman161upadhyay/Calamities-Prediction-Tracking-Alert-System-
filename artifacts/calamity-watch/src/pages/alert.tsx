@@ -54,10 +54,10 @@ export default function AlertPage() {
       {q.isLoading && (
         <div>
           <Skel className="h-[92px] max-w-[800px]" />
-          <div className="mt-8 h-[300px] bg-sheet border border-rule-strong"><LoadingRows rows={5} label="Opening the case file" /></div>
+          <div className="mt-8 h-[300px] plate"><LoadingRows rows={5} label="Opening the case file" /></div>
         </div>
       )}
-      {q.isError && !d && <div className="bg-sheet border border-rule-strong"><ErrorState what="this alert" onRetry={() => q.refetch()} /></div>}
+      {q.isError && !d && <div className="plate"><ErrorState what="this alert" onRetry={() => q.refetch()} /></div>}
 
       {d && a && (() => {
         const c = a.corroboration;
@@ -124,11 +124,11 @@ export default function AlertPage() {
                 testId="recorder-alert"
                 empty="The detector stored no hourly trace for this place and hazard."
               />
-              <p className="mt-2 text-[12px] text-ink-muted">Shaded is the alert window, from opening to {a.status === "open" ? "now" : "closing"}; the red rule marks the opening hour. Red trace is fear mass per hour, dashed is the 7-day baseline, green stamps are official records.</p>
+              <p className="mt-2 text-[12px] text-ink-muted">Shaded is the alert window, from opening to {a.status === "open" ? "now" : "closing"}; the rule marks the opening hour. Each dot is an hour of fear mass, dashed is the 7-day baseline, the chips are official records.</p>
             </div>
 
             <div className="mt-12 grid gap-8 lg:grid-cols-2">
-              <section aria-labelledby="peak-h" className="bg-sheet border border-rule-strong">
+              <section aria-labelledby="peak-h" className="plate">
                 <PlateLabel id="peak-h" parts={["Detector", "peak hour", peak ? utcDateTime(peak.hour) : utcDateTime(a.peakAt)]} />
                 {peak ? (
                   <dl className="grid grid-cols-2 gap-px bg-rule border-t-0" data-testid="figures-peak">
@@ -144,14 +144,14 @@ export default function AlertPage() {
                 )}
               </section>
 
-              <section aria-labelledby="official-h" className="bg-sheet border border-rule-strong">
+              <section aria-labelledby="official-h" className="plate">
                 <PlateLabel id="official-h" parts={["Official record", c.state === "corroborated" ? "matched" : c.state === "pending" ? "pending" : "none"]} />
                 <div className="p-4 text-[14px] leading-6" data-testid="text-official">
                   {c.state === "corroborated" ? (
                     <>
                       <p className="font-semibold text-[16px]">{c.title ?? "Untitled record"}</p>
                       <dl className="mt-3 grid grid-cols-[120px_1fr] gap-y-1 text-[13px]">
-                        <dt className="text-ink-muted">Feed</dt><dd className="font-semibold"><span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg] mr-1.5 align-[-1px]" />{c.feed ?? "official feed"}</dd>
+                        <dt className="text-ink-muted">Feed</dt><dd className="font-semibold"><span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp mr-1.5 align-[-1px]" />{c.feed ?? "official feed"}</dd>
                         <dt className="text-ink-muted">Recorded</dt>
                         <dd className="mono">{c.officialTimePrecision === "day" ? `${utcDate(c.officialAt)} (day only)` : `${utcDateTime(c.officialAt)}${c.officialTimePrecision === "hour" ? " (to the hour)" : ""}`}</dd>
                         <dt className="text-ink-muted">Hazard</dt><dd>{c.officialHazard ?? HAZARD_LABEL[a.hazard].toLowerCase()}{c.hazardRelation === "related" ? `, related to ${HAZARD_LABEL[a.hazard].toLowerCase()}` : ""}</dd>
@@ -170,7 +170,7 @@ export default function AlertPage() {
             </div>
 
             <Part id="posts" title="Posts in the window" note={<>Relevant {HAZARD_LABEL[a.hazard].toLowerCase()} posts placed at {a.placeName}, from an hour before opening to an hour after {a.status === "open" ? "now" : "closing"}, newest first.</>}>
-              <div className="bg-sheet border border-rule-strong min-h-[240px]">
+              <div className="plate min-h-[240px]">
                 <PlateLabel parts={["Ledger", "posts", "UTC"]} right={posts.data ? <span className="mono" data-testid="text-window-count">{inWindow.length} in window{(posts.data.length === 200) ? ", first 200 read" : ""}</span> : null} />
                 {posts.isLoading && <LoadingRows rows={5} label="Reading the posts" />}
                 {posts.isError && <ErrorState what="the posts" onRetry={() => posts.refetch()} />}
@@ -191,7 +191,7 @@ export default function AlertPage() {
                 <ol className="border-l border-ink ml-1" data-testid="ledger-events">
                   {d.events.map((e, i) => (
                     <li key={i} className="relative pl-6 pb-5 last:pb-0" data-testid={`row-alert-event-${i}`}>
-                      <span aria-hidden className={`absolute -left-[5px] top-1.5 size-[9px] ${e.type === "corroborated" ? "border-[1.5px] border-stamp bg-sheet rotate-[-6deg]" : e.type === "opened" ? "bg-pen" : "bg-ink"}`} />
+                      <span aria-hidden className={`absolute -left-[5px] top-1.5 size-[9px] ${e.type === "corroborated" ? "border-[1.5px] border-stamp bg-sheet" : e.type === "opened" ? "bg-pen" : "bg-ink"}`} />
                       <p className="mono text-[12px] text-ink-muted">{utcDateTime(e.at)}</p>
                       <p className="text-[14px] leading-5"><span className="font-semibold">{EVENT_LABEL[e.type] ?? e.type}.</span> {e.detail}</p>
                     </li>
@@ -200,7 +200,7 @@ export default function AlertPage() {
               )}
             </Part>
 
-            <nav aria-label="Related records" className="mt-12 md:mt-16 border-t border-ink pt-4 flex flex-wrap gap-3">
+            <nav aria-label="Related records" className="mt-12 md:mt-16 border-t border-rule-strong pt-4 flex flex-wrap gap-3">
               <Link href={placeHref} className={btn} data-testid="link-place">Read {a.placeName} over time</Link>
               <Link href={hazardHref} className={btn} data-testid="link-hazard">Read {HAZARD_LABEL[a.hazard].toLowerCase()} across places</Link>
               <Link href={`/alerts?${new URLSearchParams({ placeId: String(a.placeId), ...(scope ? { scenario: scope.scenario } : {}), ...(scope?.asOf ? { asOf: scope.asOf } : {}) }).toString()}`} className={btn} data-testid="link-place-alerts">Every alert for {a.placeName}</Link>

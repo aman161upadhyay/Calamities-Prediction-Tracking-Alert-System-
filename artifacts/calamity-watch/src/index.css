@@ -53,12 +53,12 @@
   --font-mono: var(--app-font-mono);
   --font-display: var(--app-font-sans);
 
-  --radius-sm: 3px;
-  --radius-md: 3px;
-  --radius-lg: 6px;
-  --radius-xl: 6px;
+  --radius-sm: var(--r-control);
+  --radius-md: var(--r-control);
+  --radius-lg: var(--r-control);
+  --radius-xl: var(--r-control);
 
-  /* chart-room tokens */
+  /* theme tokens (design brief v3); the cr- names are kept so every component reads the same variables */
   --color-paper: var(--cr-paper);
   --color-sheet: var(--cr-sheet);
   --color-rule: var(--cr-rule);
@@ -70,104 +70,30 @@
   --color-stamp: var(--cr-stamp);
   --color-ochre: var(--cr-ochre);
 
-  /* legacy names used by pages not yet redrawn; mapped onto the chart-room palette */
-  --color-surface: var(--cw-surface);
-  --color-surface-2: var(--cw-surface-2);
-  --color-line: var(--cw-line);
-  --color-fear: var(--cw-fear);
-  --color-official: var(--cw-official);
-  --color-risk-low: var(--risk-low);
-  --color-risk-elevated: var(--risk-elevated);
-  --color-risk-high: var(--risk-high);
-  --color-risk-severe: var(--risk-severe);
+  /* legacy names used by a few tables and forms; mapped onto the same tokens */
+  --color-surface: var(--cr-sheet);
+  --color-surface-2: var(--cr-rule);
+  --color-line: var(--cr-rule);
+  --color-fear: var(--cr-pen);
+  --color-official: var(--cr-stamp);
+  --color-risk-low: var(--cr-ink-muted);
+  --color-risk-elevated: var(--cr-ink);
+  --color-risk-high: var(--cr-ink);
+  --color-risk-severe: var(--cr-ink);
 }
 
+/* ---------- shared ---------- */
 :root {
-  --cr-paper: #F3F2EE;
-  --cr-sheet: #FCFBF8;
-  --cr-rule: #DAD7CE;
-  --cr-rule-strong: #B9B5A9;
-  --cr-grid: rgba(31, 77, 184, 0.12);
-  --cr-grid-strong: rgba(31, 77, 184, 0.24);
-  --cr-ink: #15140F;
-  --cr-ink-muted: #5B5A54;
-  --cr-pen: #C8102E;
-  --cr-pen-deep: #7A0C1E;
-  --cr-stamp: #1E7A4A;
-  --cr-ochre: #875A00;
-  --hz-water: #1D5FBF;
-  --hz-wind: #6D4CC4;
-  --hz-fire: #E25822;
-  --hz-ground: #7C4A1E;
-  --hz-heat: #B45309;
-
-  --cw-bg: var(--cr-paper);
-  --cw-surface: var(--cr-sheet);
-  --cw-surface-2: #ECEAE3;
-  --cw-line: var(--cr-rule);
-  --cw-text: var(--cr-ink);
-  --cw-muted: var(--cr-ink-muted);
-  --cw-fear: var(--cr-pen);
-  --cw-official: var(--cr-stamp);
-  --risk-low: var(--cr-ink-muted);
-  --risk-elevated: var(--cr-ochre);
-  --risk-high: var(--cr-pen);
-  --risk-severe: var(--cr-pen-deep);
-
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-pen: cubic-bezier(0.77, 0, 0.175, 1);
-
-  --button-outline: rgba(21, 20, 15, 0.12);
-  --badge-outline: rgba(21, 20, 15, 0.08);
-  --opaque-button-border-intensity: -8;
-  --elevate-1: rgba(21, 20, 15, 0.03);
-  --elevate-2: rgba(21, 20, 15, 0.07);
-
-  --background: 48 13% 94%;
-  --foreground: 50 17% 7%;
-  --border: 45 13% 83%;
-  --card: 45 33% 98%;
-  --card-foreground: 50 17% 7%;
-  --card-border: 45 9% 69%;
-  --sidebar: 45 33% 98%;
-  --sidebar-foreground: 50 17% 7%;
-  --sidebar-border: 45 13% 83%;
-  --sidebar-primary: 50 17% 7%;
-  --sidebar-primary-foreground: 48 13% 94%;
-  --sidebar-accent: 45 14% 90%;
-  --sidebar-accent-foreground: 50 17% 7%;
-  --sidebar-ring: 50 17% 7%;
-  --popover: 45 33% 98%;
-  --popover-foreground: 50 17% 7%;
-  --popover-border: 45 9% 69%;
-  --primary: 50 17% 7%;
-  --primary-foreground: 48 13% 94%;
-  --secondary: 45 14% 90%;
-  --secondary-foreground: 50 17% 7%;
-  --muted: 45 14% 90%;
-  --muted-foreground: 51 4% 34%;
-  --accent: 45 14% 90%;
-  --accent-foreground: 50 17% 7%;
-  --destructive: 350 85% 42%;
-  --destructive-foreground: 48 13% 94%;
-  --input: 45 9% 69%;
-  --ring: 50 17% 7%;
-  --chart-1: 215 74% 43%;
-  --chart-2: 255 50% 53%;
-  --chart-3: 17 77% 51%;
-  --chart-4: 27 61% 30%;
-  --chart-5: 26 91% 37%;
-
-  --app-font-sans: 'Archivo', 'Archivo Fallback', Arial, ui-sans-serif, system-ui, sans-serif;
-  --app-font-mono: 'Martian Mono', 'Martian Mono Fallback', 'Courier New', ui-monospace, monospace;
-  --radius: 6px;
-
-  --shadow-2xs: none; --shadow-xs: none; --shadow-sm: none; --shadow: none; --shadow-md: none;
-  --shadow-lg: 0 8px 24px rgba(21, 20, 15, 0.12);
-  --shadow-xl: 0 8px 24px rgba(21, 20, 15, 0.12);
-  --shadow-2xl: 0 8px 24px rgba(21, 20, 15, 0.12);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --radius: var(--r-control);
+
+  --shadow-2xs: none; --shadow-xs: none; --shadow-sm: none; --shadow: none; --shadow-md: none;
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.14);
+  --shadow-2xl: 0 12px 32px rgba(0, 0, 0, 0.14);
 
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-accent-border: hsl(var(--sidebar-accent));
@@ -176,7 +102,220 @@
   --muted-border: hsl(var(--muted));
   --accent-border: hsl(var(--accent));
   --destructive-border: hsl(var(--destructive));
+  --opaque-button-border-intensity: -8;
 }
+
+/* ---------- version A: night watch (cool neutral, Inter Tight + Geist Mono) ---------- */
+:root, html[data-variant="a"] {
+  --app-font-sans: 'Inter Tight', 'Inter Tight Fallback', Arial, ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: 'Geist Mono', 'Geist Mono Fallback', 'Courier New', ui-monospace, monospace;
+  --display-tracking: -0.045em;
+  --h2-tracking: -0.03em;
+  --r-control: 4px;
+
+  --cr-paper: #FAFAF8;
+  --cr-sheet: #FFFFFF;
+  --cr-rule: #E4E4E0;
+  --cr-rule-strong: #C9C9C4;
+  --cr-ink: #121316;
+  --cr-ink-muted: #5C5E5A;
+  --cr-pen: #D9361E;
+  --cr-pen-deep: #A3250F;
+  --cr-stamp: #121316;
+  --cr-ochre: #121316;
+  --cr-land: #F0F0EC;
+  --cr-border: #DADAD5;
+  --cr-graticule: rgba(18, 19, 22, 0.06);
+
+  --night-ground: #0A0B0D;
+  --night-sheet: #121316;
+  --night-ink: #ECECE8;
+  --night-ink-muted: #9A9C9A;
+  --night-rule: rgba(236, 236, 232, 0.10);
+  --night-rule-strong: rgba(236, 236, 232, 0.22);
+  --night-land: rgba(236, 236, 232, 0.045);
+  --night-border: rgba(236, 236, 232, 0.13);
+  --night-graticule: rgba(236, 236, 232, 0.05);
+  --night-pen: #FF6B5A;
+
+  --hz-flood: #1F9D62;
+  --hz-cyclone: #2F7FE0;
+  --hz-wildfire: #C98A12;
+  --hz-storm: #6E57D8;
+  --hz-tsunami: #0F8B8D;
+  --hz-heat: #D9641E;
+  --hz-earthquake: #8A5A2B;
+  --hz-landslide: #6B5B4E;
+  --hzn-flood: #3FD68F;
+  --hzn-cyclone: #5AA9FF;
+  --hzn-wildfire: #F5B942;
+  --hzn-storm: #A694FF;
+  --hzn-tsunami: #4FC9CB;
+  --hzn-heat: #FF8A4C;
+  --hzn-earthquake: #D1A070;
+  --hzn-landslide: #B8A596;
+
+  --button-outline: rgba(18, 19, 22, 0.12);
+  --badge-outline: rgba(18, 19, 22, 0.08);
+  --elevate-1: rgba(18, 19, 22, 0.03);
+  --elevate-2: rgba(18, 19, 22, 0.07);
+
+  --background: 60 17% 98%;
+  --foreground: 225 10% 8%;
+  --border: 60 7% 89%;
+  --card: 0 0% 100%;
+  --card-foreground: 225 10% 8%;
+  --card-border: 60 5% 78%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 225 10% 8%;
+  --sidebar-border: 60 7% 89%;
+  --sidebar-primary: 225 10% 8%;
+  --sidebar-primary-foreground: 60 17% 98%;
+  --sidebar-accent: 60 7% 93%;
+  --sidebar-accent-foreground: 225 10% 8%;
+  --sidebar-ring: 225 10% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 225 10% 8%;
+  --popover-border: 60 5% 78%;
+  --primary: 225 10% 8%;
+  --primary-foreground: 60 17% 98%;
+  --secondary: 60 7% 93%;
+  --secondary-foreground: 225 10% 8%;
+  --muted: 60 7% 93%;
+  --muted-foreground: 100 2% 36%;
+  --accent: 60 7% 93%;
+  --accent-foreground: 225 10% 8%;
+  --destructive: 8 76% 48%;
+  --destructive-foreground: 60 17% 98%;
+  --input: 60 5% 78%;
+  --ring: 225 10% 8%;
+  --chart-1: 152 67% 37%;
+  --chart-2: 213 75% 53%;
+  --chart-3: 41 83% 43%;
+  --chart-4: 253 62% 59%;
+  --chart-5: 181 81% 30%;
+}
+
+/* ---------- version B: night desk (warm green-black, Schibsted Grotesk + Fragment Mono) ---------- */
+html[data-variant="b"] {
+  --app-font-sans: 'Schibsted Grotesk', 'Schibsted Grotesk Fallback', Arial, ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: 'Fragment Mono', 'Fragment Mono Fallback', 'Courier New', ui-monospace, monospace;
+  --display-tracking: -0.035em;
+  --h2-tracking: -0.025em;
+  --r-control: 0px;
+
+  --cr-paper: #F4F1EA;
+  --cr-sheet: #FBF9F4;
+  --cr-rule: #DAD6CB;
+  --cr-rule-strong: #B8B3A4;
+  --cr-ink: #1B1D18;
+  --cr-ink-muted: #5F655B;
+  --cr-pen: #C8381F;
+  --cr-pen-deep: #93250F;
+  --cr-stamp: #1B1D18;
+  --cr-ochre: #1B1D18;
+  --cr-land: #EAE6DC;
+  --cr-border: #CFCABD;
+  --cr-graticule: rgba(27, 29, 24, 0.06);
+
+  --night-ground: #111814;
+  --night-sheet: #182019;
+  --night-ink: #EEF0E8;
+  --night-ink-muted: #A3AA9D;
+  --night-rule: rgba(238, 240, 232, 0.12);
+  --night-rule-strong: rgba(238, 240, 232, 0.26);
+  --night-land: rgba(238, 240, 232, 0.06);
+  --night-border: rgba(238, 240, 232, 0.11);
+  --night-graticule: rgba(238, 240, 232, 0.045);
+  --night-pen: #FF7A66;
+
+  --hz-flood: #2B8A4E;
+  --hz-cyclone: #2A6FC2;
+  --hz-wildfire: #B57A12;
+  --hz-storm: #6A55C9;
+  --hz-tsunami: #157F7E;
+  --hz-heat: #C85A1A;
+  --hz-earthquake: #83572A;
+  --hz-landslide: #6A5A4B;
+  --hzn-flood: #67D28A;
+  --hzn-cyclone: #6FB5F0;
+  --hzn-wildfire: #E8B04B;
+  --hzn-storm: #AC9CF2;
+  --hzn-tsunami: #5CC6C3;
+  --hzn-heat: #FF9357;
+  --hzn-earthquake: #D3A878;
+  --hzn-landslide: #BBAA9A;
+
+  --button-outline: rgba(27, 29, 24, 0.12);
+  --badge-outline: rgba(27, 29, 24, 0.08);
+  --elevate-1: rgba(27, 29, 24, 0.03);
+  --elevate-2: rgba(27, 29, 24, 0.07);
+
+  --background: 42 29% 94%;
+  --foreground: 96 9% 10%;
+  --border: 44 17% 83%;
+  --card: 43 47% 97%;
+  --card-foreground: 96 9% 10%;
+  --card-border: 45 12% 68%;
+  --sidebar: 43 47% 97%;
+  --sidebar-foreground: 96 9% 10%;
+  --sidebar-border: 44 17% 83%;
+  --sidebar-primary: 96 9% 10%;
+  --sidebar-primary-foreground: 42 29% 94%;
+  --sidebar-accent: 43 20% 90%;
+  --sidebar-accent-foreground: 96 9% 10%;
+  --sidebar-ring: 96 9% 10%;
+  --popover: 43 47% 97%;
+  --popover-foreground: 96 9% 10%;
+  --popover-border: 45 12% 68%;
+  --primary: 96 9% 10%;
+  --primary-foreground: 42 29% 94%;
+  --secondary: 43 20% 90%;
+  --secondary-foreground: 96 9% 10%;
+  --muted: 43 20% 90%;
+  --muted-foreground: 96 5% 38%;
+  --accent: 43 20% 90%;
+  --accent-foreground: 96 9% 10%;
+  --destructive: 9 73% 45%;
+  --destructive-foreground: 42 29% 94%;
+  --input: 45 12% 68%;
+  --ring: 96 9% 10%;
+  --chart-1: 142 52% 35%;
+  --chart-2: 213 64% 46%;
+  --chart-3: 38 82% 39%;
+  --chart-4: 251 52% 56%;
+  --chart-5: 179 72% 29%;
+}
+
+/* ---------- night scope: the landing hero and the top bar above it ---------- */
+.night {
+  --cr-paper: var(--night-ground);
+  --cr-sheet: var(--night-sheet);
+  --cr-rule: var(--night-rule);
+  --cr-rule-strong: var(--night-rule-strong);
+  --cr-ink: var(--night-ink);
+  --cr-ink-muted: var(--night-ink-muted);
+  --cr-pen: var(--night-pen);
+  --cr-stamp: var(--night-ink);
+  --cr-land: var(--night-land);
+  --cr-border: var(--night-border);
+  --cr-graticule: var(--night-graticule);
+  --hz-flood: var(--hzn-flood);
+  --hz-cyclone: var(--hzn-cyclone);
+  --hz-wildfire: var(--hzn-wildfire);
+  --hz-storm: var(--hzn-storm);
+  --hz-tsunami: var(--hzn-tsunami);
+  --hz-heat: var(--hzn-heat);
+  --hz-earthquake: var(--hzn-earthquake);
+  --hz-landslide: var(--hzn-landslide);
+  --button-outline: rgba(236, 236, 232, 0.16);
+  --elevate-1: rgba(236, 236, 232, 0.04);
+  --elevate-2: rgba(236, 236, 232, 0.08);
+  background: var(--cr-paper);
+  color: var(--cr-ink);
+  color-scheme: dark;
+}
+.night ::selection { background: rgba(236, 236, 232, 0.22); color: var(--cr-ink); }
 
 @layer base {
   * { @apply border-border; }
@@ -185,38 +324,35 @@
     @apply font-sans antialiased bg-background text-foreground;
     font-size: 16px;
     line-height: 24px;
-    font-stretch: 100%;
-    font-feature-settings: 'ss01';
   }
   h1, h2, h3 { font-weight: 700; letter-spacing: -0.01em; }
-  ::selection { background: rgba(200, 16, 46, 0.16); color: var(--cr-ink); }
+  ::selection { background: rgba(217, 54, 30, 0.16); color: var(--cr-ink); }
 }
 
 /* ---------- type roles ---------- */
 .display {
   font-family: var(--app-font-sans);
-  font-stretch: 118%;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--display-tracking);
 }
-.h1-station { font-size: clamp(44px, 6.2vw, 92px); line-height: 0.95; }
-@media (max-width: 479px) { .h1-station { font-size: 38px; line-height: 0.98; } }
-.h2-station { font-size: clamp(30px, 3.4vw, 48px); line-height: 1.02; }
-.h3-station { font-size: 22px; line-height: 26px; font-stretch: 112%; font-weight: 750; letter-spacing: -0.015em; }
+/* The wordmark on the landing page: heavy and tight, never poster-sized. */
+.wordmark { font-size: clamp(38px, 4.8vw, 68px); line-height: 0.95; }
+/* Page titles share the wordmark's weight at the H2 size, so no page carries a second poster. */
+.h1-station { font-size: clamp(30px, 2.9vw, 44px); line-height: 1.02; letter-spacing: var(--h2-tracking); }
+.h2-station { font-size: clamp(28px, 2.6vw, 40px); line-height: 1.04; font-weight: 700; letter-spacing: var(--h2-tracking); }
+.h3-station { font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.015em; }
 .num, .mono {
   font-family: var(--app-font-mono);
-  font-stretch: 90%;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+/* Sentence-case mono header line for an instrument or a table: no tracking, no capitals. */
 .plate-label {
   font-family: var(--app-font-mono);
-  font-stretch: 90%;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
 }
 
 /* ---------- links and focus ---------- */
@@ -228,48 +364,46 @@
 .press { transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease; }
 .press:active { transform: scale(0.97); }
 
-/* ---------- chart paper (recorders only) ---------- */
-.chart-paper {
-  background-color: var(--cr-sheet);
-  background-image:
-    linear-gradient(var(--cr-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cr-grid) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
+/* ---------- instruments ---------- */
+/* An instrument sits on the sheet behind a hairline; version B rules it top and bottom only, as a newspaper would. */
+.plate { background: var(--cr-sheet); border: 1px solid var(--cr-rule); }
+html[data-variant="b"] .plate { border-left: 0; border-right: 0; border-color: var(--cr-rule-strong); }
+/* The recorder tape has no outer frame; version B rules it above and below on the sheet. */
+.tape { background: transparent; }
+html[data-variant="b"] .tape { background: var(--cr-sheet); border-top: 1px solid var(--cr-rule-strong); border-bottom: 1px solid var(--cr-rule-strong); }
+/* Version B heads each section with a hairline dateline; version A separates sections with space alone. */
+.section-head { border-top: 1px solid transparent; }
+html[data-variant="b"] .section-head { border-top-color: var(--cr-rule-strong); padding-top: 12px; }
+.dateline { display: none; }
+html[data-variant="b"] .dateline { display: flex; }
 
-/* ---------- map paper (static fallback) ---------- */
-.map-paper {
-  background-color: var(--cr-sheet);
-  background-image: radial-gradient(rgba(21, 20, 15, 0.09) 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
-}
-
-/* ---------- signatures ---------- */
+/* ---------- motion signatures ---------- */
 @keyframes pen-draw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.pen-reveal { transform-box: fill-box; transform-origin: left center; animation: pen-draw 900ms var(--ease-pen) both; }
+.pen-reveal { transform-box: fill-box; transform-origin: left center; animation: pen-draw 900ms var(--ease-out) both; }
 
 @keyframes pen-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.15; } }
 .pen-head { animation: pen-blink 1.2s steps(1, end) infinite; }
 
-@keyframes stamp-press { from { opacity: 0; transform: rotate(-1.5deg) scale(1.06); } to { opacity: 1; transform: rotate(-1.5deg) scale(1); } }
-.stamp { transform: rotate(-1.5deg); }
-.stamp-press { animation: stamp-press 180ms var(--ease-out) both; }
-
-@keyframes log-print { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-.log-print { animation: log-print 180ms var(--ease-out) both; }
-
-@keyframes pipeline-pulse { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-.pipeline-pulse { animation: pipeline-pulse 2.4s var(--ease-pen) both; }
-
 @keyframes cw-fade { from { opacity: 0 } to { opacity: 1 } }
 .fade-in { animation: cw-fade 160ms var(--ease-out) both; }
+.stamp-press { animation: cw-fade 180ms var(--ease-out) both; }
+@keyframes log-print { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.log-print { animation: log-print 180ms var(--ease-out) both; }
 .cursor-glide { transition: transform 240ms var(--ease-out); }
 /* Needle spring: stiffness 170, damping 18, mass 1, sampled every 30 ms until it settles (720 ms). */
 .needle { transition: transform 720ms linear(0, 0.066, 0.214, 0.392, 0.567, 0.719, 0.841, 0.93, 0.99, 1.025, 1.043, 1.049, 1.046, 1.039, 1.03, 1.022, 1.014, 1.008, 1.004, 1.001, 0.999, 0.998, 0.998, 0.998, 1); }
 .stagger > * { animation: none; }
 
+/* The hero scene: a dot fades in over 260 ms and its halo opens over 1.2 s; the readout cursor blinks at 1 Hz. */
+.scene-dot { opacity: 0; transition: opacity 260ms ease-out; }
+.scene-dot.on { opacity: 1; }
+.scene-halo { transform-box: fill-box; transform-origin: center; transform: scale(0.2); transition: transform 1200ms var(--ease-out), opacity 260ms ease-out; opacity: 0; }
+.scene-dot.on .scene-halo { transform: scale(1); opacity: 1; }
+@keyframes cursor-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.term-cursor { display: inline-block; width: 0.55em; height: 1.05em; vertical-align: -0.18em; background: currentColor; animation: cursor-blink 1s steps(1, end) infinite; }
+
 /* ---------- map ---------- */
-.maplibregl-ctrl-attrib { background: rgba(252, 251, 248, .9) !important; color: var(--cr-ink-muted) !important; font-size: 11px; font-family: var(--app-font-sans); }
+.maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--cr-sheet) 90%, transparent) !important; color: var(--cr-ink-muted) !important; font-size: 11px; font-family: var(--app-font-sans); }
 .maplibregl-ctrl-attrib a { color: var(--cr-ink) !important; }
 .maplibregl-ctrl-group { border-radius: 0 !important; box-shadow: none !important; border: 1px solid var(--cr-rule-strong); }
 .static-marker { outline: none; }
@@ -278,19 +412,15 @@
 .station-btn:focus-visible { outline: 2px solid var(--cr-ink); outline-offset: 2px; border-radius: 50%; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pen-reveal, .pipeline-pulse { animation: none; }
-  .pen-head { animation: none; }
-  .stamp-press { animation: cw-fade 120ms linear both; }
-  .log-print, .fade-in { animation: cw-fade 120ms linear both; }
-  .cursor-glide, .needle { transition: none; }
+  .pen-reveal, .pipeline-pulse, .pen-head, .term-cursor { animation: none; }
+  .stamp-press, .log-print, .fade-in { animation: cw-fade 120ms linear both; }
+  .cursor-glide, .needle, .scene-dot, .scene-halo { transition: none; }
   .press:active { transform: none; }
 }
 /* Same rules, forced by ?motion=reduce (see main.tsx). */
-html[data-motion="reduce"] .pen-reveal, html[data-motion="reduce"] .pipeline-pulse { animation: none; }
-html[data-motion="reduce"] .pen-head { animation: none; }
-html[data-motion="reduce"] .stamp-press { animation: cw-fade 120ms linear both; }
-html[data-motion="reduce"] .log-print, html[data-motion="reduce"] .fade-in { animation: cw-fade 120ms linear both; }
-html[data-motion="reduce"] .cursor-glide, html[data-motion="reduce"] .needle { transition: none; }
+html[data-motion="reduce"] .pen-reveal, html[data-motion="reduce"] .pipeline-pulse, html[data-motion="reduce"] .pen-head, html[data-motion="reduce"] .term-cursor { animation: none; }
+html[data-motion="reduce"] .stamp-press, html[data-motion="reduce"] .log-print, html[data-motion="reduce"] .fade-in { animation: cw-fade 120ms linear both; }
+html[data-motion="reduce"] .cursor-glide, html[data-motion="reduce"] .needle, html[data-motion="reduce"] .scene-dot, html[data-motion="reduce"] .scene-halo { transition: none; }
 html[data-motion="reduce"] .press:active { transform: none; }
 
 @layer utilities {

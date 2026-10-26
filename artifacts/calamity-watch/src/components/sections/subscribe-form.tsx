@@ -34,7 +34,7 @@ export function SubscribeResultNote({ r }: { r: SubscriptionResult }) {
   );
 }
 
-const trig = "bg-sheet border-rule-strong rounded-[3px] h-10";
+const trig = "bg-sheet border-rule-strong rounded-[var(--r-control)] h-10";
 
 export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
   const places = useListPlaces({ featured: true });
@@ -69,7 +69,7 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
             <FormLabel>Email</FormLabel>
-            <FormControl><Input type="email" autoComplete="email" maxLength={254} className="bg-sheet border-rule-strong rounded-[3px] h-10" data-testid="input-email" {...field} /></FormControl>
+            <FormControl><Input type="email" autoComplete="email" maxLength={254} className="bg-sheet border-rule-strong rounded-[var(--r-control)] h-10" data-testid="input-email" {...field} /></FormControl>
             <FormDescription>
               {emailOff ? (
                 <span className="text-ink" data-testid="text-email-provider-missing">No email provider is configured on this deployment, so no confirmation link can be sent yet. A request is recorded as pending and sends nothing until a provider is added and the address is confirmed.</span>

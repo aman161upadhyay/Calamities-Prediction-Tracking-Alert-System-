@@ -3,6 +3,7 @@ import type { OfficialEvent, PlaceSignal } from "@workspace/api-client-react";
 import { HAZARD_LABEL, LEVEL_LABEL, num } from "@/lib/format";
 import { StationGlyph, hasNearbyOfficial } from "@/components/instruments/station-marker";
 import type { MapSelection } from "./hazard-map";
+import { ringsToPath } from "./geo-path";
 
 const W = 1000;
 
@@ -99,11 +100,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
 
   const landPath = useMemo(() => {
     if (!land) return "";
-    return land.map((r) => {
-      let d = "";
-      for (let k = 0; k < r.length; k += 2) d += `${k ? "L" : "M"}${x(r[k]).toFixed(1)},${y(r[k + 1]).toFixed(1)}`;
-      return d + "Z";
-    }).join("");
+    return ringsToPath(land, x, y, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [land, view]);
 
@@ -142,25 +139,25 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
   });
 
   return (
-    <div ref={box} className="absolute inset-0 map-paper" data-testid="map-static">
+    <div ref={box} className="absolute inset-0 bg-sheet" data-testid="map-static">
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="group" aria-label="Plotting sheet of place signals and official events. One tab stop: arrow keys move between markers, strongest station first, Enter reads one." onKeyDown={onSheetKey}>
         <defs><clipPath id="sheet-clip"><rect x={0} y={0} width={W} height={H} /></clipPath></defs>
-        {landPath && <path d={landPath} clipPath="url(#sheet-clip)" fill="rgba(21,20,15,0.035)" stroke="var(--cr-rule-strong)" strokeWidth={0.8} strokeLinejoin="round" data-testid="map-static-land" />}
+        {landPath && <path d={landPath} clipPath="url(#sheet-clip)" fill="var(--cr-land)" stroke="var(--cr-border)" strokeWidth={0.8} strokeLinejoin="round" data-testid="map-static-land" />}
         {lons.map((l) => (
           <g key={`lon${l}`}>
-            <line x1={x(l)} x2={x(l)} y1={0} y2={H} stroke={l === 0 ? "#B9B5A9" : "#DAD7CE"} strokeWidth={1} />
-            <text x={x(l) + 4} y={H - 8} fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">{deg(l, "E", "W")}</text>
+            <line x1={x(l)} x2={x(l)} y1={0} y2={H} stroke={l === 0 ? "var(--cr-rule-strong)" : "var(--cr-graticule)"} strokeWidth={1} />
+            <text x={x(l) + 4} y={H - 8} fontSize={10} fill="var(--cr-ink-muted)" fontFamily="var(--app-font-mono)">{deg(l, "E", "W")}</text>
           </g>
         ))}
         {lats.map((l) => (
           <g key={`lat${l}`}>
-            <line x1={0} x2={W} y1={y(l)} y2={y(l)} stroke={l === 0 ? "#B9B5A9" : "#DAD7CE"} strokeWidth={1} strokeDasharray={l === 0 ? undefined : "0"} />
-            <text x={W - 6} y={y(l) - 4} textAnchor="end" fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">{deg(l, "N", "S")}</text>
+            <line x1={0} x2={W} y1={y(l)} y2={y(l)} stroke={l === 0 ? "var(--cr-rule-strong)" : "var(--cr-graticule)"} strokeWidth={1} />
+            <text x={W - 6} y={y(l) - 4} textAnchor="end" fontSize={10} fill="var(--cr-ink-muted)" fontFamily="var(--app-font-mono)">{deg(l, "N", "S")}</text>
           </g>
         ))}
         {visibleEvents.map((e) => (
-          <g key={`e${e.id}`} {...roving(`e${e.id}`)} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`Official record, ${e.feedLabel}: ${e.title}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "official", event: e }); } }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
-            <rect x={-4} y={-4} width={8} height={8} fill="#FCFBF8" stroke="#1E7A4A" strokeWidth={1.5} />
+          <g key={`e${e.id}`} {...roving(`e${e.id}`)} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)})`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`Official record, ${e.feedLabel}: ${e.title}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "official", event: e }); } }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
+            <rect x={-4} y={-4} width={8} height={8} fill="var(--cr-sheet)" stroke="var(--cr-stamp)" strokeWidth={1.5} />
             <title>{`${e.feedLabel}: ${e.title} (${e.severity})`}</title>
           </g>
         ))}
@@ -171,7 +168,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
             <g key={key} {...roving(key)} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`${p.name}, ${HAZARD_LABEL[p.hazard]}, ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "place", signal: p }); } }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
               <StationGlyph p={p} stamp={hasNearbyOfficial(p, events)} />
               {labelled.has(key) && (
-                <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="#15140F" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="#FCFBF8" strokeWidth={3.5}>
+                <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--cr-ink)" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="var(--cr-sheet)" strokeWidth={3.5}>
                   {p.name}
                 </text>
               )}

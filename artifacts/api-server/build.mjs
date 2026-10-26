@@ -15,7 +15,7 @@ async function buildAll() {
   await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts"), path.resolve(artifactDir, "src/cli/replay-rebuild.ts")],
+    entryPoints: [path.resolve(artifactDir, "src/index.ts"), path.resolve(artifactDir, "src/cli/replay-rebuild.ts"), path.resolve(artifactDir, "src/cli/live-backfill.ts")],
     platform: "node",
     bundle: true,
     format: "esm",

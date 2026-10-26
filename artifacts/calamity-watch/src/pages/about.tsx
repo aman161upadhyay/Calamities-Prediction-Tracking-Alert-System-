@@ -24,7 +24,7 @@ export default function AboutPage() {
     <Page wide>
       <header className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-end">
         <h1 className="display h1-station">A new instrument in an old room</h1>
-        <p className="text-ink-muted max-w-[56ch]">Calamity Watch reads public posts and records a fear signal per place and hazard, next to the official record, so you can judge for yourself whether the signal moved first. Built by Aman Upadhyay.</p>
+        <p className="text-ink-muted max-w-[56ch]">Calamity Watch Post reads public posts and records a fear signal per place and hazard, next to the official record, so you can judge for yourself whether the signal moved first. Built by Aman Upadhyay.</p>
       </header>
 
       <Part id="is" title="What it is, and what it is not">
@@ -47,7 +47,7 @@ export default function AboutPage() {
 
       <Part id="lineage" title="2018 to 2026" note="First written in 2018 for Microsoft's CodeFunDo++ hackathon; rebuilt in 2026 with every part measured instead of assumed.">
         {/* Below sm the three columns stack per part; a 560 px table only clipped on a phone. */}
-        <div className="sm:hidden bg-sheet border border-rule-strong divide-y divide-rule" data-testid="list-lineage">
+        <div className="sm:hidden plate divide-y divide-rule" data-testid="list-lineage">
           {ROWS.map(([a, b, c]) => (
             <div key={a} className="px-4 py-3 text-[14px] leading-5">
               <p className="font-semibold">{a}</p>
@@ -56,7 +56,7 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
-        <div className="hidden sm:block bg-sheet border border-rule-strong overflow-x-auto">
+        <div className="hidden sm:block plate overflow-x-auto">
           <table className="w-full text-[14px] leading-5 min-w-[560px]" data-testid="table-lineage">
             <thead className="border-b border-rule-strong"><tr><th className="text-left font-normal text-[12px] text-ink-muted py-2 px-4 w-[140px]">Part</th><th className="text-left font-normal mono text-[12px] text-ink-muted px-4">2018</th><th className="text-left font-normal mono text-[12px] text-ink px-4">2026</th></tr></thead>
             <tbody className="divide-y divide-rule">{ROWS.map(([a, b, c]) => <tr key={a} className="align-top"><th scope="row" className="text-left font-semibold py-3 px-4">{a}</th><td className="px-4 py-3 text-ink-muted">{b}</td><td className="px-4 py-3">{c}</td></tr>)}</tbody>

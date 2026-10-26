@@ -19,33 +19,33 @@ export function Dial({ label, value, pen = false, testId }: { label: string; val
   const [bx, by] = pt(1, R);
   const [hx, hy] = pt(0.5, R);
   const [ex, ey] = pt(1, R);
-  const needle = pen ? "#C8102E" : "#15140F";
+  const needle = pen ? "var(--cr-pen)" : "var(--cr-ink)";
   return (
     <figure className="relative w-[220px]" data-testid={testId}>
       <div className="relative w-[220px] h-[120px]">
         <svg width="220" height="120" viewBox="0 0 220 120" aria-hidden className="absolute inset-0">
-          <path d={`M${ax} ${ay} A${R} ${R} 0 0 1 ${bx} ${by}`} fill="none" stroke="#15140F" strokeWidth={1.25} />
-          {pen && <path d={`M${hx} ${hy} A${R} ${R} 0 0 1 ${ex} ${ey}`} fill="none" stroke="#C8102E" strokeWidth={3} />}
+          <path d={`M${ax} ${ay} A${R} ${R} 0 0 1 ${bx} ${by}`} fill="none" stroke="var(--cr-ink)" strokeWidth={1.25} />
+          {pen && <path d={`M${hx} ${hy} A${R} ${R} 0 0 1 ${ex} ${ey}`} fill="none" stroke="var(--cr-pen)" strokeWidth={3} />}
           {ticks.map((t) => {
             const major = Math.round(t * 20) % 5 === 0;
             const [x1, y1] = pt(t, R);
             const [x2, y2] = pt(t, R - (major ? 10 : 5));
-            return <line key={t} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#15140F" strokeWidth={major ? 1.25 : 0.75} />;
+            return <line key={t} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--cr-ink)" strokeWidth={major ? 1.25 : 0.75} />;
           })}
           {[0, 0.5, 1].map((t) => {
             const [x, y] = pt(t, R - 22);
             return (
-              <text key={t} x={x} y={y + 4} textAnchor="middle" fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">
+              <text key={t} x={x} y={y + 4} textAnchor="middle" fontSize={10} fill="var(--cr-ink-muted)" fontFamily="var(--app-font-mono)">
                 {t === 0 ? "0" : t === 1 ? "1" : ".5"}
               </text>
             );
           })}
-          <line x1={10} x2={210} y1={CY + 0.5} y2={CY + 0.5} stroke="#DAD7CE" />
+          <line x1={10} x2={210} y1={CY + 0.5} y2={CY + 0.5} stroke="var(--cr-rule)" />
         </svg>
         <div
           aria-hidden
           className="needle absolute w-[2px] origin-bottom"
-          style={{ left: CX - 1, top: CY - (R - 6), height: R - 6, background: value == null ? "#B9B5A9" : needle, transform: `rotate(${v * 180 - 90}deg)` }}
+          style={{ left: CX - 1, top: CY - (R - 6), height: R - 6, background: value == null ? "var(--cr-rule-strong)" : needle, transform: `rotate(${v * 180 - 90}deg)` }}
         />
         <span aria-hidden className="absolute size-3 rounded-full bg-ink" style={{ left: CX - 6, top: CY - 6 }} />
       </div>

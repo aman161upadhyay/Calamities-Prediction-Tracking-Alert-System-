@@ -62,7 +62,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Calamity Watch model service", version=MODEL_VERSION, lifespan=lifespan)
+app = FastAPI(title="Calamity Watch Post model service", version=MODEL_VERSION, lifespan=lifespan)
 
 
 class ScoreItem(BaseModel):
