@@ -238,13 +238,16 @@ function PerClass({ rows, testId, label = ["Per class", "test split"] }: { rows:
   );
 }
 
+// Column heads on a phone: five full class names do not fit beside the row heads, which keep the full names.
+const SHORT_CLASS: Record<string, string> = { cyclone: "cycl", earthquake: "quake", wildfire: "fire" };
+
 function Confusion({ c, testId, label }: { c: ConfusionMatrix; testId: string; label: string[] }) {
   return (
     <Plate label={label}>
-      <div className="p-4 overflow-x-auto">
-        <table className="mono text-[12px] border-collapse" data-testid={testId}>
+      <div className="p-3 sm:p-4 overflow-x-auto">
+        <table className="mono text-[11px] sm:text-[12px] border-collapse" data-testid={testId}>
           <thead>
-            <tr><th className="p-1.5 text-left font-normal text-[10px] text-ink-muted">true ↓ pred →</th>{c.labels.map((l) => <th key={l} scope="col" className="p-1.5 font-normal text-ink-muted text-right">{l}</th>)}</tr>
+            <tr><th className="p-1.5 text-left font-normal text-[10px] text-ink-muted">true ↓ pred →</th>{c.labels.map((l) => <th key={l} scope="col" className="p-1 sm:p-1.5 font-normal text-ink-muted text-right"><abbr title={l} className="no-underline sm:hidden">{SHORT_CLASS[l] ?? l}</abbr><span className="hidden sm:inline">{l}</span></th>)}</tr>
           </thead>
           <tbody>
             {c.matrix.map((row, i) => {
@@ -256,7 +259,7 @@ function Confusion({ c, testId, label }: { c: ConfusionMatrix; testId: string; l
                     const share = total > 0 ? v / total : 0;
                     return (
                       <td key={j} className="p-0 border border-rule">
-                        <span className={`block min-w-[64px] px-2 py-2 text-right ${i === j ? "outline outline-[1.5px] -outline-offset-[3px] outline-ink" : ""}`} style={{ background: `rgba(21,20,15,${(share * 0.55).toFixed(3)})`, color: share > 0.45 ? "#F3F2EE" : "#15140F" }}>
+                        <span className={`block min-w-[44px] sm:min-w-[64px] px-1.5 sm:px-2 py-1.5 sm:py-2 text-right ${i === j ? "outline outline-[1.5px] -outline-offset-[3px] outline-ink" : ""}`} style={{ background: `rgba(21,20,15,${(share * 0.55).toFixed(3)})`, color: share > 0.45 ? "#F3F2EE" : "#15140F" }}>
                           {num(v)}
                         </span>
                       </td>

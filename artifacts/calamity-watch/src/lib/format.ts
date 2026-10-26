@@ -40,7 +40,7 @@ export const LEVEL_LABEL: Record<RiskLevel, string> = {
 export const LEVEL_COLOR: Record<RiskLevel, string> = {
   insufficient: "#5B5A54",
   low: "#5B5A54",
-  elevated: "#9A6700",
+  elevated: "#875A00",
   high: "#C8102E",
   severe: "#7A0C1E",
 };

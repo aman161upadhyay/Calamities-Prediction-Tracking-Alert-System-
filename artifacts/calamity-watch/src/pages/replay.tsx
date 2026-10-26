@@ -325,6 +325,14 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               step={STEP_MS}
               value={clock}
               onChange={(e) => { setPlaying(false); setClock(Number(e.target.value)); }}
+              // The pointer scrubs in 15-minute steps; the keys move in the tape's own units: an hour, a day with Page Up/Down.
+              onKeyDown={(e) => {
+                const delta = e.key === "ArrowRight" || e.key === "ArrowUp" ? HOUR : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -HOUR : e.key === "PageUp" ? 24 * HOUR : e.key === "PageDown" ? -24 * HOUR : 0;
+                if (!delta) return;
+                e.preventDefault();
+                setPlaying(false);
+                setClock((c) => Math.min(end, Math.max(start, Math.floor(c / HOUR) * HOUR + delta)));
+              }}
               aria-valuetext={utcDateTime(asOf)}
               className="relative block w-full h-6 appearance-none bg-transparent cursor-pointer accent-[#15140F] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:rounded-none"
               data-testid="input-scrub"
@@ -348,7 +356,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
             empty="The tape stored no hourly trace for this hazard."
           />
         )}
-        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once{leadH > 0 ? `, with the ${leadH} hours before the collection that hold its earliest official record` : ""}; the black rule is the playhead. Red trace is fear mass per hour summed over every place, dashed is its 7-day baseline, green stamps are the scenario's official records.</p>
+        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once{leadH > 0 ? `, with the ${leadH} hours before the collection that hold its earliest official record` : ""}; the black rule is the playhead. Red trace is fear mass per hour summed over every place, dashed is its 7-day baseline, green stamps are the scenario's official records. Hours are named by their start, so with the playhead at 11:00 the readout gives the 10:00 hour, the last complete one.</p>
       </div>
 
       <section aria-labelledby="board-h" className="mt-12 md:mt-16">

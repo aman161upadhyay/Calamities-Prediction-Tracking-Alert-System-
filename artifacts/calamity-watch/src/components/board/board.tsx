@@ -78,9 +78,11 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
   const tlParams = { hours: 72, ...(params ?? {}) };
   const timeline = useGetHazardTimeline(selected, tlParams, { query: { enabled: recorder, queryKey: getGetHazardTimelineQueryKey(selected, tlParams), refetchInterval, placeholderData: keepPreviousData } });
 
-  const places = data?.places ?? [];
+  // A pressed hazard in the rail narrows the map and the places list to that hazard's stations; pressing it again clears.
+  const allPlaces = data?.places ?? [];
+  const places = useMemo(() => (picked ? allPlaces.filter((p) => p.hazard === picked) : allPlaces), [allPlaces, picked]);
   const events = data?.officialEvents ?? [];
-  const fitKey = `${mode.scenario ?? "live"}-${places.length > 0 || events.length > 0}`;
+  const fitKey = `${mode.scenario ?? "live"}-${places.length > 0 || events.length > 0}-${picked ?? "all"}`;
   const openAlerts = alerts.data ?? data?.openAlerts ?? [];
   const placesSorted = useMemo(() => [...places].sort((a, b) => b.zScore - a.zScore), [places]);
   const newAlerts = useNewIds(openAlerts.map((a) => a.id));
@@ -92,7 +94,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
       {board.isError && !data && <ErrorState what="the board" onRetry={() => board.refetch()} />}
       {data && (
         <ul className="divide-y divide-rule" data-testid="list-hazard-rail">
-          {hazards.map((h) => <HazardRailRow key={h.hazard} h={h} active={h.hazard === selected} onPick={() => setPicked(h.hazard)} scope={params} />)}
+          {hazards.map((h) => <HazardRailRow key={h.hazard} h={h} active={h.hazard === picked} onPick={() => setPicked((v) => (v === h.hazard ? null : h.hazard))} scope={params} />)}
         </ul>
       )}
     </div>
@@ -118,7 +120,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
 
   const placeList =
     places.length === 0 ? (
-      <EmptyState>{data ? "No place has a relevant post in the last 24 hours." : "Waiting for the board."}</EmptyState>
+      <EmptyState>{!data ? "Waiting for the board." : picked ? `No place has a relevant ${HAZARD_LABEL[picked].toLowerCase()} post in the last 24 hours.` : "No place has a relevant post in the last 24 hours."}</EmptyState>
     ) : (
       <ul className="max-h-[300px] overflow-auto divide-y divide-rule" data-testid="list-map-readout">
         {placesSorted.map((p) => (
@@ -165,7 +167,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
             {hazardRail}
           </section>
           <section className="bg-sheet border border-rule-strong">
-            <PlateLabel parts={["Places", "by z"]} />
+            <PlateLabel parts={picked ? ["Places", HAZARD_LABEL[picked].toLowerCase()] : ["Places", "by z"]} right={picked ? <button type="button" className="ink-link mono text-ink" onClick={() => { const h = picked; setPicked(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-testid="button-hazard-${h}"]`)?.focus()); }} data-testid="button-places-all-hazards">all hazards</button> : undefined} />
             {placeList}
           </section>
         </div>

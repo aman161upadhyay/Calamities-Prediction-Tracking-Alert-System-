@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { OfficialEvent, PlaceSignal } from "@workspace/api-client-react";
 import { HAZARD_LABEL, LEVEL_LABEL, num } from "@/lib/format";
 import { StationGlyph, hasNearbyOfficial } from "@/components/instruments/station-marker";
@@ -109,9 +109,41 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
 
   const ordered = [...places].sort((a, b) => a.zScore - b.zScore);
 
+  // One tab stop for the whole sheet: the strongest station takes it, arrow keys walk the markers (strongest first,
+  // then the official records), Enter reads one. Without this every marker was a stop and the board took hundreds of Tabs.
+  const visibleEvents = events.filter((e) => e.lat != null && e.lon != null);
+  const rovingKeys = useMemo(
+    () => [...[...places].sort((a, b) => b.zScore - a.zScore).map((p) => `${p.placeId}:${p.hazard}`), ...visibleEvents.map((e) => `e${e.id}`)],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [places, events],
+  );
+  const [stop, setStop] = useState<string | null>(null);
+  const activeKey = stop && rovingKeys.includes(stop) ? stop : rovingKeys[0] ?? null;
+  const nodes = useRef(new Map<string, SVGGElement>());
+  const onSheetKey = (ev: KeyboardEvent<SVGSVGElement>) => {
+    const current = (ev.target as Element).closest<SVGGElement>("[data-marker-key]")?.dataset.markerKey;
+    if (!current) return;
+    const i = rovingKeys.indexOf(current);
+    let next: string | undefined;
+    if (ev.key === "ArrowRight" || ev.key === "ArrowDown") next = rovingKeys[(i + 1) % rovingKeys.length];
+    else if (ev.key === "ArrowLeft" || ev.key === "ArrowUp") next = rovingKeys[(i - 1 + rovingKeys.length) % rovingKeys.length];
+    else if (ev.key === "Home") next = rovingKeys[0];
+    else if (ev.key === "End") next = rovingKeys[rovingKeys.length - 1];
+    if (!next) return;
+    ev.preventDefault();
+    setStop(next);
+    nodes.current.get(next)?.focus();
+  };
+  const roving = (key: string) => ({
+    tabIndex: key === activeKey ? 0 : -1,
+    "data-marker-key": key,
+    ref: (el: SVGGElement | null) => { if (el) nodes.current.set(key, el); else nodes.current.delete(key); },
+    onFocus: () => setStop(key),
+  });
+
   return (
     <div ref={box} className="absolute inset-0 map-paper" data-testid="map-static">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="group" aria-label="Plotting sheet of place signals and official events. Tab to a marker and press Enter to read it.">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="group" aria-label="Plotting sheet of place signals and official events. One tab stop: arrow keys move between markers, strongest station first, Enter reads one." onKeyDown={onSheetKey}>
         <defs><clipPath id="sheet-clip"><rect x={0} y={0} width={W} height={H} /></clipPath></defs>
         {landPath && <path d={landPath} clipPath="url(#sheet-clip)" fill="rgba(21,20,15,0.035)" stroke="var(--cr-rule-strong)" strokeWidth={0.8} strokeLinejoin="round" data-testid="map-static-land" />}
         {lons.map((l) => (
@@ -126,8 +158,8 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
             <text x={W - 6} y={y(l) - 4} textAnchor="end" fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">{deg(l, "N", "S")}</text>
           </g>
         ))}
-        {events.filter((e) => e.lat != null && e.lon != null).map((e) => (
-          <g key={`e${e.id}`} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} className="static-marker" tabIndex={0} role="button" aria-label={`Official record, ${e.feedLabel}: ${e.title}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "official", event: e }); } }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
+        {visibleEvents.map((e) => (
+          <g key={`e${e.id}`} {...roving(`e${e.id}`)} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`Official record, ${e.feedLabel}: ${e.title}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "official", event: e }); } }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
             <rect x={-4} y={-4} width={8} height={8} fill="#FCFBF8" stroke="#1E7A4A" strokeWidth={1.5} />
             <title>{`${e.feedLabel}: ${e.title} (${e.severity})`}</title>
           </g>
@@ -136,7 +168,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
           const key = `${p.placeId}:${p.hazard}`;
           const px = x(p.lon), py = y(p.lat);
           return (
-            <g key={key} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} className="static-marker" tabIndex={0} role="button" aria-label={`${p.name}, ${HAZARD_LABEL[p.hazard]}, ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "place", signal: p }); } }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
+            <g key={key} {...roving(key)} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`${p.name}, ${HAZARD_LABEL[p.hazard]}, ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "place", signal: p }); } }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
               <StationGlyph p={p} stamp={hasNearbyOfficial(p, events)} />
               {labelled.has(key) && (
                 <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="#15140F" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="#FCFBF8" strokeWidth={3.5}>
@@ -148,7 +180,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
           );
         })}
       </svg>
-      <p className="absolute right-3 bottom-2 mono text-[10px] text-ink-muted bg-sheet/90 px-1.5">Plotting sheet: Natural Earth 110m land outlines (public domain), equirectangular; interactive tiles are unavailable in this browser</p>
+      <p className="absolute right-3 bottom-2 max-w-[55%] text-right leading-tight mono text-[10px] text-ink-muted bg-sheet/90 px-1.5">Plotting sheet: Natural Earth 110m land outlines (public domain), equirectangular; interactive tiles are unavailable in this browser</p>
     </div>
   );
 }

@@ -65,7 +65,7 @@ function App() {
           <div className="min-h-[100dvh] flex flex-col">
             <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 bg-sheet border border-ink px-3 py-2 text-[13px]">Skip to content</a>
             <TopNav />
-            <div id="main" className="flex-1">
+            <div id="main" tabIndex={-1} className="flex-1 outline-none">
               <Router />
             </div>
             <Footer />

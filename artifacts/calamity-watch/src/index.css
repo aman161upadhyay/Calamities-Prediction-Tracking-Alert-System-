@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './fonts.css';
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -93,7 +94,7 @@
   --cr-pen: #C8102E;
   --cr-pen-deep: #7A0C1E;
   --cr-stamp: #1E7A4A;
-  --cr-ochre: #9A6700;
+  --cr-ochre: #875A00;
   --hz-water: #1D5FBF;
   --hz-wind: #6D4CC4;
   --hz-fire: #E25822;
@@ -157,8 +158,8 @@
   --chart-4: 27 61% 30%;
   --chart-5: 26 91% 37%;
 
-  --app-font-sans: 'Archivo', ui-sans-serif, system-ui, sans-serif;
-  --app-font-mono: 'Martian Mono', ui-monospace, monospace;
+  --app-font-sans: 'Archivo', 'Archivo Fallback', Arial, ui-sans-serif, system-ui, sans-serif;
+  --app-font-mono: 'Martian Mono', 'Martian Mono Fallback', 'Courier New', ui-monospace, monospace;
   --radius: 6px;
 
   --shadow-2xs: none; --shadow-xs: none; --shadow-sm: none; --shadow: none; --shadow-md: none;
@@ -262,6 +263,9 @@
 
 @keyframes cw-fade { from { opacity: 0 } to { opacity: 1 } }
 .fade-in { animation: cw-fade 160ms var(--ease-out) both; }
+.cursor-glide { transition: transform 240ms var(--ease-out); }
+/* Needle spring: stiffness 170, damping 18, mass 1, sampled every 30 ms until it settles (720 ms). */
+.needle { transition: transform 720ms linear(0, 0.066, 0.214, 0.392, 0.567, 0.719, 0.841, 0.93, 0.99, 1.025, 1.043, 1.049, 1.046, 1.039, 1.03, 1.022, 1.014, 1.008, 1.004, 1.001, 0.999, 0.998, 0.998, 0.998, 1); }
 .stagger > * { animation: none; }
 
 /* ---------- map ---------- */
@@ -278,6 +282,7 @@
   .pen-head { animation: none; }
   .stamp-press { animation: cw-fade 120ms linear both; }
   .log-print, .fade-in { animation: cw-fade 120ms linear both; }
+  .cursor-glide, .needle { transition: none; }
   .press:active { transform: none; }
 }
 /* Same rules, forced by ?motion=reduce (see main.tsx). */
@@ -285,6 +290,7 @@ html[data-motion="reduce"] .pen-reveal, html[data-motion="reduce"] .pipeline-pul
 html[data-motion="reduce"] .pen-head { animation: none; }
 html[data-motion="reduce"] .stamp-press { animation: cw-fade 120ms linear both; }
 html[data-motion="reduce"] .log-print, html[data-motion="reduce"] .fade-in { animation: cw-fade 120ms linear both; }
+html[data-motion="reduce"] .cursor-glide, html[data-motion="reduce"] .needle { transition: none; }
 html[data-motion="reduce"] .press:active { transform: none; }
 
 @layer utilities {

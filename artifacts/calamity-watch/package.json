@@ -27,7 +27,6 @@
     "@workspace/api-client-react": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
-    "framer-motion": "catalog:",
     "lucide-react": "catalog:",
     "maplibre-gl": "^6.15.0",
     "react": "catalog:",

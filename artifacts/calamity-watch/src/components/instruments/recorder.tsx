@@ -159,7 +159,11 @@ export function Recorder({
     for (let k = 0; k < hours.length; k++) if (hours[k] + 3_600_000 <= t) i = k;
     return i >= 0 ? i : null;
   }, [playhead, hours]);
-  const idx = cursor ?? playheadIdx ?? Math.max(0, hours.length - 1);
+  // On a live tape the last bucket is the hour still being written: it is drawn hollow, kept out of the trace, and the
+  // readout rests on the last complete hour. Otherwise the trace fell to zero at the top of every hour.
+  const inProgress = live && hours.length > 1 && hours[hours.length - 1] + HOUR > Date.now();
+  const lastDone = Math.max(0, hours.length - (inProgress ? 2 : 1));
+  const idx = cursor ?? playheadIdx ?? lastDone;
 
   useEffect(() => {
     if (!narrow || !scrollRef.current) return;
@@ -199,9 +203,9 @@ export function Recorder({
     if (!hours.length) return;
     let next: number | null = null;
     if (e.key === "ArrowLeft") next = Math.max(0, idx - (e.shiftKey ? 6 : 1));
-    else if (e.key === "ArrowRight") next = Math.min(hours.length - 1, idx + (e.shiftKey ? 6 : 1));
+    else if (e.key === "ArrowRight") next = Math.min(lastDone, idx + (e.shiftKey ? 6 : 1));
     else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = hours.length - 1;
+    else if (e.key === "End") next = lastDone;
     else if (e.key === "Escape") return setCursor(null);
     if (next === null) return;
     e.preventDefault();
@@ -223,10 +227,10 @@ export function Recorder({
       <FrameMarks />
       <div className="bg-sheet border border-rule-strong">
         <PlateLabel
-          parts={label}
+          parts={compact && label.length > 3 && /^utc$/i.test(label[label.length - 1]) ? label.slice(0, -1) : label}
           right={
             <span className="inline-flex items-center gap-4">
-              <span className="hidden lg:inline-flex items-center gap-4">
+              <span className="hidden xl:inline-flex items-center gap-4">
                 <Key kind="trace">fear mass</Key>
                 <Key kind="base">7-day baseline</Key>
                 <Key kind="tick">level mark</Key>
@@ -242,7 +246,8 @@ export function Recorder({
               <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 block" onMouseMove={onMove} onMouseLeave={() => setCursor(null)} aria-hidden>
                 <defs>
                   <clipPath id={clipId}>
-                    <rect key={drawKey} className={anyData ? "pen-reveal" : ""} x={0} y={0} width={W} height={H} />
+                    {/* The pen crosses the paper at a constant speed: a wide tape takes longer to draw than a narrow lane (600 to 1400 ms). */}
+                    <rect key={drawKey} className={anyData ? "pen-reveal" : ""} style={anyData ? { animationDuration: `${Math.round(Math.min(1400, Math.max(600, W * 0.7)))}ms` } : undefined} x={0} y={0} width={W} height={H} />
                   </clipPath>
                 </defs>
                 <rect x={W - M.r} y={0} width={M.r} height={H} fill="#FCFBF8" fillOpacity={0.85} />
@@ -300,10 +305,11 @@ export function Recorder({
                   const cx = x(+new Date(playhead.at));
                   if (cx < M.l || cx > W - M.r) return null;
                   return (
-                    <g data-testid="recorder-cursor">
-                      <line x1={cx} x2={cx} y1={M.t} y2={H - M.b + 4} stroke="#15140F" strokeWidth={1.5} />
-                      <path d={`M${cx - 5} ${M.t} L${cx + 5} ${M.t} L${cx} ${M.t + 7}Z`} fill="#15140F" />
-                      <text x={cx > W - M.r - 90 ? cx - 4 : cx + 4} textAnchor={cx > W - M.r - 90 ? "end" : "start"} y={H - M.b - 4} fontSize={10} fill="#15140F" fontWeight={600} fontFamily="Martian Mono, monospace">{playhead.label ?? "playhead"}</text>
+                    // The playhead glides between hours instead of jumping, like a transport needle; reduced motion drops the glide.
+                    <g data-testid="recorder-cursor" className="cursor-glide" style={{ transform: `translate(${cx}px, 0)` }}>
+                      <line x1={0} x2={0} y1={M.t} y2={H - M.b + 4} stroke="#15140F" strokeWidth={1.5} />
+                      <path d={`M-5 ${M.t} L5 ${M.t} L0 ${M.t + 7}Z`} fill="#15140F" />
+                      <text x={cx > W - M.r - 90 ? -4 : 4} textAnchor={cx > W - M.r - 90 ? "end" : "start"} y={H - M.b - 4} fontSize={10} fill="#15140F" fontWeight={600} fontFamily="Martian Mono, monospace">{playhead.label ?? "playhead"}</text>
                     </g>
                   );
                 })()}
@@ -342,11 +348,13 @@ export function Recorder({
                     const max = Math.max(0.5, ...pts.map((p) => Math.max(p.fearMass, p.baselineMedian ?? 0))) * 1.12;
                     const yv = (v: number) => y0 + lh - 4 - (v / max) * (lh - 22);
                     const px = (p: TimelinePoint) => x(+new Date(p.hour));
-                    const trace = pts.map((p, j) => `${j ? "L" : "M"}${px(p).toFixed(1)},${yv(p.fearMass).toFixed(1)}`).join("");
+                    const drawn = inProgress ? pts.slice(0, -1) : pts;
+                    const partial = inProgress ? pts[pts.length - 1] : undefined;
+                    const trace = drawn.map((p, j) => `${j ? "L" : "M"}${px(p).toFixed(1)},${yv(p.fearMass).toFixed(1)}`).join("");
                     const withBase = pts.filter((p) => p.baselineMedian != null);
                     const band = withBase.length > 1 ? `M${px(withBase[0]).toFixed(1)},${yv(0)}` + withBase.map((p) => `L${px(p).toFixed(1)},${yv(p.baselineMedian as number).toFixed(1)}`).join("") + `L${px(withBase[withBase.length - 1]).toFixed(1)},${yv(0)}Z` : "";
                     const baseLine = withBase.length > 1 ? withBase.map((p, j) => `${j ? "L" : "M"}${px(p).toFixed(1)},${yv(p.baselineMedian as number).toFixed(1)}`).join("") : "";
-                    const last = pts[pts.length - 1];
+                    const last = drawn[drawn.length - 1] ?? pts[pts.length - 1];
                     return (
                       <g key={l.hazard}>
                         {band && <path d={band} fill="rgba(21,20,15,0.06)" />}
@@ -368,7 +376,12 @@ export function Recorder({
                           );
                         })}
                         <path d={trace} fill="none" stroke="#C8102E" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round" />
-                        <circle cx={px(last)} cy={yv(last.fearMass)} r={3.5} fill="#C8102E" className={livePen ? "pen-head" : ""} />
+                        <circle cx={px(last)} cy={yv(last.fearMass)} r={3.5} fill="#C8102E" />
+                        {partial && (
+                          <circle cx={px(partial)} cy={yv(partial.fearMass)} r={3.5} fill="#FCFBF8" stroke="#C8102E" strokeWidth={1.6} className={livePen ? "pen-head" : ""}>
+                            <title>{`${utcDateTime(partial.hour)} so far: ${partial.nRelevant} relevant posts, fear mass ${num(partial.fearMass, 2)}; the hour is still being written`}</title>
+                          </circle>
+                        )}
                       </g>
                     );
                   })}
@@ -397,13 +410,13 @@ export function Recorder({
             </span>
           ))}
         </div>
-        <Readout lanes={lanes} idx={idx} word={cursor !== null ? "cursor" : playheadIdx !== null ? "playhead" : "latest"} onKey={onKey} t={cursorT} />
+        <Readout lanes={lanes} idx={idx} word={cursor !== null ? "cursor" : playheadIdx !== null ? "playhead" : "latest"} onKey={onKey} t={cursorT} soFar={inProgress && cursor === null ? hours.length - 1 : undefined} />
       </div>
     </div>
   );
 }
 
-function Readout({ lanes, idx, word, onKey, t }: { lanes: RecorderLane[]; idx: number; onKey: (e: KeyboardEvent<HTMLDivElement>) => void; t?: number; word: "cursor" | "playhead" | "latest"; }) {
+function Readout({ lanes, idx, word, onKey, t, soFar }: { lanes: RecorderLane[]; idx: number; onKey: (e: KeyboardEvent<HTMLDivElement>) => void; t?: number; word: "cursor" | "playhead" | "latest"; soFar?: number }) {
   const official = t === undefined ? [] : lanes.flatMap((l) => (l.timeline?.officialMarkers ?? []).filter((m) => { const a = +new Date(m.at); return a >= t && a < t + HOUR; }));
   const uniq = [...new Map(official.map((m) => [m.eventId, m])).values()];
   const aggregate = lanes.length > 0 && lanes.every((l) => l.timeline && l.timeline.placeId == null);
@@ -436,6 +449,9 @@ function Readout({ lanes, idx, word, onKey, t }: { lanes: RecorderLane[]; idx: n
                     <span className="mono whitespace-nowrap"><span className="text-ink-muted">baseline</span> {p.baselineMedian == null ? "n/a" : num(p.baselineMedian, 2)}</span>
                     <span className="mono whitespace-nowrap"><span className="text-ink-muted">z</span> {p.zScore == null ? "n/a" : num(p.zScore, 1)}</span>
                     <span className="mono whitespace-nowrap"><span className="text-ink-muted">posts</span> {p.nRelevant}</span>
+                    {soFar !== undefined && l.timeline?.points[soFar] && (
+                      <span className="mono whitespace-nowrap text-ink-muted" data-testid={`readout-sofar-${l.hazard}`}>this hour so far {l.timeline.points[soFar].nRelevant} posts</span>
+                    )}
                     {/* On an all-places lane the level is the aggregate crossing its thresholds, which never opens an alert; a place lane's level is the detector's own. */}
                     <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: LEVEL_COLOR[p.level] }}><LevelGlyph level={p.level} size={9} />{LEVEL_LABEL[p.level]}{aggregate && <span className="text-ink-muted font-normal"> (lane, not an alert)</span>}</span>
                   </>

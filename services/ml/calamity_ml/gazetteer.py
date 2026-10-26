@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import math
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -100,6 +101,10 @@ DIRECTION_WORDS = {
 
 
 def normalise(s: str) -> str:
+    # Accents are folded, not dropped: "Bagé" must become "bage" (its GeoNames ascii name), never "bag", or the English
+    # word "bag" in a relief post resolves to a town in Brazil.
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
     s = s.strip().lower().replace("’", "'")
     s = re.sub(r"^(the|city of)\s+", "", s)
     stripped = re.sub(r"\s+(county|state|province|region|district)$", "", s)

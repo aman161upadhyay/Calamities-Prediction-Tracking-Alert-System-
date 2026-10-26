@@ -44,6 +44,8 @@ COMMON_WORD_NAMES = {
     # Companies and brands that share a name with a town (Toyota, Japan; Shell, Wyoming): a brand in a disaster post.
     "toyota", "honda", "nissan", "hyundai", "samsung", "sony", "shell", "chevron", "exxon", "walmart", "target",
     "costco", "tesla", "boeing", "airbus", "ikea", "nestle", "apple", "oracle", "adobe", "cisco", "intel", "dell",
+    # British spellings and trade words that are also towns ("Tyre stocks are down" is rubber, not Lebanon).
+    "tyre", "tyres", "rubber", "cotton", "timber", "cement", "steel", "diesel", "petrol",
 }
 # Hazard words that are also town names ("Hurricane, Utah", "Flood, Virginia", "Tornado, West Virginia"). In a post about a
 # disaster they are almost always the hazard, so they resolve only with state-level support, never on country alone.
@@ -72,7 +74,17 @@ STOPLIST = {
     "east", "west", "north", "south", "midwest", "west coast", "east coast", "gulf", "atlantic", "pacific", "caribbean",
     "the gulf", "the atlantic", "the pacific", "the caribbean", "coast", "the coast", "bay", "the bay", "downtown",
     "southeast", "northeast", "northwest", "southwest", "central america", "middle east", "the middle east",
+    # Capitalised ordinary words that GeoNames carries as transliterated alternate names: "Gods" (Qods, Iran) from
+    # "God's Own Country", "Hindi" (Mariupol), "Fanta" (Vantaa), "Federal" (Washington), "Forest" (Cleveland).
+    "gods", "god", "god's", "hindi", "fanta", "federal", "the federal", "forest", "the forest",
 }
+
+# A facility or organisation span that names a natural feature ("Cleveland National Forest", "Buffalo Bayou") is not a
+# reference to the city its leading word matches.
+FEATURE_SUFFIXES = (
+    "national forest", "state forest", "forest", "bayou", "creek", "canyon", "national park", "state park",
+    "wildlife refuge", "reservoir", "mesa", "ridge", "falls", "springs",
+)
 
 
 @dataclass
@@ -101,6 +113,9 @@ class Geoparser:
     def _weak_mention(self, raw: str) -> str | None:
         """Reduce an ORG/FAC span to a leading place name that is a large city, region or country."""
         words = raw.split()
+        low = raw.lower()
+        if any(low.endswith(suf) for suf in FEATURE_SUFFIXES):
+            return None
         for n in (3, 2, 1):
             if len(words) < n:
                 continue
@@ -288,11 +303,20 @@ class Geoparser:
                     s -= 1.0
                 strong_by_key[c.key] = strong
                 scored.append((s, supported, c))
+            # A region's floor exists so "Texas" beats a town called Texas; it must not let an unsupported state
+            # elsewhere ("Victoria", Australia) crowd a town the stream's own state vouches for (Victoria, TX).
+            if any(strong_by_key[c.key] for _s, _sup, c in scored):
+                scored = [(s - 1.5, sup, c) if c.kind == "region" and not sup else (s, sup, c) for s, sup, c in scored]
             # An informal short form ("Cali") yields to a place whose proper name is the mention when the text
             # supports that place ("Cali, Colombia"); on its own it keeps the usual population order.
             norm_m = normalise(m)
             if any(sup and (norm_m, c.key) not in self.gazetteer.informal for _s, sup, c in scored):
                 scored = [(s - 1.0, sup, c) if (norm_m, c.key) in self.gazetteer.informal else (s, sup, c) for s, sup, c in scored]
+            # Likewise a place whose proper name is the mention, once the text or the stream supports it, outranks a
+            # larger city that only carries the name as an alternate ("Victoria" in a Texas stream is Victoria, TX,
+            # not Hong Kong, whose colonial name GeoNames still lists).
+            if any(sup and normalise(c.name) == norm_m for _s, sup, c in scored):
+                scored = [(s - 1.0, sup, c) if normalise(c.name) != norm_m else (s, sup, c) for s, sup, c in scored]
             scored.sort(key=lambda t: t[0], reverse=True)
             best_s, best_supported, best = scored[0]
             if len(scored) == 1:

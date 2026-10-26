@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { motion, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { prob } from "@/lib/format";
 
 const CX = 110;
@@ -11,17 +9,11 @@ function pt(v: number, r: number) {
   return [CX + r * Math.cos(a), CY - r * Math.sin(a)] as const;
 }
 
-/** A 180-degree needle gauge with a printed 0 to 1 scale. The value is always printed beside it. */
+/** A 180-degree needle gauge with a printed 0 to 1 scale. The value is always printed beside it.
+ *  The needle swings on a CSS transition whose easing is a sampled spring (see .needle in index.css),
+ *  so it overshoots by about five hundredths and settles, like a moving-coil meter. */
 export function Dial({ label, value, pen = false, testId }: { label: string; value: number | null; pen?: boolean; testId?: string }) {
-  const reduce = useReducedMotion() || (typeof document !== "undefined" && document.documentElement.dataset.motion === "reduce");
-  const spring = useSpring(0, { stiffness: 170, damping: 18 });
-  const rotate = useTransform(spring, (v) => v * 180 - 90);
-  useEffect(() => {
-    const v = Math.max(0, Math.min(1, value ?? 0));
-    if (reduce) spring.jump(v);
-    else spring.set(v);
-  }, [value, reduce, spring]);
-
+  const v = Math.max(0, Math.min(1, value ?? 0));
   const ticks = Array.from({ length: 21 }, (_, i) => i / 20);
   const [ax, ay] = pt(0, R);
   const [bx, by] = pt(1, R);
@@ -50,10 +42,10 @@ export function Dial({ label, value, pen = false, testId }: { label: string; val
           })}
           <line x1={10} x2={210} y1={CY + 0.5} y2={CY + 0.5} stroke="#DAD7CE" />
         </svg>
-        <motion.div
+        <div
           aria-hidden
-          className="absolute w-[2px] origin-bottom"
-          style={{ left: CX - 1, top: CY - (R - 6), height: R - 6, background: value == null ? "#B9B5A9" : needle, rotate }}
+          className="needle absolute w-[2px] origin-bottom"
+          style={{ left: CX - 1, top: CY - (R - 6), height: R - 6, background: value == null ? "#B9B5A9" : needle, transform: `rotate(${v * 180 - 90}deg)` }}
         />
         <span aria-hidden className="absolute size-3 rounded-full bg-ink" style={{ left: CX - 6, top: CY - 6 }} />
       </div>

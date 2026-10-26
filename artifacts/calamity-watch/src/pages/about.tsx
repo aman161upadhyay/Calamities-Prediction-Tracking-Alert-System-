@@ -46,7 +46,17 @@ export default function AboutPage() {
       </Part>
 
       <Part id="lineage" title="2018 to 2026" note="First written in 2018 for Microsoft's CodeFunDo++ hackathon; rebuilt in 2026 with every part measured instead of assumed.">
-        <div className="bg-sheet border border-rule-strong overflow-x-auto">
+        {/* Below sm the three columns stack per part; a 560 px table only clipped on a phone. */}
+        <div className="sm:hidden bg-sheet border border-rule-strong divide-y divide-rule" data-testid="list-lineage">
+          {ROWS.map(([a, b, c]) => (
+            <div key={a} className="px-4 py-3 text-[14px] leading-5">
+              <p className="font-semibold">{a}</p>
+              <p className="mt-1 grid grid-cols-[40px_minmax(0,1fr)] gap-x-3"><span className="mono text-[12px] text-ink-muted pt-0.5">2018</span><span className="text-ink-muted">{b}</span></p>
+              <p className="mt-1 grid grid-cols-[40px_minmax(0,1fr)] gap-x-3"><span className="mono text-[12px] pt-0.5">2026</span><span>{c}</span></p>
+            </div>
+          ))}
+        </div>
+        <div className="hidden sm:block bg-sheet border border-rule-strong overflow-x-auto">
           <table className="w-full text-[14px] leading-5 min-w-[560px]" data-testid="table-lineage">
             <thead className="border-b border-rule-strong"><tr><th className="text-left font-normal text-[12px] text-ink-muted py-2 px-4 w-[140px]">Part</th><th className="text-left font-normal mono text-[12px] text-ink-muted px-4">2018</th><th className="text-left font-normal mono text-[12px] text-ink px-4">2026</th></tr></thead>
             <tbody className="divide-y divide-rule">{ROWS.map(([a, b, c]) => <tr key={a} className="align-top"><th scope="row" className="text-left font-semibold py-3 px-4">{a}</th><td className="px-4 py-3 text-ink-muted">{b}</td><td className="px-4 py-3">{c}</td></tr>)}</tbody>
@@ -67,7 +77,7 @@ export default function AboutPage() {
               <dt className="text-ink-muted">Official</dt><dd>GDACS, USGS, US National Weather Service, NASA FIRMS</dd>
               <dt className="text-ink-muted">Weather</dt><dd>Open-Meteo</dd>
               <dt className="text-ink-muted">Map</dt><dd>OpenFreeMap positron tiles from OpenMapTiles, data from OpenStreetMap contributors (ODbL)</dd>
-              <dt className="text-ink-muted">Type</dt><dd>Archivo and Martian Mono (SIL OFL)</dd>
+              <dt className="text-ink-muted">Type</dt><dd>Archivo and Martian Mono, served from this site under the SIL Open Font License</dd>
             </dl>
           </Plate>
           <Plate label={["Sources", "state now", "UTC"]} testId="plate-source-state">

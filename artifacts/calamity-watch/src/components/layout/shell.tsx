@@ -29,7 +29,7 @@ function Mark() {
 function stateMark(s: SourceHealth["state"]) {
   if (s === "ok") return { glyph: "●", color: "#15140F" };
   if (s === "idle") return { glyph: "○", color: "#5B5A54" };
-  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#9A6700" };
+  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#875A00" };
   // Failure states are ink (the brief keeps red for fear and alert readings); the triangle and the state word carry the message.
   return { glyph: "▲", color: "#15140F" };
 }
@@ -221,7 +221,7 @@ export function Footer() {
           <p className="plate-label text-ink-muted mb-2">Licences</p>
           <ul>
             <li>Map: OpenFreeMap, OpenMapTiles, OpenStreetMap contributors (ODbL)</li>
-            <li>Type: Archivo and Martian Mono (SIL OFL)</li>
+            <li>Type: Archivo and Martian Mono, self-hosted under the SIL OFL</li>
             <li>Land outlines: Natural Earth (public domain)</li>
             <li>
               Datasets and model cards: <Link href="/model" className="ink-link" data-testid="link-footer-model">model page</Link>
