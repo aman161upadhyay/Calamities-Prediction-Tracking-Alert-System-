@@ -770,7 +770,7 @@ export type UnavailableResponse = ErrorResponse;
 export type ScenarioParameter = string;
 
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 export type AsOfParameter = string;
 
@@ -780,7 +780,7 @@ export type GetBoardParams = {
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -791,7 +791,7 @@ export type ListHazardsParams = {
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -802,7 +802,7 @@ export type GetHazardParams = {
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -823,7 +823,7 @@ hours?: number;
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -836,7 +836,7 @@ featured?: boolean;
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -847,7 +847,7 @@ export type GetPlaceParams = {
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -875,7 +875,7 @@ limit?: number;
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -898,14 +898,14 @@ limit?: number;
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
 
 export type GetAlertParams = {
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };
@@ -927,7 +927,7 @@ limit?: number;
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };

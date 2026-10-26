@@ -35,6 +35,8 @@ Data: `useListReplayScenarios`, `useGetReplayScenario`, `usePrepareReplayScenari
 
 Pen draw timing per recorder size, stamp press, pipeline pulse, needle spring, transport cursor, tab indicator; font loading without layout shift (preload, `size-adjust` fallback metrics); Lighthouse-style checks with the dev build (LCP element is the H1 or the recorder, no CLS from fonts or the map); axe-style manual pass on headings, names, contrast, focus order; narrow-width pass for every page. Rounds continue until three reviewers in a row accept with no slop finding.
 
+Status (2026-10-26): done. Rounds 8 and 9 (`docs/council/round-8.md`, `round-9.md`) reviewed the whole site; round 9 closed with two outright ACCEPTs, one API input-bound minor (fixed), and the fifth consecutive unanimous "not slop" verdict. Lighthouse itself was not run (no browser with WebGL2 or a performance trace is available here); the measurable parts were done by hand: main chunk 564 kB with the map lazy, fonts preloaded with size-adjust fallbacks, the recorder drawn from server data without client-side layout shift.
+
 ## Working rules
 
 - The design subagent builds each phase from the brief and the real hooks; the main agent screenshots, runs the gate, runs the council, repairs or sends follow-ups, and pushes.

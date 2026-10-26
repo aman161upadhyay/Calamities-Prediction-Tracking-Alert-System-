@@ -14,7 +14,7 @@ export type GetBoardParams = {
  */
 scenario?: ScenarioParameter;
 /**
- * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ * ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
 };

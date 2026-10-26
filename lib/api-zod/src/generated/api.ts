@@ -73,7 +73,7 @@ export const GetSystemStatusResponse = zod.object({
  */
 export const GetBoardQueryParams = zod.object({
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetBoardResponse = zod.object({
@@ -171,7 +171,7 @@ export const GetBoardResponse = zod.object({
  */
 export const ListHazardsQueryParams = zod.object({
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const ListHazardsResponseItem = zod.object({
@@ -205,7 +205,7 @@ export const GetHazardParams = zod.object({
 
 export const GetHazardQueryParams = zod.object({
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetHazardResponse = zod.object({
@@ -325,7 +325,7 @@ export const GetHazardTimelineQueryParams = zod.object({
   "placeId": zod.coerce.number().int().min(1).max(getHazardTimelineQueryPlaceIdMax).optional(),
   "hours": zod.coerce.number().int().min(getHazardTimelineQueryHoursMin).max(getHazardTimelineQueryHoursMax).default(getHazardTimelineQueryHoursDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetHazardTimelineResponse = zod.object({
@@ -363,7 +363,7 @@ export const ListPlacesQueryParams = zod.object({
   "q": zod.coerce.string().optional(),
   "featured": zod.coerce.boolean().optional(),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const ListPlacesResponseItem = zod.object({
@@ -399,7 +399,7 @@ export const GetPlaceParams = zod.object({
 
 export const GetPlaceQueryParams = zod.object({
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetPlaceResponse = zod.object({
@@ -526,7 +526,7 @@ export const ListPostsQueryParams = zod.object({
   "minRelevance": zod.coerce.number().min(listPostsQueryMinRelevanceMin).max(listPostsQueryMinRelevanceMax).default(listPostsQueryMinRelevanceDefault),
   "limit": zod.coerce.number().int().min(1).max(listPostsQueryLimitMax).default(listPostsQueryLimitDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const ListPostsResponseItem = zod.object({
@@ -572,7 +572,7 @@ export const ListAlertsQueryParams = zod.object({
   "placeId": zod.coerce.number().int().min(1).max(listAlertsQueryPlaceIdMax).optional(),
   "limit": zod.coerce.number().int().min(1).max(listAlertsQueryLimitMax).default(listAlertsQueryLimitDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const ListAlertsResponseItem = zod.object({
@@ -618,7 +618,7 @@ export const GetAlertParams = zod.object({
 })
 
 export const GetAlertQueryParams = zod.object({
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetAlertResponse = zod.object({
@@ -727,7 +727,7 @@ export const ListOfficialEventsQueryParams = zod.object({
   "hours": zod.coerce.number().int().min(1).max(listOfficialEventsQueryHoursMax).default(listOfficialEventsQueryHoursDefault),
   "limit": zod.coerce.number().int().min(1).max(listOfficialEventsQueryLimitMax).default(listOfficialEventsQueryLimitDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
-  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
+  "asOf": zod.date().optional().describe('ISO timestamp between 2000-01-01 and one year from now; values outside that range are refused with 400. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const ListOfficialEventsResponseItem = zod.object({

@@ -30,10 +30,18 @@ export function singleParam(query: Record<string, unknown>, name: string): strin
   return v as string | undefined;
 }
 
+// The data starts with the 2017 tapes and nothing is known about the future beyond the clock's drift; a JavaScript
+// Date reaches year ±271821, which Postgres refuses with a server error, so the bound is applied here as a 400.
+const AS_OF_MIN = Date.UTC(2000, 0, 1);
+const AS_OF_SLACK_MS = 366 * 24 * 3_600_000;
+
 export function parseAsOf(value: string | undefined): Date | undefined {
   if (value === undefined || value === "") return undefined;
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) throw new ApiError(400, "asOf must be an ISO 8601 timestamp");
+  if (d.getTime() < AS_OF_MIN || d.getTime() > Date.now() + AS_OF_SLACK_MS) {
+    throw new ApiError(400, "asOf must be between 2000-01-01 and one year from now");
+  }
   return d;
 }
 
