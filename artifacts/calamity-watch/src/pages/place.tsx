@@ -5,7 +5,7 @@ import { useGetPlace, useListAlerts, getGetPlaceQueryKey, getListAlertsQueryKey,
 import { Page } from "@/components/layout/shell";
 import { EmptyState, ErrorState, ExperimentalNote, HazardTag, LevelBadge, LoadingRows, Skel, TrendText } from "@/components/kit";
 import { Recorder, WindowSwitch, type RecorderLane } from "@/components/instruments/recorder";
-import { PostRow } from "@/components/board/rows";
+import { PostRow, scopeQuery } from "@/components/board/rows";
 import { AlertLedger, Figure, OfficialLedger, Part, ScopeNote, useScope } from "@/components/evidence/parts";
 import { HAZARD_LABEL, LEVEL_RANK, isNotFound, num, placeLabel, utcDateTime } from "@/lib/format";
 import { useTitle } from "./home";
@@ -16,7 +16,7 @@ const WINDOWS: (24 | 72 | 168)[] = [24, 72, 168];
 export default function PlacePage() {
   const { placeId } = useParams<{ placeId: string }>();
   const id = Number(placeId);
-  const { scope, params, ready, atEnd, levelLabel } = useScope();
+  const { scope, params, ready, atEnd } = useScope();
   const live = !scope;
   const q = useGetPlace(id, params, { query: { queryKey: [...getGetPlaceQueryKey(id), params], enabled: Number.isFinite(id) && ready, refetchInterval: live ? 60_000 : false } });
   const d = q.data;
@@ -70,7 +70,7 @@ export default function PlacePage() {
                 <ol className="sm:hidden divide-y divide-rule" data-testid="list-place-hazards">
                   {[...d.hazards].sort((a, b) => LEVEL_RANK[b.level] - LEVEL_RANK[a.level]).map((h) => (
                     <li key={h.hazard} className="px-4 py-2.5 min-w-0">
-                      <div className="flex items-baseline justify-between gap-3"><HazardTag hazard={h.hazard} /><LevelBadge level={h.level} /></div>
+                      <div className="flex items-baseline justify-between gap-3"><HazardTag hazard={h.hazard} query={scopeQuery(scope)} /><LevelBadge level={h.level} /></div>
                       <p className="mono text-[12px] text-ink-muted mt-0.5">z {h.zScore == null ? "n/a" : num(h.zScore, 1)} · {num(h.relevantLast24h)} relevant, 24 h</p>
                     </li>
                   ))}
@@ -80,7 +80,7 @@ export default function PlacePage() {
                   <tbody className="divide-y divide-rule">
                     {[...d.hazards].sort((a, b) => LEVEL_RANK[b.level] - LEVEL_RANK[a.level]).map((h) => (
                       <tr key={h.hazard} data-testid={`row-place-hazard-${h.hazard}`}>
-                        <td className="px-4 py-2.5"><HazardTag hazard={h.hazard} /></td>
+                        <td className="px-4 py-2.5"><HazardTag hazard={h.hazard} query={scopeQuery(scope)} /></td>
                         <td className="px-3"><LevelBadge level={h.level} /></td>
                         <td className="px-3 text-right mono text-[13px]">{h.zScore == null ? "n/a" : num(h.zScore, 1)}</td>
                         <td className="px-3 text-right mono text-[13px]">{num(h.relevantLast24h)}</td>
@@ -98,7 +98,7 @@ export default function PlacePage() {
               {alerts.isPending && <LoadingRows rows={3} />}
               {alerts.isError && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
               {alerts.data && alerts.data.length === 0 && <EmptyState>No alert has opened for {d.place.name} in this record.</EmptyState>}
-              {alerts.data && alerts.data.length > 0 && <AlertLedger alerts={alerts.data} levelLabel={levelLabel} scope={scope} showPlace={false} testId="ledger-place-alerts" />}
+              {alerts.data && alerts.data.length > 0 && <AlertLedger alerts={alerts.data} atEnd={atEnd} scope={scope} showPlace={false} testId="ledger-place-alerts" />}
             </div>
           </Part>
 

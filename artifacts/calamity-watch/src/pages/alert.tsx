@@ -34,7 +34,8 @@ export default function AlertPage() {
   const scope = scenario ? { scenario, asOf } : null;
 
   // Posts in the window: read up to the alert's close (or the playhead, whichever is earlier), then keep the window.
-  const until = a ? [asOf, a.closedAt].filter(Boolean).map((t) => t as string).sort()[0] : undefined;
+  // Read to an hour past closing (the stated window), never past the playhead or now.
+  const until = a ? [asOf, a.closedAt ? new Date(+new Date(a.closedAt) + 3_600_000).toISOString() : undefined, a.closedAt ? new Date().toISOString() : undefined].filter(Boolean).map((t) => t as string).sort((x, y) => +new Date(x) - +new Date(y))[0] : undefined;
   const postParams = a ? { placeId: a.placeId, hazard: a.hazard, limit: 200, ...(scenario ? { scenario } : {}), ...(until ? { asOf: until } : {}) } : {};
   const posts = useListPosts(postParams, { query: { queryKey: getListPostsQueryKey(postParams), enabled: !!a } });
 
@@ -136,7 +137,7 @@ export default function AlertPage() {
                     <Figure label="z against the baseline" testId="text-peak-zscore"><span className="mono">{peak.zScore == null ? "n/a" : num(peak.zScore, 1)}</span></Figure>
                     <Figure label="Relevant posts that hour" testId="text-peak-posts"><span className="mono">{num(peak.nRelevant)}</span> <span className="text-[12px] text-ink-muted">of {num(peak.nPosts)}</span></Figure>
                     <Figure label="Level"><LevelBadge level={peak.level} testId="status-peak-hour-level" /></Figure>
-                    <Figure label="Current level"><LevelBadge level={a.currentLevel} testId="status-current-level" /></Figure>
+                    <Figure label={a.status === "open" && !a.closedAt ? (asOf ? "Level at playhead" : scenario ? "Level at end" : "Level now") : "Level at closing"}><LevelBadge level={a.currentLevel} testId="status-current-level" /></Figure>
                   </dl>
                 ) : (
                   <EmptyState>The peak hour falls outside the stored trace; the peak z above is the detector's own record.</EmptyState>

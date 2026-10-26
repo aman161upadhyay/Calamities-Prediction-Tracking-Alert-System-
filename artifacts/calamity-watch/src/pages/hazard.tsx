@@ -21,7 +21,7 @@ export default function HazardPage() {
 
 function HazardInner({ hazard }: { hazard: Hazard }) {
   useTitle(`${HAZARD_LABEL[hazard]} signal`);
-  const { scope, params, ready, atEnd, levelLabel } = useScope();
+  const { scope, params, ready, atEnd } = useScope();
   const refetchInterval = scope ? (false as const) : 60_000;
   const detail = useGetHazard(hazard, params, { query: { queryKey: [...getGetHazardQueryKey(hazard), params], refetchInterval, enabled: ready } });
   const [win, setWin] = useState<24 | 72 | 168>(24);
@@ -120,7 +120,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
           {alerts.isPending && <LoadingRows rows={3} />}
           {alerts.isError && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
           {alerts.data && alerts.data.length === 0 && <EmptyState>No {label.toLowerCase()} alert has opened in this record.{!scope && <> <Link href={`/alerts?hazard=${hazard}`} className="ink-link text-ink">Read the ledger</Link> to switch to a replay.</>}</EmptyState>}
-          {alerts.data && alerts.data.length > 0 && <AlertLedger alerts={alerts.data} levelLabel={levelLabel} scope={scope} testId="ledger-hazard-alerts" />}
+          {alerts.data && alerts.data.length > 0 && <AlertLedger alerts={alerts.data} atEnd={atEnd} scope={scope} testId="ledger-hazard-alerts" />}
         </div>
       </Part>
 

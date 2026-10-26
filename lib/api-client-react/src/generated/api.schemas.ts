@@ -789,6 +789,10 @@ asOf?: AsOfParameter;
 };
 
 export type GetHazardTimelineParams = {
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 /**
  * @minimum 6
@@ -831,6 +835,10 @@ asOf?: AsOfParameter;
 
 export type ListPostsParams = {
 hazard?: Hazard;
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 source?: Source;
 /**
@@ -856,6 +864,10 @@ asOf?: AsOfParameter;
 export type ListAlertsParams = {
 status?: AlertStatus;
 hazard?: Hazard;
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 /**
  * @minimum 1

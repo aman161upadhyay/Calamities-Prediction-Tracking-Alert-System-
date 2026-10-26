@@ -9,6 +9,10 @@ import type { AsOfParameter } from './asOfParameter';
 import type { ScenarioParameter } from './scenarioParameter';
 
 export type GetHazardTimelineParams = {
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 /**
  * @minimum 6

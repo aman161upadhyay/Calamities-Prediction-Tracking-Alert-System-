@@ -26,7 +26,8 @@ export function parseWith<T extends ZodTypeAny>(schema: T, value: unknown): z.in
 
 export function intParam(value: string | undefined, name: string): number {
   const n = Number(value);
-  if (!Number.isInteger(n) || n <= 0) throw new ApiError(400, `${name} must be a positive integer`);
+  // Ids are int4 in the database; anything past its range is a 400 here, not a 500 from the driver.
+  if (!Number.isInteger(n) || n <= 0 || n > 2147483647) throw new ApiError(400, `${name} must be a positive integer up to 2147483647`);
   return n;
 }
 

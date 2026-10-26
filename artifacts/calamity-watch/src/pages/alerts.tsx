@@ -20,13 +20,15 @@ export default function AlertsPage() {
   const hazard = isHazard(hz) ? hz : undefined;
   const pid = Number(sp.get("placeId"));
   const placeId = Number.isInteger(pid) && pid > 0 ? pid : undefined;
-  const scenario = sp.get("scenario") || undefined;
+  const urlScenario = sp.get("scenario") || undefined;
+  const scenarios = useListReplayScenarios();
+  const unknown = !!urlScenario && scenarios.isSuccess && !scenarios.data.some((s) => s.id === urlScenario);
+  const scenario = unknown ? undefined : urlScenario;
   const asOf = sp.get("asOf") || undefined;
   const scope = scenario ? { scenario, asOf } : null;
 
   const params = { limit: LIMIT, ...(status ? { status } : {}), ...(hazard ? { hazard } : {}), ...(placeId ? { placeId } : {}), ...(scenario ? { scenario } : {}), ...(scenario && asOf ? { asOf } : {}) };
   const q = useListAlerts(params, { query: { queryKey: getListAlertsQueryKey(params), refetchInterval: scenario ? false : 60_000 } });
-  const scenarios = useListReplayScenarios();
   const placeParams = scenario ? { scenario } : undefined;
   const place = useGetPlace(placeId ?? 0, placeParams, { query: { queryKey: getGetPlaceQueryKey(placeId ?? 0, placeParams), enabled: !!placeId } });
   const scen = scenarios.data?.find((s) => s.id === scenario);
@@ -70,6 +72,7 @@ export default function AlertsPage() {
         )}
       </div>
 
+      {unknown && <p className="mb-3 text-[13px] text-ink" data-testid="text-unknown-replay">Unknown replay <span className="mono">{urlScenario}</span>; showing live alerts. <Link href="/alerts" className="ink-link" data-testid="link-alerts-live">Clear it</Link></p>}
       <div className="bg-sheet border border-rule-strong">
         <PlateLabel
           parts={["Ledger", "alerts", scope ? (scen?.name.split(",")[0] ?? scope.scenario) : "live", "UTC"]}
@@ -101,7 +104,7 @@ export default function AlertsPage() {
               </div>
             </div>
           )}
-          {q.data && rows.length > 0 && <AlertLedger alerts={rows} scope={scope} levelLabel={!scope ? "Level now" : asOf ? `Level at ${utcDateTime(asOf)}` : "Level at end"} />}
+          {q.data && rows.length > 0 && <AlertLedger alerts={rows} scope={scope} atEnd={!!scope && !asOf} />}
         </div>
         {rows.length === LIMIT && <p className="px-4 py-2 border-t border-rule text-[12px] text-ink-muted">Showing the first {LIMIT}, open first then most recent. Narrow by hazard or status to see older ones.</p>}
       </div>

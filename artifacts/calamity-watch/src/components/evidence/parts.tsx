@@ -23,8 +23,7 @@ export function useScope() {
   /** False until a scenario's end is known; time-windowed queries wait for it. */
   const ready = !scenario || !!asOf || scenarios.isError || (scenarios.isSuccess && !endsAt);
   const atEnd = !!scenario && !urlAsOf;
-  const levelLabel = !scenario ? "Level now" : atEnd ? "Level at end" : `Level at ${utcDateTime(urlAsOf)}`;
-  return { scope, params, sp, ready, atEnd, levelLabel };
+  return { scope, params, sp, ready, atEnd };
 }
 
 export function replayHref(scope: NonNullable<Scope>) {
@@ -52,6 +51,7 @@ export function RadioRow({ label, value, options, onChange, testId }: { label: s
   const ref = useRef<HTMLDivElement>(null);
   const onKey = (e: KeyboardEvent<HTMLDivElement>) => {
     const i = Math.max(0, options.findIndex((o) => o.value === value));
+
     let n = -1;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") n = (i + 1) % options.length;
     if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = (i - 1 + options.length) % options.length;
@@ -64,15 +64,16 @@ export function RadioRow({ label, value, options, onChange, testId }: { label: s
     <div className="grid gap-x-4 gap-y-1.5 md:grid-cols-[88px_1fr] items-start">
       <span className="text-[13px] leading-7 text-ink-muted" id={`${testId}-label`}>{label}</span>
       <div ref={ref} role="radiogroup" aria-labelledby={`${testId}-label`} onKeyDown={onKey} className="flex flex-wrap gap-1.5 min-w-0" data-testid={testId}>
-        {options.map((o) => {
+        {options.map((o, idx) => {
           const on = o.value === value;
+          const tabbable = on || (idx === 0 && !options.some((x) => x.value === value));
           return (
             <button
               key={o.value || "all"}
               type="button"
               role="radio"
               aria-checked={on}
-              tabIndex={on ? 0 : -1}
+              tabIndex={tabbable ? 0 : -1}
               onClick={() => onChange(o.value)}
               data-testid={`button-${testId}-${o.value || "all"}`}
               className={cn("press inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[3px] border text-[13px] leading-none", on ? "bg-ink text-paper border-ink" : "bg-sheet border-rule-strong text-ink hover:border-ink")}
@@ -92,16 +93,18 @@ function windowText(a: Alert) {
   return `${h} h`;
 }
 
-const COLS = "grid gap-x-4 items-baseline grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[132px_minmax(0,1fr)_96px_64px_minmax(180px,240px)] lg:grid-cols-[148px_minmax(0,1fr)_110px_72px_64px_64px_minmax(200px,260px)]";
+const COLS = "grid gap-x-4 items-baseline grid-cols-[minmax(0,1fr)_auto] md:grid-cols-[140px_minmax(0,1fr)_124px_60px_minmax(180px,240px)] lg:grid-cols-[140px_minmax(0,1fr)_124px_60px_56px_56px_minmax(184px,250px)]";
 
 /** The printed ledger of alerts: one hairline row per alert, the whole row opens the dossier. */
-export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace = true, levelLabel = "Level now" }: { alerts: Alert[]; scope: Scope; testId?: string; showPlace?: boolean; levelLabel?: string }) {
+export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace = true, atEnd = false }: { alerts: Alert[]; scope: Scope; testId?: string; showPlace?: boolean; atEnd?: boolean }) {
+  /** Each level names its own observation time: closed alerts keep the level at closing. */
+  const when = (a: Alert) => a.status !== "open" || a.closedAt ? "at close" : !scope ? "now" : atEnd ? "at end" : "at playhead";
   return (
     <div data-testid={testId}>
       <div className={cn(COLS, "hidden md:grid px-4 h-8 items-center border-b border-rule-strong text-[12px] text-ink-muted")} aria-hidden>
         <span>Opened, UTC</span>
         <span>{showPlace ? "Place and hazard" : "Hazard"}</span>
-        <span>{levelLabel}</span>
+        <span>Level</span>
         <span>Open for</span>
         <span className="hidden lg:block text-right">Peak z</span>
         <span className="hidden lg:block text-right">Posts</span>
@@ -123,7 +126,7 @@ export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace
                   <span className="block md:hidden mono text-[11px] text-ink-muted mt-0.5">{utcDateTime(a.openedAt)} · {windowText(a)}</span>
                   <span className="block md:hidden mt-1 text-[12px] leading-4"><StampGlyph state={c.state} />{c.state === "corroborated" && <span className="mono text-[11px] text-ink-muted"> · {stampLead(c, a.openedAt)}</span>}</span>
                 </span>
-                <span><LevelBadge level={a.currentLevel} testId={`status-alert-level-${a.id}`} /></span>
+                <span className="text-right md:text-left"><LevelBadge level={a.currentLevel} testId={`status-alert-level-${a.id}`} /> <span className="mono text-[11px] text-ink-muted whitespace-nowrap md:block md:mt-0.5" data-testid={`text-alert-level-when-${a.id}`}>{when(a)}</span></span>
                 <span className="mono text-[12px] hidden md:block">{windowText(a)}</span>
                 <span className="mono text-[12px] text-right hidden lg:block">{num(a.peakZ, 1)}</span>
                 <span className="mono text-[12px] text-right hidden lg:block">{num(a.postCount)}</span>

@@ -12,6 +12,10 @@ import type { Source } from './source';
 
 export type ListPostsParams = {
 hazard?: Hazard;
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 source?: Source;
 /**

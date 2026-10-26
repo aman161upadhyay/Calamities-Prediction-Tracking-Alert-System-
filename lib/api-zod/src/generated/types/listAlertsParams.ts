@@ -13,6 +13,10 @@ import type { ScenarioParameter } from './scenarioParameter';
 export type ListAlertsParams = {
 status?: AlertStatus;
 hazard?: Hazard;
+/**
+ * @minimum 1
+ * @maximum 2147483647
+ */
 placeId?: number;
 /**
  * @minimum 1

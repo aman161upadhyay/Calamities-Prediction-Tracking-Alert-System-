@@ -154,9 +154,15 @@ export function leadText(
   const min = c.leadMinutes;
   if (min === null || min === undefined) return "no lead time recorded";
   const a = Math.abs(min);
-  const hourly = c.officialTimePrecision === "hour";
-  const t = hourly ? `about ${Math.round(a / 60)} h` : a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
-  return min >= 0 ? `${t} before ${what}` : `${t} after ${what}`;
+  if (c.officialTimePrecision === "hour") {
+    // Same rounding as stampLead: an hour-dated record supports whole hours only, and a rounded zero is the same hour, not "before".
+    const h = Math.round(a / 60);
+    if (h === 0) return `in the same hour as ${what}`;
+    return min > 0 ? `about ${h} h before ${what}` : `about ${h} h after ${what}`;
+  }
+  if (min === 0) return `in the same minute as ${what}`;
+  const t = a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
+  return min > 0 ? `${t} before ${what}` : `${t} after ${what}`;
 }
 
 function dateParts(iso: string): [number, number, number] {

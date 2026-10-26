@@ -111,6 +111,8 @@ paths:
           required: false
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
         - name: hours
           in: query
           required: false
@@ -192,6 +194,8 @@ paths:
           required: false
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
         - name: source
           in: query
           required: false
@@ -246,6 +250,8 @@ paths:
           required: false
           schema:
             type: integer
+            minimum: 1
+            maximum: 2147483647
         - name: limit
           in: query
           required: false
@@ -523,6 +529,8 @@ components:
       required: true
       schema:
         type: integer
+        minimum: 1
+        maximum: 2147483647
     ScenarioIdPath:
       name: scenarioId
       in: path

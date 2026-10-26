@@ -312,6 +312,8 @@ export const GetHazardTimelineParams = zod.object({
   "hazard": zod.enum(['flood', 'storm', 'cyclone', 'wildfire', 'earthquake', 'landslide', 'heat', 'tsunami'])
 })
 
+export const getHazardTimelineQueryPlaceIdMax = 2147483647;
+
 export const getHazardTimelineQueryHoursDefault = 72;
 export const getHazardTimelineQueryHoursMin = 6;
 export const getHazardTimelineQueryHoursMax = 720;
@@ -319,7 +321,7 @@ export const getHazardTimelineQueryHoursMax = 720;
 
 
 export const GetHazardTimelineQueryParams = zod.object({
-  "placeId": zod.coerce.number().int().optional(),
+  "placeId": zod.coerce.number().int().min(1).max(getHazardTimelineQueryPlaceIdMax).optional(),
   "hours": zod.coerce.number().int().min(getHazardTimelineQueryHoursMin).max(getHazardTimelineQueryHoursMax).default(getHazardTimelineQueryHoursDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
   "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
@@ -386,8 +388,12 @@ export const ListPlacesResponse = zod.array(ListPlacesResponseItem)
 /**
  * @summary Place detail with per-hazard levels, alerts, nearby official events and weather context
  */
+export const getPlacePathPlaceIdMax = 2147483647;
+
+
+
 export const GetPlaceParams = zod.object({
-  "placeId": zod.coerce.number().int()
+  "placeId": zod.coerce.number().int().min(1).max(getPlacePathPlaceIdMax)
 })
 
 export const GetPlaceQueryParams = zod.object({
@@ -500,6 +506,8 @@ export const GetPlaceResponse = zod.object({
 /**
  * @summary Scored posts feed, newest first
  */
+export const listPostsQueryPlaceIdMax = 2147483647;
+
 export const listPostsQueryMinRelevanceDefault = 0.5;
 export const listPostsQueryMinRelevanceMin = 0;
 export const listPostsQueryMinRelevanceMax = 1;
@@ -511,7 +519,7 @@ export const listPostsQueryLimitMax = 200;
 
 export const ListPostsQueryParams = zod.object({
   "hazard": zod.enum(['flood', 'storm', 'cyclone', 'wildfire', 'earthquake', 'landslide', 'heat', 'tsunami']).optional(),
-  "placeId": zod.coerce.number().int().optional(),
+  "placeId": zod.coerce.number().int().min(1).max(listPostsQueryPlaceIdMax).optional(),
   "source": zod.enum(['x', 'bluesky', 'replay']).optional(),
   "minRelevance": zod.coerce.number().min(listPostsQueryMinRelevanceMin).max(listPostsQueryMinRelevanceMax).default(listPostsQueryMinRelevanceDefault),
   "limit": zod.coerce.number().int().min(1).max(listPostsQueryLimitMax).default(listPostsQueryLimitDefault),
@@ -549,6 +557,8 @@ export const ListPostsResponse = zod.array(ListPostsResponseItem)
 /**
  * @summary Alerts, open first then most recent
  */
+export const listAlertsQueryPlaceIdMax = 2147483647;
+
 export const listAlertsQueryLimitDefault = 50;
 export const listAlertsQueryLimitMax = 200;
 
@@ -557,7 +567,7 @@ export const listAlertsQueryLimitMax = 200;
 export const ListAlertsQueryParams = zod.object({
   "status": zod.enum(['open', 'closed']).optional(),
   "hazard": zod.enum(['flood', 'storm', 'cyclone', 'wildfire', 'earthquake', 'landslide', 'heat', 'tsunami']).optional(),
-  "placeId": zod.coerce.number().int().optional(),
+  "placeId": zod.coerce.number().int().min(1).max(listAlertsQueryPlaceIdMax).optional(),
   "limit": zod.coerce.number().int().min(1).max(listAlertsQueryLimitMax).default(listAlertsQueryLimitDefault),
   "scenario": zod.coerce.string().optional().describe('Replay scenario id. When set, data comes from that scenario instead of live ingestion.'),
   "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')

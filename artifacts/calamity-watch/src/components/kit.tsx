@@ -32,7 +32,8 @@ export function HazardDot({ hazard, color }: { hazard: Hazard; color?: string })
   return <span aria-hidden className="inline-block size-2.5 rounded-full shrink-0 ring-1 ring-paper" style={{ background: color ?? HAZARD_FALLBACK_COLOR[hazard] }} />;
 }
 
-export function HazardTag({ hazard, link = true }: { hazard: Hazard; color?: string; link?: boolean }) {
+/** `query` carries the page's replay scope ("?scenario=…&asOf=…") so a hazard link never drops into live data. */
+export function HazardTag({ hazard, link = true, query = "" }: { hazard: Hazard; color?: string; link?: boolean; query?: string }) {
   const inner = (
     <>
       <HazardDot hazard={hazard} />
@@ -41,7 +42,7 @@ export function HazardTag({ hazard, link = true }: { hazard: Hazard; color?: str
   );
   if (!link) return <span className="inline-flex items-center gap-1.5">{inner}</span>;
   return (
-    <Link href={`/hazards/${hazard}`} data-testid={`link-hazard-${hazard}`} className="inline-flex items-center gap-1.5 ink-link">
+    <Link href={`/hazards/${hazard}${query}`} data-testid={`link-hazard-${hazard}`} className="inline-flex items-center gap-1.5 ink-link">
       {inner}
     </Link>
   );
