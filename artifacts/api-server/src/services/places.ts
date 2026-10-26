@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { db, placesTable, type Place } from "@workspace/db";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { ML_DATA_DIR } from "../lib/config";
 import { logger } from "../lib/logger";
 import type { MlPlace } from "../ml/client";
@@ -16,14 +16,24 @@ export interface PlaceSeed {
   lon: number;
   population: number | null;
   kind: string;
+  radiusKm?: number | null;
   featured?: boolean;
 }
 
 const idCache = new Map<string, number>();
+/** Keys whose admin1 or extent has been written in this process; a bare seed (a scenario anchor) must not block them. */
+const enriched = new Set<string>();
+
+function carriesDetail(s: PlaceSeed): boolean {
+  return s.radiusKm != null || s.admin1 != null;
+}
 
 export async function upsertPlaces(seeds: PlaceSeed[] | MlPlace[]): Promise<Map<string, number>> {
   const byKey = new Map<string, PlaceSeed>();
-  for (const s of seeds as PlaceSeed[]) if (!idCache.has(s.key) && !byKey.has(s.key)) byKey.set(s.key, s);
+  for (const s of seeds as PlaceSeed[]) {
+    if (byKey.has(s.key)) continue;
+    if (!idCache.has(s.key) || (carriesDetail(s) && !enriched.has(s.key))) byKey.set(s.key, s);
+  }
   if (byKey.size > 0) {
     const values = [...byKey.values()].map((p) => ({
       key: p.key,
@@ -35,11 +45,23 @@ export async function upsertPlaces(seeds: PlaceSeed[] | MlPlace[]): Promise<Map<
       lon: p.lon,
       population: p.population ?? null,
       kind: p.kind,
+      radiusKm: p.radiusKm ?? null,
       featured: p.featured ?? false,
     }));
-    await db.insert(placesTable).values(values).onConflictDoNothing({ target: placesTable.key });
+    // Keep rows current with the gazetteer (an extent or admin code added later), without touching `featured`.
+    await db
+      .insert(placesTable)
+      .values(values)
+      .onConflictDoUpdate({
+        target: placesTable.key,
+        set: {
+          admin1: sql`coalesce(excluded.admin1, ${placesTable.admin1})`,
+          radiusKm: sql`coalesce(excluded.radius_km, ${placesTable.radiusKm})`,
+        },
+      });
     const rows = await db.select({ id: placesTable.id, key: placesTable.key }).from(placesTable).where(inArray(placesTable.key, [...byKey.keys()]));
     for (const r of rows) idCache.set(r.key, r.id);
+    for (const [key, seed] of byKey) if (carriesDetail(seed)) enriched.add(key);
   }
   return idCache;
 }

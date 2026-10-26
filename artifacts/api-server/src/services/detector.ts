@@ -1,10 +1,12 @@
 import { db, alertEventsTable, alertsTable, officialEventsTable, placesTable, type Alert } from "@workspace/db";
 import { and, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
 import { DETECTOR } from "../lib/config";
-import { COMPATIBLE, hazardMeta, levelRank, type HazardId, type RiskLevel } from "../lib/hazards";
+import { COMPATIBLE, levelRank, type HazardId, type RiskLevel } from "../lib/hazards";
 import { logger } from "../lib/logger";
+import { feedLabel } from "../lib/feeds";
 import { haversineKm } from "../lib/stats";
 import { HOUR_MS, fmtUtc, minutesBetween } from "../lib/time";
+import { alertSummary } from "../lib/summary";
 import type { ComputedSignal } from "./signals";
 import { seriesKey } from "./signals";
 
@@ -26,12 +28,6 @@ export interface DetectorOutcome {
 const ELEVATED = levelRank("elevated");
 const LOW = levelRank("low");
 
-function summaryFor(hazard: string, placeName: string, nRelevant: number, z: number, peakLevel: string): string {
-  const label = hazardMeta(hazard).label;
-  const zText = `${z.toFixed(1)} robust standard deviations above its 7-day baseline`;
-  if (peakLevel === "severe") return `${label} posts about ${placeName} reached ${nRelevant} relevant posts in an hour, ${zText}.`;
-  return `${label} posts about ${placeName} rose to ${nRelevant} relevant posts in an hour, ${zText}.`;
-}
 
 async function addEvent(alertId: number, at: Date, type: string, detail: string) {
   await db.insert(alertEventsTable).values({ alertId, at, type, detail });
@@ -101,8 +97,9 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
               openedAt,
               peakZ: peak.z,
               peakAt: peak.at,
+              peakN: peak.n,
               postCount: cur.n + prev.n,
-              summary: summaryFor(hazard, place.name, Math.max(cur.n, prev.n), peak.z, peakLevel),
+              summary: alertSummary(hazard, place.name, peak.n, peak.z, peak.at, peakLevel),
               corroborationState: "pending",
               lowStreak: 0,
               lastHourUtc: new Date(t),
@@ -110,7 +107,7 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
             })
             .returning();
           alert = created!;
-          await addEvent(alert.id, openedAt, "opened", `Opened at ${cur.level} after two consecutive hours at elevated or above (z ${prev.z.toFixed(1)} then ${cur.z.toFixed(1)}).`);
+          await addEvent(alert.id, openedAt, "opened", `Two consecutive hours at elevated or above (z ${prev.z.toFixed(1)} then ${cur.z.toFixed(1)}); level ${cur.level}.`);
           outcome.opened.push(alert);
         }
         continue;
@@ -120,21 +117,22 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
       if (cur.z > alert.peakZ) {
         patch.peakZ = cur.z;
         patch.peakAt = new Date(t);
+        patch.peakN = cur.n;
       }
       if (levelRank(cur.level) > levelRank(alert.peakLevel)) patch.peakLevel = cur.level;
       if (cur.level !== alert.currentLevel) {
-        await addEvent(alert.id, new Date(t + HOUR_MS), "level_changed", `Level changed from ${alert.currentLevel} to ${cur.level} for the hour starting ${fmtUtc(new Date(t))} (z ${cur.z.toFixed(1)}, ${cur.n} relevant posts).`);
+        await addEvent(alert.id, new Date(t + HOUR_MS), "level_changed", `${alert.currentLevel} to ${cur.level} for the hour starting ${fmtUtc(new Date(t))} (z ${cur.z.toFixed(1)}, ${cur.n} relevant posts).`);
         if (levelRank(cur.level) > levelRank(alert.currentLevel)) outcome.upgraded.push({ ...alert, ...patch, currentLevel: cur.level } as Alert);
         patch.currentLevel = cur.level;
       }
       patch.lowStreak = levelRank(cur.level) <= LOW ? alert.lowStreak + 1 : 0;
-      const peakZ = patch.peakZ ?? alert.peakZ;
-      const peakLevel = patch.peakLevel ?? alert.peakLevel;
-      patch.summary = summaryFor(hazard, place.name, Math.max(cur.n, Math.round(alert.postCount / Math.max(1, (t - alert.openedAt.getTime()) / HOUR_MS + 2))), peakZ, peakLevel);
+      if (patch.peakZ !== undefined || patch.peakLevel !== undefined) {
+        patch.summary = alertSummary(hazard, place.name, patch.peakN ?? alert.peakN ?? cur.n, patch.peakZ ?? alert.peakZ, patch.peakAt ?? alert.peakAt, patch.peakLevel ?? alert.peakLevel);
+      }
       if (patch.lowStreak >= DETECTOR.closeAfterHours) {
         patch.status = "closed";
         patch.closedAt = new Date(t + HOUR_MS);
-        await addEvent(alert.id, patch.closedAt, "closed", `Closed after ${DETECTOR.closeAfterHours} consecutive hours at low or insufficient.`);
+        await addEvent(alert.id, patch.closedAt, "closed", `${DETECTOR.closeAfterHours} consecutive hours at low or insufficient.`);
         outcome.closed += 1;
       }
       await db.update(alertsTable).set(patch).where(eq(alertsTable.id, alert.id));
@@ -147,7 +145,7 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
       const cur = { level: partial.level, z: partial.zScore, n: partial.nRelevant };
       const prev = levelAt(firstIncomplete - HOUR_MS);
       if (!alert && levelRank(cur.level) >= ELEVATED && levelRank(prev.level) >= ELEVATED) {
-        const peak = cur.z >= prev.z ? { z: cur.z, at: new Date(firstIncomplete) } : { z: prev.z, at: new Date(firstIncomplete - HOUR_MS) };
+        const peak = cur.z >= prev.z ? { z: cur.z, at: new Date(firstIncomplete), n: cur.n } : { z: prev.z, at: new Date(firstIncomplete - HOUR_MS), n: prev.n };
         const peakLevel = levelRank(cur.level) >= levelRank(prev.level) ? cur.level : prev.level;
         const openedAt = new Date();
         const [created] = await db
@@ -162,23 +160,28 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
             openedAt,
             peakZ: peak.z,
             peakAt: peak.at,
+            peakN: peak.n,
             postCount: prev.n,
-            summary: summaryFor(hazard, place.name, Math.max(cur.n, prev.n), peak.z, peakLevel),
+            summary: alertSummary(hazard, place.name, peak.n, peak.z, peak.at, peakLevel),
             corroborationState: "pending",
             lowStreak: 0,
             lastHourUtc: new Date(firstIncomplete - HOUR_MS),
             updatedAt: new Date(),
           })
           .returning();
-        await addEvent(created!.id, openedAt, "opened", `Opened at ${cur.level}: the previous hour and the current hour so far are both at elevated or above (z ${prev.z.toFixed(1)} then ${cur.z.toFixed(1)}).`);
+        await addEvent(created!.id, openedAt, "opened", `The previous hour and the current hour so far are both at elevated or above (z ${prev.z.toFixed(1)} then ${cur.z.toFixed(1)}); level ${cur.level}.`);
         outcome.opened.push(created!);
       } else if (alert && levelRank(cur.level) > levelRank(alert.currentLevel)) {
         const patch: Partial<Alert> = { currentLevel: cur.level, updatedAt: new Date() };
         if (cur.z > alert.peakZ) {
           patch.peakZ = cur.z;
           patch.peakAt = new Date(firstIncomplete);
+          patch.peakN = cur.n;
         }
         if (levelRank(cur.level) > levelRank(alert.peakLevel)) patch.peakLevel = cur.level;
+        if (patch.peakZ !== undefined || patch.peakLevel !== undefined) {
+          patch.summary = alertSummary(hazard, place.name, patch.peakN ?? alert.peakN ?? cur.n, patch.peakZ ?? alert.peakZ, patch.peakAt ?? alert.peakAt, patch.peakLevel ?? alert.peakLevel);
+        }
         await addEvent(alert.id, new Date(), "level_changed", `Level rose from ${alert.currentLevel} to ${cur.level} in the current hour (z ${cur.z.toFixed(1)}, ${cur.n} relevant posts so far).`);
         await db.update(alertsTable).set(patch).where(eq(alertsTable.id, alert.id));
         outcome.upgraded.push({ ...alert, ...patch } as Alert);
@@ -189,7 +192,12 @@ export async function runDetector(opts: DetectorOptions): Promise<DetectorOutcom
   return outcome;
 }
 
-/** Match pending alerts with official events: same hazard family, within 250 km, -24 h to +48 h of opening. */
+/**
+ * Match pending alerts with official events: same hazard family, within 250 km (or the place's own extent for a
+ * region or country), and active in the window from 24 h before the alert opened to 48 h after. An event is active
+ * from its start until its recorded end, or for 72 h when the feed records none, so an alert raised on day two of a
+ * flood still matches the flood.
+ */
 export async function corroborateAlerts(scenario: string, asOf: Date): Promise<number> {
   const pending = await db.select().from(alertsTable).where(and(eq(alertsTable.scenario, scenario), eq(alertsTable.corroborationState, "pending")));
   if (pending.length === 0) return 0;
@@ -207,21 +215,21 @@ export async function corroborateAlerts(scenario: string, asOf: Date): Promise<n
         and(
           eq(officialEventsTable.scenario, scenario),
           inArray(officialEventsTable.hazard, COMPATIBLE[alert.hazard as HazardId] ?? [alert.hazard]),
-          gte(officialEventsTable.startsAt, from),
           lte(officialEventsTable.startsAt, to),
+          gte(sql`coalesce(${officialEventsTable.endsAt}, ${officialEventsTable.startsAt} + make_interval(hours => ${DETECTOR.corroborationActiveHours}))`, from),
           isNotNull(officialEventsTable.lat),
         ),
       );
     const near = candidates
       .map((e) => ({ e, km: haversineKm(place.lat, place.lon, e.lat!, e.lon!) }))
-      .filter((c) => c.km <= DETECTOR.corroborationRadiusKm)
+      .filter((c) => c.km <= Math.max(DETECTOR.corroborationRadiusKm, place.radiusKm ?? 0))
       .sort((a, b) => Math.abs(a.e.startsAt.getTime() - alert.openedAt.getTime()) - Math.abs(b.e.startsAt.getTime() - alert.openedAt.getTime()));
     if (near.length > 0) {
       const { e, km } = near[0]!;
       const lead = minutesBetween(alert.openedAt, e.startsAt);
       await db.update(alertsTable).set({ corroborationState: "corroborated", officialEventId: e.id, leadMinutes: lead, updatedAt: new Date() }).where(eq(alertsTable.id, alert.id));
       const when = lead > 0 ? `${Math.round(lead / 60)} h after the alert opened` : `${Math.round(-lead / 60)} h before the alert opened`;
-      await addEvent(alert.id, new Date(Math.max(e.startsAt.getTime(), alert.openedAt.getTime())), "corroborated", `${e.feed.toUpperCase()}: ${e.title} (${Math.round(km)} km away, ${when}).`);
+      await addEvent(alert.id, new Date(Math.max(e.startsAt.getTime(), alert.openedAt.getTime())), "corroborated", `${feedLabel(e.feed)}: ${e.title} (${Math.round(km)} km away, ${when}).`);
       matched += 1;
     } else if (asOf.getTime() > to.getTime()) {
       await db.update(alertsTable).set({ corroborationState: "uncorroborated", updatedAt: new Date() }).where(eq(alertsTable.id, alert.id));

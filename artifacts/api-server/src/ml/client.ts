@@ -22,9 +22,16 @@ export interface MlPlace {
   lon: number;
   population: number | null;
   kind: string;
+  /** Rough extent for regions and countries; null for cities. */
+  radiusKm: number | null;
   confidence: number;
   method: string;
   mention: string;
+}
+
+export interface MlGeoparseResponse {
+  latencyMs: number;
+  results: { id: string; places: MlPlace[] }[];
 }
 
 export interface MlResult {
@@ -75,11 +82,22 @@ export async function waitForModelService(maxMs = 10 * 60_000, everyMs = 5_000):
   }
 }
 
-export async function mlScore(items: { id: string; text: string }[], geoparse = true): Promise<MlScoreResponse> {
+/** Score a batch. `contextPlaceKey` names a place the stream is known to be about; it only breaks homonym ties. */
+export async function mlScore(items: { id: string; text: string }[], geoparse = true, contextPlaceKey: string | null = null): Promise<MlScoreResponse> {
   return fetchJson<MlScoreResponse>(`${mlBaseUrl()}/score`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ items, geoparse }),
+    body: JSON.stringify({ items, geoparse, contextPlaceKey }),
+    timeoutMs: 180_000,
+  });
+}
+
+/** Place resolution only, for re-resolving stored posts after a gazetteer or geoparser change. */
+export async function mlGeoparse(items: { id: string; text: string }[], contextPlaceKey: string | null = null): Promise<MlGeoparseResponse> {
+  return fetchJson<MlGeoparseResponse>(`${mlBaseUrl()}/geoparse`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ items, contextPlaceKey }),
     timeoutMs: 180_000,
   });
 }

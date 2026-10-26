@@ -135,11 +135,33 @@ export function signed(v: number | null | undefined, digits = 1): string {
   return v > 0 ? `+${s}` : s;
 }
 
-export function leadText(min: number | null | undefined, feed = "the official record"): string {
+/**
+ * Lead or lag between the alert and the official record, in words that match how precisely the source dates it.
+ * Minute-level records read in minutes and hours, hour-level ones in whole hours, day-level ones by date only.
+ */
+export function leadText(
+  c: { leadMinutes?: number | null; officialAt?: string | null; officialTimePrecision?: string | null; feed?: string | null },
+  openedAt: string,
+): string {
+  const what = c.feed === "Historical record" ? "the recorded event" : c.feed ?? "the official record";
+  if (c.officialTimePrecision === "day") {
+    if (!c.officialAt) return "no lead time recorded";
+    const days = Math.round((Date.UTC(...dateParts(c.officialAt)) - Date.UTC(...dateParts(openedAt))) / 86_400_000);
+    const dated = `${what} is dated to the day only`;
+    if (days === 0) return `opened on the same day as ${what} (dated to the day only)`;
+    return days > 0 ? `opened ${days} day${days === 1 ? "" : "s"} before ${what}; ${dated}` : `opened ${-days} day${days === -1 ? "" : "s"} after ${what}; ${dated}`;
+  }
+  const min = c.leadMinutes;
   if (min === null || min === undefined) return "no lead time recorded";
   const a = Math.abs(min);
-  const t = a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
-  return min >= 0 ? `${t} before ${feed}` : `${t} after ${feed}`;
+  const hourly = c.officialTimePrecision === "hour";
+  const t = hourly ? `about ${Math.round(a / 60)} h` : a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
+  return min >= 0 ? `${t} before ${what}` : `${t} after ${what}`;
+}
+
+function dateParts(iso: string): [number, number, number] {
+  const d = new Date(iso);
+  return [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()];
 }
 
 /** "Kerala, India" but never "Mexico, Mexico". */

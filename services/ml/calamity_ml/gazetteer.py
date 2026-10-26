@@ -22,6 +22,10 @@ class GazetteerPlace:
     lon: float
     population: int | None
     kind: str  # city | region | country
+    # Rough extent for regions and countries, used to widen corroboration; None for cities.
+    radius_km: float | None = None
+    # Towns under the population floor: resolved only when the text or the stream gives supporting context.
+    minor: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -34,6 +38,7 @@ class GazetteerPlace:
             "lon": self.lon,
             "population": self.population,
             "kind": self.kind,
+            "radiusKm": self.radius_km,
         }
 
 
@@ -42,21 +47,39 @@ class Gazetteer:
     by_name: dict[str, list[GazetteerPlace]] = field(default_factory=dict)
     by_key: dict[str, GazetteerPlace] = field(default_factory=dict)
     country_names: dict[str, str] = field(default_factory=dict)
+    # (normalised alias, place key) pairs that exist only because "X City" was also registered as "X".
+    alias_only: set[tuple[str, str]] = field(default_factory=set)
 
     def add(self, place: GazetteerPlace, *names: str) -> None:
         self.by_key[place.key] = place
-        expanded: list[str] = []
+        expanded: list[tuple[str, bool]] = []
         for n in names:
-            expanded.append(n)
-            if n.lower().endswith(" city") and len(n) > 8:
-                expanded.append(n[:-5])
-        for n in expanded:
+            expanded.append((n, False))
+            # "Oklahoma City" is also "Oklahoma"; only for sizeable cities, and see prune_city_aliases for clashes.
+            if n.lower().endswith(" city") and len(n) > 8 and (place.population or 0) >= 200_000:
+                expanded.append((n[:-5], True))
+        for n, alias in expanded:
             norm = normalise(n)
             if len(norm) < 3:
                 continue
             bucket = self.by_name.setdefault(norm, [])
             if place not in bucket:
                 bucket.append(place)
+            if alias:
+                self.alias_only.add((norm, place.key))
+
+    def prune_city_aliases(self) -> None:
+        """Drop "X City" aliases that collide with a region or country called X, so "Texas" is the state and
+        "Mexico" the country. Cities of five million or more keep theirs ("New York")."""
+        for place in list(self.by_key.values()):
+            if place.kind not in ("region", "country"):
+                continue
+            norm = normalise(place.name)
+            bucket = self.by_name.get(norm)
+            if not bucket:
+                continue
+            keep = [c for c in bucket if (norm, c.key) not in self.alias_only or (c.population or 0) >= 5_000_000]
+            self.by_name[norm] = keep
 
     def lookup(self, name: str) -> list[GazetteerPlace]:
         return self.by_name.get(normalise(name), [])
@@ -82,16 +105,52 @@ def _read_country_info(path: Path) -> dict[str, dict]:
             cols = line.rstrip("\n").split("\t")
             if len(cols) < 6:
                 continue
-            out[cols[0]] = {"iso": cols[0], "name": cols[4], "capital": cols[5], "population": int(cols[7] or 0) if len(cols) > 7 and cols[7] else None}
+            out[cols[0]] = {
+                "iso": cols[0],
+                "name": cols[4],
+                "capital": cols[5],
+                "area_km2": float(cols[6]) if len(cols) > 6 and cols[6] else None,
+                "population": int(cols[7] or 0) if len(cols) > 7 and cols[7] else None,
+            }
     return out
 
 
-def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_000) -> Gazetteer:
-    """GeoNames cities15000 (CC BY 4.0) filtered by population, plus curated regions and countries."""
+def _read_admin1_codes(path: Path) -> dict[tuple[str, str], str]:
+    """GeoNames admin1CodesASCII: (country code, lowercased admin1 name) -> admin1 code, e.g. ("US", "california") -> "CA"."""
+    out: dict[tuple[str, str], str] = {}
+    if not path.exists():
+        return out
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            cols = line.rstrip("\n").split("\t")
+            if len(cols) < 3 or "." not in cols[0]:
+                continue
+            cc, code = cols[0].split(".", 1)
+            out[(cc, cols[1].lower())] = code
+            out[(cc, cols[2].lower())] = code
+    return out
+
+
+def _radius_from_area(area_km2: float | None) -> float | None:
+    if not area_km2 or area_km2 <= 0:
+        return None
+    return float(min(2500.0, max(100.0, math.sqrt(area_km2 / math.pi))))
+
+
+def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_000, minor_min_population: int = 15_000) -> Gazetteer:
+    """GeoNames cities15000 (CC BY 4.0) plus curated regions and countries.
+
+    Cities at or above ``min_population`` resolve on their own. Smaller towns (down to ``minor_min_population``) are kept
+    as *minor* entries that only resolve with supporting context, so "Paradise, California" finds Paradise, CA while a
+    bare "Paradise" does not get pinned to the biggest homonym with false confidence.
+    """
     gz = Gazetteer()
     countries = _read_country_info(RAW_DIR / "countryInfo.txt")
+    admin1_codes = _read_admin1_codes(RAW_DIR / "admin1CodesASCII.txt")
     gz.country_names = {iso: c["name"] for iso, c in countries.items()}
     capitals: dict[str, GazetteerPlace] = {}
+    # City coordinates per (country, admin1), used to size curated regions that map to an admin1 unit.
+    admin1_points: dict[tuple[str, str], list[tuple[float, float]]] = {}
 
     with open(RAW_DIR / "cities15000.txt", encoding="utf-8") as fh:
         for line in fh:
@@ -105,6 +164,9 @@ def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_
             admin1 = cols[10] or None
             population = int(cols[14] or 0)
             country = countries.get(cc, {}).get("name", cc)
+            if admin1:
+                admin1_points.setdefault((cc, admin1), []).append((lat, lon))
+            minor = population < min_population and feature_code not in ("PPLC", "PPLA")
             place = GazetteerPlace(
                 key=f"geonames:{geoname_id}",
                 name=name,
@@ -115,14 +177,16 @@ def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_
                 lon=lon,
                 population=population or None,
                 kind="city",
+                minor=minor,
             )
             if feature_code == "PPLC":
                 capitals[cc] = place
-            if population < min_population and feature_code not in ("PPLC", "PPLA"):
+            if minor and population < minor_min_population:
                 continue
             names = [name, ascii_name]
             if population >= alt_min_population and alternates:
-                names += [a for a in alternates.split(",") if _ASCII_NAME.match(a)]
+                # Alternate names, minus airport codes and other short tokens ("THE" is Teresina's IATA code).
+                names += [a for a in alternates.split(",") if _ASCII_NAME.match(a) and len(a) >= 4 and not a.isupper()]
             gz.add(place, *names)
 
     for iso, info in countries.items():
@@ -139,24 +203,42 @@ def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_
             lon=cap.lon,
             population=info["population"],
             kind="country",
+            radius_km=_radius_from_area(info.get("area_km2")),
         )
         gz.add(place, info["name"])
 
     with open(DATA_DIR / "regions.csv", encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
-            place = GazetteerPlace(
-                key=row["key"],
-                name=row["name"],
-                admin1=None,
-                country=row["country"],
-                country_code=row["country_code"],
-                lat=float(row["lat"]),
-                lon=float(row["lon"]),
-                population=None,
-                kind="region",
-            )
-            aliases = [a for a in (row.get("aliases") or "").split("|") if a]
-            gz.add(place, row["name"], *aliases)
+        rows = list(csv.DictReader(fh))
+    region_admin1: dict[str, str | None] = {}
+    for row in rows:
+        cc = row["country_code"]
+        explicit = (row.get("admin1") or "").strip() or None
+        admin1 = explicit or admin1_codes.get((cc, row["name"].lower()))
+        if admin1 is None and "-" in row["key"]:
+            # Sub-regions such as region:us-ca-norcal inherit from region:us-ca.
+            parent = row["key"].rsplit("-", 1)[0]
+            admin1 = region_admin1.get(parent)
+        region_admin1[row["key"]] = admin1
+        lat, lon = float(row["lat"]), float(row["lon"])
+        radius: float | None = float(row["radius_km"]) if (row.get("radius_km") or "").strip() else None
+        if radius is None and admin1 and not explicit and admin1_codes.get((cc, row["name"].lower())) == admin1:
+            pts = admin1_points.get((cc, admin1), [])
+            if pts:
+                radius = min(800.0, max(100.0, max(haversine_km(lat, lon, a, b) for a, b in pts)))
+        place = GazetteerPlace(
+            key=row["key"],
+            name=row["name"],
+            admin1=admin1,
+            country=row["country"],
+            country_code=cc,
+            lat=lat,
+            lon=lon,
+            population=None,
+            kind="region",
+            radius_km=radius if radius is not None else 300.0,
+        )
+        aliases = [a for a in (row.get("aliases") or "").split("|") if a]
+        gz.add(place, row["name"], *aliases)
 
     # Common demonyms and short forms that NER returns as GPE.
     extras = {
@@ -172,6 +254,7 @@ def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_
         place = gz.by_key.get(key)
         if place:
             gz.add(place, alias)
+    gz.prune_city_aliases()
     return gz
 
 

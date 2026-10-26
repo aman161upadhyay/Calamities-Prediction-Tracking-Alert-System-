@@ -14,5 +14,10 @@ export interface DetectorSettings {
   openAfterHours: number;
   closeAfterHours: number;
   corroborationRadiusKm: number;
+  /** Hours after an alert opens during which an official event still corroborates it. */
   corroborationWindowHours: number;
+  /** Hours before an alert opens during which an active official event corroborates it. */
+  corroborationLookbackHours: number;
+  /** How long an official event with no recorded end is treated as active. */
+  corroborationActiveHours: number;
 }

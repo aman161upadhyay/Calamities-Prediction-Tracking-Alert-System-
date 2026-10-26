@@ -78,6 +78,7 @@ export function FearTimeline({ timeline, color, height = 180, compact }: { timel
               <tr>
                 <th className="text-left font-medium py-1 pr-2">Hour (UTC)</th>
                 <th className="text-right font-medium py-1 px-2">Fear mass</th>
+                <th className="text-right font-medium py-1 px-2">Baseline</th>
                 <th className="text-right font-medium py-1 px-2">Relevant</th>
                 <th className="text-right font-medium py-1 px-2">z</th>
                 <th className="text-left font-medium py-1 pl-2">Level</th>
@@ -88,6 +89,7 @@ export function FearTimeline({ timeline, color, height = 180, compact }: { timel
                 <tr key={p.hour} className="border-t border-line/60">
                   <td className="py-1 pr-2">{shortHour(p.hour)}</td>
                   <td className="text-right px-2">{num(p.fearMass, 2)}</td>
+                  <td className="text-right px-2">{p.baselineMedian == null ? "n/a" : num(p.baselineMedian, 2)}</td>
                   <td className="text-right px-2">{p.nRelevant}</td>
                   <td className="text-right px-2">{p.zScore == null ? "n/a" : num(p.zScore, 1)}</td>
                   <td className="pl-2 font-sans">{LEVEL_LABEL[p.level]}</td>

@@ -228,6 +228,19 @@ export const CorroborationState = {
   pending: 'pending',
 } as const;
 
+/**
+ * How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.
+ * @nullable
+ */
+export type CorroborationOfficialTimePrecision = typeof CorroborationOfficialTimePrecision[keyof typeof CorroborationOfficialTimePrecision] | null;
+
+
+export const CorroborationOfficialTimePrecision = {
+  minute: 'minute',
+  hour: 'hour',
+  day: 'day',
+} as const;
+
 export interface Corroboration {
   /** pending while the alert is open and younger than 48 hours */
   state: CorroborationState;
@@ -240,7 +253,17 @@ export interface Corroboration {
   /** @nullable */
   officialAt?: string | null;
   /**
-     * Positive when the social alert opened before the official event
+     * How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.
+     * @nullable
+     */
+  officialTimePrecision?: CorroborationOfficialTimePrecision;
+  /**
+     * The cited source for the official record
+     * @nullable
+     */
+  officialUrl?: string | null;
+  /**
+     * Positive when the social alert opened before the official event; null when the official time is only known to the day
      * @nullable
      */
   leadMinutes?: number | null;
@@ -263,7 +286,7 @@ export interface Alert {
   peakZ: number;
   peakAt: string;
   corroboration: Corroboration;
-  /** One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline." */
+  /** One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour. */
   summary: string;
   postCount: number;
   /** @nullable */
@@ -581,7 +604,12 @@ export interface DetectorSettings {
   openAfterHours: number;
   closeAfterHours: number;
   corroborationRadiusKm: number;
+  /** Hours after an alert opens during which an official event still corroborates it. */
   corroborationWindowHours: number;
+  /** Hours before an alert opens during which an active official event corroborates it. */
+  corroborationLookbackHours: number;
+  /** How long an official event with no recorded end is treated as active. */
+  corroborationActiveHours: number;
 }
 
 export type ModelInfoGeoparser = {
@@ -815,6 +843,13 @@ scenario?: ScenarioParameter;
 asOf?: AsOfParameter;
 };
 
+export type GetAlertParams = {
+/**
+ * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+ */
+asOf?: AsOfParameter;
+};
+
 export type ListOfficialEventsParams = {
 hazard?: Hazard;
 /**
@@ -835,6 +870,13 @@ scenario?: ScenarioParameter;
  * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
+};
+
+export type PrepareReplayScenarioParams = {
+/**
+ * Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.
+ */
+force?: boolean;
 };
 
 export type VerifySubscriptionParams = {

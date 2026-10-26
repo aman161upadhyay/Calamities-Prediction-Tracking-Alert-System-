@@ -26,6 +26,7 @@ import type {
   BoardSnapshot,
   Classification,
   ClassifyInput,
+  GetAlertParams,
   GetBoardParams,
   GetHazardParams,
   GetHazardTimelineParams,
@@ -44,6 +45,7 @@ import type {
   OfficialEvent,
   PlaceDetail,
   PlaceListItem,
+  PrepareReplayScenarioParams,
   ReplayScenario,
   ScoredPost,
   SubscriptionInput,
@@ -923,20 +925,30 @@ export function useListAlerts<TData = Awaited<ReturnType<typeof listAlerts>>, TE
 
 
 
-export const getGetAlertUrl = (alertId: number,) => {
+export const getGetAlertUrl = (alertId: number,
+    params?: GetAlertParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/alerts/${alertId}`
+  return stringifiedParams.length > 0 ? `/api/alerts/${alertId}?${stringifiedParams}` : `/api/alerts/${alertId}`
 }
 
 /**
+ * The alert's scenario is implied by the alert itself. Pass asOf to read a replay alert as of the playhead; the evidence, level, peak and corroboration are then limited to what was known at that moment.
  * @summary Alert evidence (timeline, posts, event log, corroboration)
  */
-export const getAlert = async (alertId: number, options?: Parameters<typeof customFetch>[1]): Promise<AlertDetail> => {
+export const getAlert = async (alertId: number,
+    params?: GetAlertParams, options?: Parameters<typeof customFetch>[1]): Promise<AlertDetail> => {
 
-  return customFetch<AlertDetail>(getGetAlertUrl(alertId),
+  return customFetch<AlertDetail>(getGetAlertUrl(alertId,params),
   {
     ...options,
     method: 'GET'
@@ -949,23 +961,25 @@ export const getAlert = async (alertId: number, options?: Parameters<typeof cust
 
 
 
-export const getGetAlertQueryKey = (alertId: number,) => {
+export const getGetAlertQueryKey = (alertId: number,
+    params?: GetAlertParams,) => {
     return [
-    `/api/alerts/${alertId}`
+    `/api/alerts/${alertId}`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetAlertQueryOptions = <TData = Awaited<ReturnType<typeof getAlert>>, TError = ErrorType<NotFoundResponse>>(alertId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAlert>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetAlertQueryOptions = <TData = Awaited<ReturnType<typeof getAlert>>, TError = ErrorType<NotFoundResponse>>(alertId: number,
+    params?: GetAlertParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAlert>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetAlertQueryKey(alertId);
+  const queryKey =  queryOptions?.queryKey ?? getGetAlertQueryKey(alertId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAlert>>> = ({ signal }) => getAlert(alertId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAlert>>> = ({ signal }) => getAlert(alertId,params, { signal, ...requestOptions });
 
 
 
@@ -983,11 +997,12 @@ export type GetAlertQueryError = ErrorType<NotFoundResponse>
  */
 
 export function useGetAlert<TData = Awaited<ReturnType<typeof getAlert>>, TError = ErrorType<NotFoundResponse>>(
- alertId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAlert>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ alertId: number,
+    params?: GetAlertParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAlert>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetAlertQueryOptions(alertId,options)
+  const queryOptions = getGetAlertQueryOptions(alertId,params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1480,20 +1495,29 @@ export function useGetReplayScenario<TData = Awaited<ReturnType<typeof getReplay
 
 
 
-export const getPrepareReplayScenarioUrl = (scenarioId: string,) => {
+export const getPrepareReplayScenarioUrl = (scenarioId: string,
+    params?: PrepareReplayScenarioParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/replay/scenarios/${scenarioId}/prepare`
+  return stringifiedParams.length > 0 ? `/api/replay/scenarios/${scenarioId}/prepare?${stringifiedParams}` : `/api/replay/scenarios/${scenarioId}/prepare`
 }
 
 /**
  * @summary Score and aggregate a scenario so it can be played (idempotent)
  */
-export const prepareReplayScenario = async (scenarioId: string, options?: Parameters<typeof customFetch>[1]): Promise<ReplayScenario> => {
+export const prepareReplayScenario = async (scenarioId: string,
+    params?: PrepareReplayScenarioParams, options?: Parameters<typeof customFetch>[1]): Promise<ReplayScenario> => {
 
-  return customFetch<ReplayScenario>(getPrepareReplayScenarioUrl(scenarioId),
+  return customFetch<ReplayScenario>(getPrepareReplayScenarioUrl(scenarioId,params),
   {
     ...options,
     method: 'POST'
@@ -1523,9 +1547,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof prepareReplayScenario>>, PrepareReplayScenarioMutationVariables> = (props) => {
-          const {scenarioId} = props ?? {};
+          const {scenarioId,params} = props ?? {};
 
-          return  prepareReplayScenario(scenarioId,requestOptions)
+          return  prepareReplayScenario(scenarioId,params,requestOptions)
         }
 
 
@@ -1538,7 +1562,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type PrepareReplayScenarioMutationResult = NonNullable<Awaited<ReturnType<typeof prepareReplayScenario>>>
 
     export type PrepareReplayScenarioMutationError = ErrorType<NotFoundResponse>
-    export type PrepareReplayScenarioMutationVariables = {scenarioId: string}
+    export type PrepareReplayScenarioMutationVariables = {scenarioId: string;params?: PrepareReplayScenarioParams}
 
     /**
  * @summary Score and aggregate a scenario so it can be played (idempotent)

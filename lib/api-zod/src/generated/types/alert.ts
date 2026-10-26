@@ -27,7 +27,7 @@ export interface Alert {
   peakZ: number;
   peakAt: Date;
   corroboration: Corroboration;
-  /** One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline." */
+  /** One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour. */
   summary: string;
   postCount: number;
   /** @nullable */

@@ -15,7 +15,8 @@ export const LIMITATIONS = [
   "The baseline needs seven days of history. In the first week after start, and at the start of every replay, every surge reads as a spike because the baseline is empty.",
   "Live coverage depends on what the sources return: Bluesky public search without credentials, and X only when a bearer token and budget are configured. Volumes are small compared with 2018-era Twitter streams.",
   "Replay scenarios use HumAID tweet ids, labels and timestamps. The text is scored locally and withheld from the interface under the dataset's terms; collections start hours to days after each event began.",
-  "Corroboration is a spatial and temporal match (250 km, -24 h to +48 h) against official feeds. It shows that an official event existed near the alert, not that the alert caused or predicted it.",
+  "Corroboration is a spatial and temporal match against official feeds: within 250 km (or the extent of the region or country when the alert is at that level), and the official event is active between 24 h before and 48 h after the alert opened (an event with no recorded end counts as active for 72 h). It shows that an official event existed near the alert, not that the alert caused or predicted it.",
+  "Counts are posts, not independent witnesses. Posts are deduplicated only by platform id, so one prolific author or copied text under different ids can satisfy the minimum of five relevant posts and inflate a signal.",
 ];
 
 export async function modelInfo() {
@@ -46,6 +47,8 @@ function assemble(card: Record<string, unknown>) {
       closeAfterHours: DETECTOR.closeAfterHours,
       corroborationRadiusKm: DETECTOR.corroborationRadiusKm,
       corroborationWindowHours: DETECTOR.corroborationWindowHours,
+      corroborationLookbackHours: DETECTOR.corroborationLookbackHours,
+      corroborationActiveHours: DETECTOR.corroborationActiveHours,
     },
     limitations: LIMITATIONS,
   };

@@ -271,12 +271,14 @@ paths:
       operationId: getAlert
       tags: [alerts]
       summary: Alert evidence (timeline, posts, event log, corroboration)
+      description: The alert's scenario is implied by the alert itself. Pass asOf to read a replay alert as of the playhead; the evidence, level, peak and corroboration are then limited to what was known at that moment.
       parameters:
         - name: alertId
           in: path
           required: true
           schema:
             type: integer
+        - $ref: "#/components/parameters/AsOf"
       responses:
         "200":
           description: Alert detail
@@ -416,6 +418,12 @@ paths:
       summary: Score and aggregate a scenario so it can be played (idempotent)
       parameters:
         - $ref: "#/components/parameters/ScenarioIdPath"
+        - name: force
+          in: query
+          required: false
+          description: Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.
+          schema:
+            type: boolean
       responses:
         "200":
           description: Scenario state after the request
@@ -846,7 +854,7 @@ components:
           $ref: "#/components/schemas/Corroboration"
         summary:
           type: string
-          description: One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."
+          description: One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.
         postCount:
           type: integer
         scenario:
@@ -869,9 +877,16 @@ components:
         officialAt:
           type: ["string", "null"]
           format: date-time
+        officialTimePrecision:
+          type: ["string", "null"]
+          enum: [minute, hour, day, null]
+          description: How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.
+        officialUrl:
+          type: ["string", "null"]
+          description: The cited source for the official record
         leadMinutes:
           type: ["integer", "null"]
-          description: Positive when the social alert opened before the official event
+          description: Positive when the social alert opened before the official event; null when the official time is only known to the day
 
     AlertEvent:
       type: object
@@ -1409,7 +1424,7 @@ components:
 
     DetectorSettings:
       type: object
-      required: [baselineDays, minRelevantPerHour, thresholds, openAfterHours, closeAfterHours, corroborationRadiusKm, corroborationWindowHours]
+      required: [baselineDays, minRelevantPerHour, thresholds, openAfterHours, closeAfterHours, corroborationRadiusKm, corroborationWindowHours, corroborationLookbackHours, corroborationActiveHours]
       properties:
         baselineDays:
           type: integer
@@ -1433,6 +1448,13 @@ components:
           type: integer
         corroborationWindowHours:
           type: integer
+          description: Hours after an alert opens during which an official event still corroborates it.
+        corroborationLookbackHours:
+          type: integer
+          description: Hours before an alert opens during which an active official event corroborates it.
+        corroborationActiveHours:
+          type: integer
+          description: How long an official event with no recorded end is treated as active.
 
     ModelInfo:
       type: object

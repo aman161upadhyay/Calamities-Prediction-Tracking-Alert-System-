@@ -16,6 +16,8 @@ export const placesTable = pgTable(
     population: integer("population"),
     /** city | region | country */
     kind: text("kind").notNull().default("city"),
+    /** Rough extent in km for regions and countries, used to widen corroboration; null for cities. */
+    radiusKm: real("radius_km"),
     featured: boolean("featured").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

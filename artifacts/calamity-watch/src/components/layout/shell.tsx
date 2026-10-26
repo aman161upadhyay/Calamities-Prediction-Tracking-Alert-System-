@@ -78,7 +78,7 @@ export function Footer() {
         <div>
           <p className="text-foreground font-bold">Sources</p>
           <ul className="mt-1 space-y-0.5">
-            <li>Posts: X API, Bluesky firehose</li>
+            <li>Posts: X API, Bluesky public search</li>
             <li>Official: GDACS, USGS, NWS, NASA FIRMS</li>
             <li>Weather: Open-Meteo</li>
           </ul>

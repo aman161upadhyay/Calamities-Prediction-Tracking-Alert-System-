@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { DETECTOR } from "../lib/config";
 import { hazardMeta, isHazardId, levelRank, type RiskLevel } from "../lib/hazards";
 import { HOUR_MS, floorHour } from "../lib/time";
+import { alertSummary } from "../lib/summary";
 import { scenarioById } from "../services/replay";
 
 export class ApiError extends Error {
@@ -43,13 +44,8 @@ export function parseHazard(value: unknown): string {
   return value;
 }
 
-export const FEED_LABELS: Record<string, string> = {
-  gdacs: "GDACS",
-  usgs: "USGS",
-  nws: "NWS",
-  firms: "NASA FIRMS",
-  scenario: "Historical record",
-};
+import { FEED_LABELS } from "../lib/feeds";
+export { FEED_LABELS };
 
 export const REPLAY_TEXT_PLACEHOLDER = "Text withheld under the HumAID data terms (tweet ids may be shared, text may not). Open the original on X to read it.";
 
@@ -104,6 +100,7 @@ interface AsOfAdjust {
   currentLevel: RiskLevel;
   peakZ: number;
   peakAt: Date;
+  peakN: number;
   postCount: number;
 }
 
@@ -130,12 +127,14 @@ export async function asOfAdjustments(alerts: AlertRow[], scope: Scope): Promise
     const latest = complete[complete.length - 1] ?? mine[mine.length - 1];
     let peakZ = 0;
     let peakAt = a.openedAt;
+    let peakN = 0;
     let postCount = 0;
     for (const r of mine) {
       postCount += Number(r.n_relevant);
       if ((r.z_score ?? 0) > peakZ) {
         peakZ = r.z_score ?? 0;
         peakAt = new Date(r.hour);
+        peakN = Number(r.n_relevant);
       }
     }
     const closed = a.closedAt && a.closedAt.getTime() <= scope.asOf.getTime();
@@ -143,6 +142,7 @@ export async function asOfAdjustments(alerts: AlertRow[], scope: Scope): Promise
       currentLevel: closed ? (a.currentLevel as RiskLevel) : latest && latest.hour >= upto.getTime() - HOUR_MS ? (latest.level as RiskLevel) : "low",
       peakZ: closed ? a.peakZ : Math.max(peakZ, 0),
       peakAt: closed ? a.peakAt : peakAt,
+      peakN: closed ? (a.peakN ?? peakN) : peakN,
       postCount: closed ? a.postCount : postCount,
     });
   }
@@ -153,14 +153,39 @@ export function mapAlert(a: AlertRow, place: Place, official: OfficialEventRow |
   const asOf = scope.asOf.getTime();
   const closed = a.closedAt !== null && a.closedAt.getTime() <= asOf;
   const windowEnd = a.openedAt.getTime() + DETECTOR.corroborationWindowHours * HOUR_MS;
-  let corroboration: { state: "corroborated" | "uncorroborated" | "pending"; officialEventId: number | null; feed: string | null; title: string | null; officialAt: string | null; leadMinutes: number | null };
+  type Corroboration = {
+    state: "corroborated" | "uncorroborated" | "pending";
+    officialEventId: number | null;
+    feed: string | null;
+    title: string | null;
+    officialAt: string | null;
+    officialTimePrecision: "minute" | "hour" | "day" | null;
+    officialUrl: string | null;
+    leadMinutes: number | null;
+  };
+  const none: Corroboration = { state: "pending", officialEventId: null, feed: null, title: null, officialAt: null, officialTimePrecision: null, officialUrl: null, leadMinutes: null };
+  let corroboration: Corroboration;
   if (a.corroborationState === "corroborated" && official && official.startsAt.getTime() <= asOf) {
-    corroboration = { state: "corroborated", officialEventId: official.id, feed: FEED_LABELS[official.feed] ?? official.feed, title: official.title, officialAt: official.startsAt.toISOString(), leadMinutes: a.leadMinutes };
+    const precision = (official.timePrecision === "hour" || official.timePrecision === "day" ? official.timePrecision : "minute") as "minute" | "hour" | "day";
+    corroboration = {
+      state: "corroborated",
+      officialEventId: official.id,
+      feed: FEED_LABELS[official.feed] ?? official.feed,
+      title: official.title,
+      officialAt: official.startsAt.toISOString(),
+      officialTimePrecision: precision,
+      officialUrl: official.url,
+      // A day-level record cannot support a lead time in minutes; the interface compares dates instead.
+      leadMinutes: precision === "day" ? null : a.leadMinutes,
+    };
   } else if (asOf > windowEnd && a.corroborationState !== "pending") {
-    corroboration = { state: "uncorroborated", officialEventId: null, feed: null, title: null, officialAt: null, leadMinutes: null };
+    corroboration = { ...none, state: "uncorroborated" };
   } else {
-    corroboration = { state: "pending", officialEventId: null, feed: null, title: null, officialAt: null, leadMinutes: null };
+    corroboration = none;
   }
+  const peakLevel = adjust ? maxOf(adjust.currentLevel, levelForZ(adjust.peakZ)) : a.peakLevel;
+  // The summary is rebuilt for the playhead so that an earlier moment in a replay never quotes a later peak.
+  const summary = adjust ? alertSummary(a.hazard, place.name, adjust.peakN, adjust.peakZ, adjust.peakAt, peakLevel) : a.summary;
   return {
     id: a.id,
     placeId: a.placeId,
@@ -170,14 +195,14 @@ export function mapAlert(a: AlertRow, place: Place, official: OfficialEventRow |
     lon: place.lon,
     hazard: a.hazard,
     status: closed ? "closed" : "open",
-    peakLevel: adjust ? maxOf(adjust.currentLevel, levelForZ(adjust.peakZ)) : a.peakLevel,
+    peakLevel,
     currentLevel: adjust ? adjust.currentLevel : a.currentLevel,
     openedAt: a.openedAt.toISOString(),
     closedAt: closed && a.closedAt ? a.closedAt.toISOString() : null,
     peakZ: adjust ? adjust.peakZ : a.peakZ,
     peakAt: (adjust ? adjust.peakAt : a.peakAt).toISOString(),
     corroboration,
-    summary: a.summary,
+    summary,
     postCount: adjust ? adjust.postCount : a.postCount,
     scenario: a.scenario === "" ? null : a.scenario,
   };

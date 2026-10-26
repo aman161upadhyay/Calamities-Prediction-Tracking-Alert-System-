@@ -17,6 +17,8 @@ export const alertsTable = pgTable(
     closedAt: timestamp("closed_at", { withTimezone: true }),
     peakZ: real("peak_z").notNull(),
     peakAt: timestamp("peak_at", { withTimezone: true }).notNull(),
+    /** Relevant posts in the peak hour, so the summary's count and z-score describe the same hour. */
+    peakN: integer("peak_n"),
     postCount: integer("post_count").notNull().default(0),
     summary: text("summary").notNull().default(""),
     /** corroborated | uncorroborated | pending */

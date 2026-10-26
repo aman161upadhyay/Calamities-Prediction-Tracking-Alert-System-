@@ -1,290 +1,290 @@
 {
-  "name": "Hazard relevance and type classifier",
-  "algorithm": "Place names masked to one token (GeoNames cities of 50k or more, countries, regions), then hashing TF-IDF (word 1-2 grams, 2^18 features per view) with two logistic-regression heads: relevance (binary) and hazard type (flood, cyclone, wildfire, earthquake, none). Class-weight balanced. Of two candidates, the one with the better macro-F1 on events never seen in training is shipped.",
-  "trainedAt": "2026-10-26T08:01:19.122352+00:00",
-  "version": "1.0",
-  "datasets": [
-    {
-      "name": "HumAID (Alam et al. 2021), 14 of 19 events, train and dev splits",
-      "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
-      "license": "CrisisNLP terms of use: research use, tweet text kept confidential",
-      "rows": 36931,
-      "role": "train"
-    },
-    {
-      "name": "TweetEval sentiment (generic tweets with no hazard vocabulary) as no-hazard negatives",
-      "url": "https://huggingface.co/datasets/cardiffnlp/tweet_eval",
-      "license": "Dataset card: see TweetEval",
-      "rows": 20000,
-      "role": "train"
-    },
-    {
-      "name": "HumAID test split of the same 14 events plus held-out generic tweets",
-      "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
-      "license": "CrisisNLP terms of use",
-      "rows": 14133,
-      "role": "test"
-    },
-    {
-      "name": "HumAID, 5 events never seen in training (the replay scenarios)",
-      "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
-      "license": "CrisisNLP terms of use",
-      "rows": 30420,
-      "role": "cross-dataset test"
-    },
-    {
-      "name": "Kaggle disaster tweets (train.csv via Hugging Face mirror)",
-      "url": "https://www.kaggle.com/competitions/nlp-getting-started",
-      "license": "Kaggle competition rules; evaluation only",
-      "rows": 7613,
-      "role": "cross-dataset test"
-    }
+ "name": "Hazard relevance and type classifier",
+ "algorithm": "Place names masked to one token (GeoNames cities of 50k or more, countries, regions), then hashing TF-IDF (word 1-2 grams, 2^18 features per view) with two logistic-regression heads: relevance (binary) and hazard type (flood, cyclone, wildfire, earthquake, none). Class-weight balanced. Of two candidates, the one with the better macro-F1 on events never seen in training is shipped.",
+ "trainedAt": "2026-10-26T08:01:19.122352+00:00",
+ "version": "1.0",
+ "datasets": [
+  {
+   "name": "HumAID (Alam et al. 2021), 14 of 19 events, train and dev splits",
+   "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
+   "license": "CrisisNLP terms of use: research use, tweet text kept confidential",
+   "rows": 36931,
+   "role": "train"
+  },
+  {
+   "name": "TweetEval sentiment (generic tweets with no hazard vocabulary) as no-hazard negatives",
+   "url": "https://huggingface.co/datasets/cardiffnlp/tweet_eval",
+   "license": "Dataset card: see TweetEval",
+   "rows": 20000,
+   "role": "train"
+  },
+  {
+   "name": "HumAID test split of the same 14 events plus held-out generic tweets",
+   "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
+   "license": "CrisisNLP terms of use",
+   "rows": 14133,
+   "role": "test"
+  },
+  {
+   "name": "HumAID, 5 events never seen in training (the replay scenarios)",
+   "url": "https://crisisnlp.qcri.org/humaid_dataset.html",
+   "license": "CrisisNLP terms of use",
+   "rows": 30420,
+   "role": "cross-dataset test"
+  },
+  {
+   "name": "Kaggle disaster tweets (train.csv via Hugging Face mirror)",
+   "url": "https://www.kaggle.com/competitions/nlp-getting-started",
+   "license": "Kaggle competition rules; evaluation only",
+   "rows": 7613,
+   "role": "cross-dataset test"
+  }
+ ],
+ "accuracy": 0.9549576556996178,
+ "macroF1": 0.9197824709114949,
+ "perClass": [
+  {
+   "label": "cyclone",
+   "precision": 0.9783001808318263,
+   "recall": 0.9313134790841797,
+   "f1": 0.9542287679689567,
+   "support": 5809
+  },
+  {
+   "label": "earthquake",
+   "precision": 0.8945022288261516,
+   "recall": 0.9391575663026521,
+   "f1": 0.9162861491628614,
+   "support": 1282
+  },
+  {
+   "label": "flood",
+   "precision": 0.7313664596273292,
+   "recall": 0.878731343283582,
+   "f1": 0.7983050847457627,
+   "support": 536
+  },
+  {
+   "label": "none",
+   "precision": 0.9729097641785227,
+   "recall": 0.9984,
+   "f1": 0.9854900799526207,
+   "support": 5000
+  },
+  {
+   "label": "wildfire",
+   "precision": 0.9609826589595376,
+   "recall": 0.9287709497206704,
+   "f1": 0.9446022727272727,
+   "support": 716
+  }
+ ],
+ "confusion": {
+  "labels": [
+   "cyclone",
+   "earthquake",
+   "flood",
+   "none",
+   "wildfire"
   ],
-  "accuracy": 0.9549576556996178,
-  "macroF1": 0.9197824709114949,
+  "matrix": [
+   [
+    5410,
+    125,
+    156,
+    102,
+    16
+   ],
+   [
+    50,
+    1204,
+    11,
+    10,
+    7
+   ],
+   [
+    40,
+    4,
+    471,
+    18,
+    3
+   ],
+   [
+    3,
+    2,
+    2,
+    4992,
+    1
+   ],
+   [
+    27,
+    11,
+    4,
+    9,
+    665
+   ]
+  ]
+ },
+ "crossDataset": [
+  {
+   "dataset": "HumAID events held out of training and used to pick the shipped candidate (Kerala floods 2018, Hurricane Harvey 2017, California wildfires 2018, Puebla earthquake 2017, Cyclone Idai 2019): hazard type, scored on the relevant posts only",
+   "accuracy": 0.8062451098940181,
+   "f1": 0.8371569402085359,
+   "rows": 28118
+  },
+  {
+   "dataset": "Same held-out events: relevance (humanitarian vs not), all posts",
+   "accuracy": 0.8499671268902038,
+   "f1": 0.9153466632043625,
+   "rows": 30420
+  },
+  {
+   "dataset": "Kaggle: Natural Language Processing with Disaster Tweets (train.csv, relevance only)",
+   "accuracy": 0.676737160120846,
+   "f1": 0.46042534531900897,
+   "rows": 7613
+  }
+ ],
+ "relevanceAccuracy": 0.9247152055473007,
+ "relevanceF1": 0.9351930807650141,
+ "candidates": [
+  {
+   "name": "TF-IDF word n-grams + logistic regression",
+   "macroF1": 0.9197824709114949,
+   "accuracy": 0.9549576556996178,
+   "shipped": true,
+   "note": "test split macro-F1 0.920; unseen events macro-F1 0.837, accuracy 0.806; trained in 16 s on CPU"
+  },
+  {
+   "name": "TF-IDF word+char n-grams + logistic regression",
+   "macroF1": 0.9049731132852532,
+   "accuracy": 0.9476879262534662,
+   "shipped": false,
+   "note": "test split macro-F1 0.905; unseen events macro-F1 0.833, accuracy 0.796; trained in 39 s on CPU"
+  }
+ ],
+ "trainingSummary": {
+  "train_rows": 56931,
+  "train_relevant": 33727,
+  "train_events": [
+   "canada_wildfires_2016",
+   "ecuador_earthquake_2016",
+   "greece_wildfires_2018",
+   "hurricane_dorian_2019",
+   "hurricane_florence_2018",
+   "hurricane_irma_2017",
+   "hurricane_maria_2017",
+   "hurricane_matthew_2016",
+   "italy_earthquake_aug_2016",
+   "kaikoura_earthquake_2016",
+   "maryland_floods_2018",
+   "midwestern_us_floods_2019",
+   "pakistan_earthquake_2019",
+   "srilanka_floods_2017"
+  ],
+  "test_split_rows": 14133,
+  "unseen_event_rows": 30420,
+  "unseen_events": [
+   "california_wildfires_2018",
+   "cyclone_idai_2019",
+   "hurricane_harvey_2017",
+   "kerala_floods_2018",
+   "puebla_mexico_earthquake_2017"
+  ],
+  "negatives_train": 20000,
+  "negatives_test": 5000,
+  "kaggle_rows": 7613,
+  "hazard_counts_train": {
+   "cyclone": 25826,
+   "none": 20000,
+   "earthquake": 5544,
+   "wildfire": 3011,
+   "flood": 2550
+  }
+ },
+ "unseenEventsDetail": {
   "perClass": [
-    {
-      "label": "cyclone",
-      "precision": 0.9783001808318263,
-      "recall": 0.9313134790841797,
-      "f1": 0.9542287679689567,
-      "support": 5809
-    },
-    {
-      "label": "earthquake",
-      "precision": 0.8945022288261516,
-      "recall": 0.9391575663026521,
-      "f1": 0.9162861491628614,
-      "support": 1282
-    },
-    {
-      "label": "flood",
-      "precision": 0.7313664596273292,
-      "recall": 0.878731343283582,
-      "f1": 0.7983050847457627,
-      "support": 536
-    },
-    {
-      "label": "none",
-      "precision": 0.9729097641785227,
-      "recall": 0.9984,
-      "f1": 0.9854900799526207,
-      "support": 5000
-    },
-    {
-      "label": "wildfire",
-      "precision": 0.9609826589595376,
-      "recall": 0.9287709497206704,
-      "f1": 0.9446022727272727,
-      "support": 716
-    }
+   {
+    "label": "cyclone",
+    "precision": 0.8644196174966863,
+    "recall": 0.727200318598168,
+    "f1": 0.7898948825539646,
+    "support": 12555
+   },
+   {
+    "label": "earthquake",
+    "precision": 0.8120128381476387,
+    "recall": 0.8958017197774406,
+    "f1": 0.8518518518518519,
+    "support": 1977
+   },
+   {
+    "label": "flood",
+    "precision": 0.7170421592683471,
+    "recall": 0.8540116896918172,
+    "f1": 0.7795562022553656,
+    "support": 7528
+   },
+   {
+    "label": "none",
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "support": 0
+   },
+   {
+    "label": "wildfire",
+    "precision": 0.9782011357391464,
+    "recall": 0.8814790359854737,
+    "f1": 0.9273248241729617,
+    "support": 6058
+   }
   ],
   "confusion": {
-    "labels": [
-      "cyclone",
-      "earthquake",
-      "flood",
-      "none",
-      "wildfire"
+   "labels": [
+    "cyclone",
+    "earthquake",
+    "flood",
+    "none",
+    "wildfire"
+   ],
+   "matrix": [
+    [
+     9130,
+     316,
+     2401,
+     611,
+     97
     ],
-    "matrix": [
-      [
-        5410,
-        125,
-        156,
-        102,
-        16
-      ],
-      [
-        50,
-        1204,
-        11,
-        10,
-        7
-      ],
-      [
-        40,
-        4,
-        471,
-        18,
-        3
-      ],
-      [
-        3,
-        2,
-        2,
-        4992,
-        1
-      ],
-      [
-        27,
-        11,
-        4,
-        9,
-        665
-      ]
+    [
+     142,
+     1771,
+     35,
+     24,
+     5
+    ],
+    [
+     857,
+     75,
+     6429,
+     150,
+     17
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    [
+     433,
+     19,
+     101,
+     165,
+     5340
     ]
-  },
-  "crossDataset": [
-    {
-      "dataset": "HumAID events held out of training (Kerala floods 2018, Hurricane Harvey 2017, California wildfires 2018, Puebla earthquake 2017, Cyclone Idai 2019): hazard type",
-      "accuracy": 0.8062451098940181,
-      "f1": 0.8371569402085359,
-      "rows": 30420
-    },
-    {
-      "dataset": "Same held-out events: relevance (humanitarian vs not)",
-      "accuracy": 0.8499671268902038,
-      "f1": 0.9153466632043625,
-      "rows": 30420
-    },
-    {
-      "dataset": "Kaggle: Natural Language Processing with Disaster Tweets (train.csv, relevance only)",
-      "accuracy": 0.676737160120846,
-      "f1": 0.46042534531900897,
-      "rows": 7613
-    }
-  ],
-  "relevanceAccuracy": 0.9247152055473007,
-  "relevanceF1": 0.9351930807650141,
-  "candidates": [
-    {
-      "name": "TF-IDF word n-grams + logistic regression",
-      "macroF1": 0.9197824709114949,
-      "accuracy": 0.9549576556996178,
-      "shipped": true,
-      "note": "test split macro-F1 0.920; unseen events macro-F1 0.837, accuracy 0.806; trained in 16 s on CPU"
-    },
-    {
-      "name": "TF-IDF word+char n-grams + logistic regression",
-      "macroF1": 0.9049731132852532,
-      "accuracy": 0.9476879262534662,
-      "shipped": false,
-      "note": "test split macro-F1 0.905; unseen events macro-F1 0.833, accuracy 0.796; trained in 39 s on CPU"
-    }
-  ],
-  "trainingSummary": {
-    "train_rows": 56931,
-    "train_relevant": 33727,
-    "train_events": [
-      "canada_wildfires_2016",
-      "ecuador_earthquake_2016",
-      "greece_wildfires_2018",
-      "hurricane_dorian_2019",
-      "hurricane_florence_2018",
-      "hurricane_irma_2017",
-      "hurricane_maria_2017",
-      "hurricane_matthew_2016",
-      "italy_earthquake_aug_2016",
-      "kaikoura_earthquake_2016",
-      "maryland_floods_2018",
-      "midwestern_us_floods_2019",
-      "pakistan_earthquake_2019",
-      "srilanka_floods_2017"
-    ],
-    "test_split_rows": 14133,
-    "unseen_event_rows": 30420,
-    "unseen_events": [
-      "california_wildfires_2018",
-      "cyclone_idai_2019",
-      "hurricane_harvey_2017",
-      "kerala_floods_2018",
-      "puebla_mexico_earthquake_2017"
-    ],
-    "negatives_train": 20000,
-    "negatives_test": 5000,
-    "kaggle_rows": 7613,
-    "hazard_counts_train": {
-      "cyclone": 25826,
-      "none": 20000,
-      "earthquake": 5544,
-      "wildfire": 3011,
-      "flood": 2550
-    }
-  },
-  "unseenEventsDetail": {
-    "perClass": [
-      {
-        "label": "cyclone",
-        "precision": 0.8644196174966863,
-        "recall": 0.727200318598168,
-        "f1": 0.7898948825539646,
-        "support": 12555
-      },
-      {
-        "label": "earthquake",
-        "precision": 0.8120128381476387,
-        "recall": 0.8958017197774406,
-        "f1": 0.8518518518518519,
-        "support": 1977
-      },
-      {
-        "label": "flood",
-        "precision": 0.7170421592683471,
-        "recall": 0.8540116896918172,
-        "f1": 0.7795562022553656,
-        "support": 7528
-      },
-      {
-        "label": "none",
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "support": 0
-      },
-      {
-        "label": "wildfire",
-        "precision": 0.9782011357391464,
-        "recall": 0.8814790359854737,
-        "f1": 0.9273248241729617,
-        "support": 6058
-      }
-    ],
-    "confusion": {
-      "labels": [
-        "cyclone",
-        "earthquake",
-        "flood",
-        "none",
-        "wildfire"
-      ],
-      "matrix": [
-        [
-          9130,
-          316,
-          2401,
-          611,
-          97
-        ],
-        [
-          142,
-          1771,
-          35,
-          24,
-          5
-        ],
-        [
-          857,
-          75,
-          6429,
-          150,
-          17
-        ],
-        [
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        [
-          433,
-          19,
-          101,
-          165,
-          5340
-        ]
-      ]
-    }
+   ]
   }
+ }
 }

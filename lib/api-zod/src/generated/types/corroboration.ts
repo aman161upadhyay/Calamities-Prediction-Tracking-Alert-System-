@@ -5,6 +5,7 @@
  * Calamity Watch API. Social-sensing hazard signals, alerts, official corroboration, model metrics and replay.
  * OpenAPI spec version: 0.1.0
  */
+import type { CorroborationOfficialTimePrecision } from './corroborationOfficialTimePrecision';
 import type { CorroborationState } from './corroborationState';
 
 export interface Corroboration {
@@ -19,7 +20,17 @@ export interface Corroboration {
   /** @nullable */
   officialAt?: Date | null;
   /**
-     * Positive when the social alert opened before the official event
+     * How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.
+     * @nullable
+     */
+  officialTimePrecision?: CorroborationOfficialTimePrecision;
+  /**
+     * The cited source for the official record
+     * @nullable
+     */
+  officialUrl?: string | null;
+  /**
+     * Positive when the social alert opened before the official event; null when the official time is only known to the day
      * @nullable
      */
   leadMinutes?: number | null;

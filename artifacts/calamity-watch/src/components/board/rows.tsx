@@ -31,7 +31,7 @@ export function PostRow({ post, color, full }: { post: ScoredPost; color?: strin
       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] leading-4">
         <span className="inline-flex items-center gap-1.5">
           <HazardDot hazard={post.hazard} color={color} />
-          {HAZARD_LABEL[post.hazard]} <span className="num">{prob(post.pRelevant)}</span>
+          {HAZARD_LABEL[post.hazard]} <span className="text-muted-foreground">relevance</span> <span className="num">{prob(post.pRelevant)}</span>
         </span>
         <span>
           <span className="text-fear">fear</span> <span className="num">{prob(post.pFear)}</span>
@@ -53,11 +53,19 @@ export function PostRow({ post, color, full }: { post: ScoredPost; color?: strin
   );
 }
 
-export function AlertRow({ alert, compact }: { alert: Alert; compact?: boolean }) {
+/** Query string that keeps a replay's scenario and playhead on the alert page, so it reads as of the same moment. */
+export function scopeQuery(scope?: { scenario?: string | null; asOf?: string | null } | null): string {
+  if (!scope?.scenario) return "";
+  const q = new URLSearchParams({ scenario: scope.scenario });
+  if (scope.asOf) q.set("asOf", scope.asOf);
+  return `?${q.toString()}`;
+}
+
+export function AlertRow({ alert, compact, scope }: { alert: Alert; compact?: boolean; scope?: { scenario?: string | null; asOf?: string | null } | null }) {
   const c = alert.corroboration;
   return (
     <li data-testid={`row-alert-${alert.id}`} className="border-t border-line first:border-t-0">
-      <Link href={`/alerts/${alert.id}`} className="block px-4 py-3 hover:bg-surface-2 focus-visible:bg-surface-2" data-testid={`link-alert-${alert.id}`}>
+      <Link href={`/alerts/${alert.id}${scopeQuery(scope)}`} className="block px-4 py-3 hover:bg-surface-2 focus-visible:bg-surface-2" data-testid={`link-alert-${alert.id}`}>
         <div className="flex items-start justify-between gap-2">
           <span className="font-bold text-[14px] leading-5">
             {alert.placeName} <span className="font-normal text-muted-foreground">{HAZARD_LABEL[alert.hazard].toLowerCase()}</span>
@@ -69,7 +77,7 @@ export function AlertRow({ alert, compact }: { alert: Alert; compact?: boolean }
         </p>
         <p className="mt-0.5 text-[12px] leading-4">
           {c.state === "corroborated" ? (
-            <span className="text-official">Corroborated by {c.feed ?? "an official feed"}, {leadText(c.leadMinutes, c.feed === "Historical record" ? "the recorded event" : c.feed ?? "the official record")}</span>
+            <span className="text-official">Corroborated by {c.feed ?? "an official feed"}, {leadText(c, alert.openedAt)}</span>
           ) : c.state === "pending" ? (
             <span className="text-muted-foreground">Awaiting official corroboration</span>
           ) : (

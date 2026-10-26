@@ -5,9 +5,9 @@ import { SOURCE_STATE_LABEL, ago } from "@/lib/format";
 import { useTitle } from "./home";
 
 const ROWS: [string, string, string][] = [
-  ["Posts", "Twitter streaming API, four Indian cities", "X recent search on a daily budget, plus the Bluesky firehose, any place"],
+  ["Posts", "Twitter streaming API, four Indian cities", "X recent search on a daily budget, plus Bluesky public search, any place"],
   ["Understanding", "Azure key phrases and generic sentiment", "Trained hazard classifier plus a multilabel emotion model for fear"],
-  ["Place", "The city a stream was filtered on", "Named-entity recognition against a gazetteer, with platform geotags"],
+  ["Place", "The city a stream was filtered on", "Named-entity recognition against a gazetteer; the text has to name the place"],
   ["Alert rule", "Fixed threshold on negative tweets", "Robust z-score against each place's own 7-day baseline"],
   ["Checking", "None", "Every alert matched against GDACS, USGS, NWS and NASA FIRMS, lead time recorded"],
   ["Storage and UI", "CSV and a Flask page", "Postgres, a typed API and this board, with replay of past events"],

@@ -1,7 +1,7 @@
 import { db, officialEventsTable, placesTable, alertsTable } from "@workspace/db";
 import { and, eq, gte, inArray, isNotNull, lte, sql, desc } from "drizzle-orm";
 import { DETECTOR } from "../lib/config";
-import { COMPATIBLE, HAZARDS, levelRank, type HazardId, type RiskLevel } from "../lib/hazards";
+import { HAZARDS, levelRank, type HazardId, type RiskLevel } from "../lib/hazards";
 import { baselineOf, haversineKm, levelFor, robustZ, round, trendOf } from "../lib/stats";
 import { HOUR_MS, floorHour } from "../lib/time";
 import { FEED_LABELS, type Scope, knownHour, mapOfficialEvent } from "./common";
@@ -214,11 +214,11 @@ export async function buildTimeline(scope: Scope, hazard: string, placeId: numbe
       level: levelFor(z, agg?.nRelevant ?? 0),
     });
   }
-  const compat = COMPATIBLE[hazard as HazardId] ?? [hazard];
+  // Markers are the same hazard only; the wider COMPATIBLE set is for corroborating alerts, not for the chart.
   const events = await db
     .select()
     .from(officialEventsTable)
-    .where(and(eq(officialEventsTable.scenario, scope.scenario), inArray(officialEventsTable.hazard, compat), gte(officialEventsTable.startsAt, start), lte(officialEventsTable.startsAt, scope.asOf), isNotNull(officialEventsTable.lat)))
+    .where(and(eq(officialEventsTable.scenario, scope.scenario), eq(officialEventsTable.hazard, hazard), gte(officialEventsTable.startsAt, start), lte(officialEventsTable.startsAt, scope.asOf), isNotNull(officialEventsTable.lat)))
     .orderBy(desc(officialEventsTable.startsAt))
     .limit(400);
   // Keep the most recent 60 within the window, returned oldest first.

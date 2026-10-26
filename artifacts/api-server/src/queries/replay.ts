@@ -43,11 +43,11 @@ export async function getScenario(id: string) {
   return describe(def, await scenarioStates());
 }
 
-export async function startScenario(id: string) {
+export async function startScenario(id: string, force = false) {
   const def = scenarioById(id);
   if (!def) throw new ApiError(404, "Scenario not found");
   const states = await scenarioStates();
   const st = states.get(id);
-  if (st?.state !== "ready" && !isPreparing(id)) void prepareScenario(id);
+  if ((force || st?.state !== "ready") && !isPreparing(id)) void prepareScenario(id, { force });
   return describe(def, await scenarioStates());
 }

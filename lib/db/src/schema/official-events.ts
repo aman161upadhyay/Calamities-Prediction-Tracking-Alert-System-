@@ -15,6 +15,8 @@ export const officialEventsTable = pgTable(
     country: text("country"),
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     endsAt: timestamp("ends_at", { withTimezone: true }),
+    /** How precisely the source records startsAt: minute | hour | day. Day-level records never support exact lead times. */
+    timePrecision: text("time_precision").notNull().default("minute"),
     url: text("url"),
     scenario: text("scenario").notNull().default(""),
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),

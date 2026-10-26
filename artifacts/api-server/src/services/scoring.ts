@@ -1,7 +1,7 @@
 import { db, modelRunsTable, postPlacesTable, postScoresTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
-import { mlScore } from "../ml/client";
+import { mlGeoparse, mlScore } from "../ml/client";
 import { upsertPlaces } from "./places";
 
 const CHUNK = 64;
@@ -16,6 +16,8 @@ export interface ScoreOptions {
   limit: number;
   /** Replay posts with no resolvable place are attached to the scenario's anchor place with low confidence. */
   fallbackPlaceId?: number | null;
+  /** Gazetteer key of a place the stream is known to be about (a replay scenario's region); breaks homonym ties only. */
+  contextPlaceKey?: string | null;
   onProgress?: (done: number, total: number) => void | Promise<void>;
 }
 
@@ -36,7 +38,7 @@ export async function scorePending(opts: ScoreOptions): Promise<number> {
   try {
     for (let i = 0; i < rows.length; i += CHUNK) {
       const chunk = rows.slice(i, i + CHUNK);
-      const res = await mlScore(chunk.map((r) => ({ id: String(r.id), text: r.text })));
+      const res = await mlScore(chunk.map((r) => ({ id: String(r.id), text: r.text })), true, opts.contextPlaceKey ?? null);
       version = res.modelVersion;
       const placeIds = await upsertPlaces(res.results.flatMap((r) => r.places));
       const scoreValues = res.results.map((r) => ({
@@ -102,4 +104,46 @@ export async function scorePending(opts: ScoreOptions): Promise<number> {
     throw err;
   }
   return scored;
+}
+
+/**
+ * Re-resolve places for every post of a scenario with the current geoparser, replacing its post_places rows.
+ * Scores are untouched. Used by a forced re-preparation after a gazetteer or geoparser change.
+ */
+export async function regeoparseScenario(opts: { scenario: string; fallbackPlaceId?: number | null; contextPlaceKey?: string | null; onProgress?: (done: number, total: number) => void | Promise<void> }): Promise<number> {
+  const totalRes = await db.execute<{ n: string }>(sql`select count(*) as n from posts where scenario = ${opts.scenario}`);
+  const total = Number(totalRes.rows[0]!.n);
+  let lastId = 0;
+  let done = 0;
+  for (;;) {
+    const batch = await db.execute<PendingPost & Record<string, unknown>>(sql`
+      select id, text from posts where scenario = ${opts.scenario} and id > ${lastId} order by id limit 256
+    `);
+    const rows = batch.rows;
+    if (rows.length === 0) break;
+    lastId = rows[rows.length - 1]!.id;
+    const res = await mlGeoparse(rows.map((r) => ({ id: String(r.id), text: r.text })), opts.contextPlaceKey ?? null);
+    const placeIds = await upsertPlaces(res.results.flatMap((r) => r.places));
+    const placeValues: (typeof postPlacesTable.$inferInsert)[] = [];
+    for (const r of res.results) {
+      const postId = Number(r.id);
+      if (r.places.length === 0 && opts.fallbackPlaceId) {
+        placeValues.push({ postId, placeId: opts.fallbackPlaceId, confidence: 0.3, method: "scenario", mention: null });
+        continue;
+      }
+      for (const p of r.places) {
+        const placeId = placeIds.get(p.key);
+        if (placeId) placeValues.push({ postId, placeId, confidence: p.confidence, method: p.method, mention: p.mention });
+      }
+    }
+    await db.transaction(async (tx) => {
+      await tx.delete(postPlacesTable).where(inArray(postPlacesTable.postId, rows.map((r) => r.id)));
+      if (placeValues.length) {
+        await tx.insert(postPlacesTable).values(placeValues).onConflictDoNothing({ target: [postPlacesTable.postId, postPlacesTable.placeId] });
+      }
+    });
+    done += rows.length;
+    await opts.onProgress?.(done, total);
+  }
+  return done;
 }

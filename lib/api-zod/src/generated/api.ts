@@ -136,9 +136,11 @@ export const GetBoardResponse = zod.object({
   "feed": zod.string().nullish(),
   "title": zod.string().nullish(),
   "officialAt": zod.coerce.date().nullish(),
-  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event')
+  "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
+  "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
-  "summary": zod.string().describe('One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."'),
+  "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
   "postCount": zod.number().int(),
   "scenario": zod.string().nullable()
 })),
@@ -431,9 +433,11 @@ export const GetPlaceResponse = zod.object({
   "feed": zod.string().nullish(),
   "title": zod.string().nullish(),
   "officialAt": zod.coerce.date().nullish(),
-  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event')
+  "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
+  "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
-  "summary": zod.string().describe('One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."'),
+  "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
   "postCount": zod.number().int(),
   "scenario": zod.string().nullable()
 })),
@@ -575,9 +579,11 @@ export const ListAlertsResponseItem = zod.object({
   "feed": zod.string().nullish(),
   "title": zod.string().nullish(),
   "officialAt": zod.coerce.date().nullish(),
-  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event')
+  "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
+  "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
-  "summary": zod.string().describe('One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."'),
+  "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
   "postCount": zod.number().int(),
   "scenario": zod.string().nullable()
 })
@@ -585,10 +591,15 @@ export const ListAlertsResponse = zod.array(ListAlertsResponseItem)
 
 
 /**
+ * The alert's scenario is implied by the alert itself. Pass asOf to read a replay alert as of the playhead; the evidence, level, peak and corroboration are then limited to what was known at that moment.
  * @summary Alert evidence (timeline, posts, event log, corroboration)
  */
 export const GetAlertParams = zod.object({
   "alertId": zod.coerce.number().int()
+})
+
+export const GetAlertQueryParams = zod.object({
+  "asOf": zod.date().optional().describe('ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.')
 })
 
 export const GetAlertResponse = zod.object({
@@ -613,9 +624,11 @@ export const GetAlertResponse = zod.object({
   "feed": zod.string().nullish(),
   "title": zod.string().nullish(),
   "officialAt": zod.coerce.date().nullish(),
-  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event')
+  "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
+  "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
-  "summary": zod.string().describe('One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."'),
+  "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
   "postCount": zod.number().int(),
   "scenario": zod.string().nullable()
 }),
@@ -790,7 +803,9 @@ export const GetModelInfoResponse = zod.object({
   "openAfterHours": zod.number().int(),
   "closeAfterHours": zod.number().int(),
   "corroborationRadiusKm": zod.number().int(),
-  "corroborationWindowHours": zod.number().int()
+  "corroborationWindowHours": zod.number().int().describe('Hours after an alert opens during which an official event still corroborates it.'),
+  "corroborationLookbackHours": zod.number().int().describe('Hours before an alert opens during which an active official event corroborates it.'),
+  "corroborationActiveHours": zod.number().int().describe('How long an official event with no recorded end is treated as active.')
 }),
   "limitations": zod.array(zod.string())
 })
@@ -906,6 +921,10 @@ export const GetReplayScenarioResponse = zod.object({
  */
 export const PrepareReplayScenarioParams = zod.object({
   "scenarioId": zod.coerce.string()
+})
+
+export const PrepareReplayScenarioQueryParams = zod.object({
+  "force": zod.coerce.boolean().optional().describe('Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.')
 })
 
 export const PrepareReplayScenarioResponse = zod.object({

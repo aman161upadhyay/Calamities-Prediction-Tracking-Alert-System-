@@ -110,7 +110,7 @@ router.get("/replay/scenarios/:scenarioId", handle(async (req) => getScenario(St
 router.post(
   "/replay/scenarios/:scenarioId/prepare",
   handle(async (req, res) => {
-    const data = await startScenario(String(req.params.scenarioId));
+    const data = await startScenario(String(req.params.scenarioId), req.query.force === "true");
     res.status(202).json(data);
     return undefined;
   }),

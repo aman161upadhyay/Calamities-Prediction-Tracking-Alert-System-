@@ -73,6 +73,19 @@ class ScoreItem(BaseModel):
 class ScoreRequest(BaseModel):
     items: list[ScoreItem] = Field(max_length=256)
     geoparse: bool = True
+    # Gazetteer key of a place the stream is known to be about (a replay scenario's region). Breaks homonym ties only.
+    contextPlaceKey: str | None = None
+
+
+class GeoparseRequest(BaseModel):
+    items: list[ScoreItem] = Field(max_length=512)
+    contextPlaceKey: str | None = None
+
+
+def _context_place(key: str | None):
+    if not key or State.geoparser is None:
+        return None
+    return State.geoparser.gazetteer.by_key.get(key)
 
 
 @app.get("/health")
@@ -95,10 +108,11 @@ def score(req: ScoreRequest) -> dict:
         raise HTTPException(status_code=503, detail=State.error or "models are still loading")
     t0 = time.time()
     texts = [it.text for it in req.items]
+    context = _context_place(req.contextPlaceKey)
     with State.lock:
         s1 = State.stage_one.predict(texts)
         s2 = State.stage_two.predict(texts)
-        places = [State.geoparser.resolve(t) if req.geoparse else [] for t in texts]
+        places = [State.geoparser.resolve(t, context) if req.geoparse else [] for t in texts]
     results = []
     for it, a, b, pl in zip(req.items, s1, s2, places):
         kw = keyword_hazards(it.text)
@@ -119,6 +133,21 @@ def score(req: ScoreRequest) -> dict:
             "places": [r.to_dict() for r in pl],
         })
     return {"modelVersion": MODEL_VERSION, "latencyMs": int((time.time() - t0) * 1000), "results": results}
+
+
+@app.post("/geoparse")
+def geoparse(req: GeoparseRequest) -> dict:
+    """Place resolution only (no classifiers), for re-resolving stored posts after a gazetteer change."""
+    if State.geoparser is None:
+        raise HTTPException(status_code=503, detail=State.error or "the geoparser is still loading")
+    t0 = time.time()
+    context = _context_place(req.contextPlaceKey)
+    with State.lock:
+        places = [State.geoparser.resolve(it.text, context) for it in req.items]
+    return {
+        "latencyMs": int((time.time() - t0) * 1000),
+        "results": [{"id": it.id, "places": [r.to_dict() for r in pl]} for it, pl in zip(req.items, places)],
+    }
 
 
 @app.get("/model-card")
@@ -147,8 +176,8 @@ def model_card() -> dict:
             "labels": ["negative", "neutral", "positive"],
         },
         "geoparser": {
-            "method": "spaCy en_core_web_sm named entities (GPE, LOC) resolved against a gazetteer with a population prior and same-text country context; camel-case hashtags are split first",
-            "gazetteer": "GeoNames cities15000 (CC BY 4.0) with population 50k+ plus capitals, 250 countries and a curated table of regions",
+            "method": "spaCy en_core_web_sm named entities (GPE, LOC; ORG and FAC spans only when they start with a large city, region or country) resolved against a gazetteer with a population prior, country and state context from the same text, a trailing US state code, and, in replay, the scenario's region as a tie-breaker between homonyms; camel-case hashtags are split first",
+            "gazetteer": "GeoNames cities15000 (CC BY 4.0): towns of 50k+ resolve on their own, towns of 15k to 50k only with supporting context; plus capitals, 250 countries and a curated table of regions with admin codes and extents",
             "placesInGazetteer": len(State.geoparser.gazetteer) if State.geoparser else 0,
         },
         "hazards": HAZARD_IDS,

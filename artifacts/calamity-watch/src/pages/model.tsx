@@ -35,7 +35,7 @@ export default function ModelPage() {
               <div><dt className="text-[12px] text-muted-foreground">Relevance accuracy</dt><dd className="num text-[20px]">{pct(m.stageOne.relevanceAccuracy)}</dd></div>
               <div><dt className="text-[12px] text-muted-foreground">Relevance F1</dt><dd className="num text-[20px]">{num(m.stageOne.relevanceF1, 3)}</dd></div>
             </dl>
-            <p className="text-[12px] text-muted-foreground mt-1">All on the held-out test split.</p>
+            <p className="text-[12px] text-muted-foreground mt-1">All on the held-out test split of the 14 training events (a random fifth of their posts). Hazard-type figures are computed on the relevant posts of that split, relevance figures on all of it.</p>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-2">
@@ -77,9 +77,9 @@ export default function ModelPage() {
           <section className="grid gap-6 lg:grid-cols-2">
             <div>
               <h3 className="text-[16px] mb-2">Cross-dataset results</h3>
-              <p className="text-[12px] text-muted-foreground mb-2">Trained on one collection, tested on another it never saw. Expect these to be lower.</p>
+              <p className="text-[12px] text-muted-foreground mb-2">Measured on data the model was not trained on. The five held-out HumAID events also chose which candidate shipped, so they are a selection set rather than a final blind test; the Kaggle set played no part in training or selection. Expect these to be lower than the test split.</p>
               <table className="w-full text-[14px]">
-                <thead><tr><th className={th}>Dataset</th><th className={`${th} text-right`}>Rows</th><th className={`${th} text-right`}>Accuracy</th><th className={`${th} text-right`}>F1</th></tr></thead>
+                <thead><tr><th className={th}>Dataset</th><th className={`${th} text-right`}>Rows scored</th><th className={`${th} text-right`}>Accuracy</th><th className={`${th} text-right`}>F1</th></tr></thead>
                 <tbody className="num">{m.stageOne.crossDataset.map((c) => <tr key={c.dataset} className="border-t border-line"><td className="py-1.5 pr-3 font-sans">{c.dataset}</td><td className="text-right pl-3 whitespace-nowrap">{num(c.rows)}</td><td className="text-right pl-3 whitespace-nowrap">{pct(c.accuracy)}</td><td className="text-right pl-3 whitespace-nowrap">{num(c.f1, 3)}</td></tr>)}</tbody>
               </table>
             </div>
@@ -123,7 +123,7 @@ export default function ModelPage() {
               <dt className="text-muted-foreground">Level thresholds (robust z)</dt><dd className="num">elevated {m.detector.thresholds.elevated}, high {m.detector.thresholds.high}, severe {m.detector.thresholds.severe}</dd>
               <dt className="text-muted-foreground">Open after</dt><dd className="num">{m.detector.openAfterHours} h above threshold</dd>
               <dt className="text-muted-foreground">Close after</dt><dd className="num">{m.detector.closeAfterHours} h below threshold</dd>
-              <dt className="text-muted-foreground">Corroboration</dt><dd className="num">within {m.detector.corroborationRadiusKm} km and {m.detector.corroborationWindowHours} h</dd>
+              <dt className="text-muted-foreground">Corroboration</dt><dd><span className="num">{m.detector.corroborationRadiusKm} km</span>; official event active from <span className="num">{m.detector.corroborationLookbackHours} h</span> before to <span className="num">{m.detector.corroborationWindowHours} h</span> after the alert opens (<span className="num">{m.detector.corroborationActiveHours} h</span> when the feed records no end)</dd>
               <dt className="text-muted-foreground">Place resolution</dt><dd>{m.geoparser.method}, {m.geoparser.gazetteer}, <span className="num">{num(m.geoparser.placesInGazetteer)}</span> places</dd>
             </dl>
           </section>

@@ -77,6 +77,8 @@ def evaluate(relevance, hazard, transform, df: pd.DataFrame) -> dict:
         ],
         "confusion": {"labels": labels, "matrix": confusion_matrix(haz_true, haz_pred, labels=labels).astype(int).tolist()},
         "rows": int(len(df)),
+        # Hazard metrics are computed on the relevant posts only; report that support, not the full frame.
+        "hazardRows": int(mask.sum()),
     }
 
 
@@ -127,9 +129,9 @@ def main() -> None:
     k_true = kaggle["relevant"].values.astype(int)
     kaggle_metrics = {"dataset": "Kaggle: Natural Language Processing with Disaster Tweets (train.csv, relevance only)",
                       "accuracy": float(accuracy_score(k_true, k_pred)), "f1": float(f1_score(k_true, k_pred)), "rows": int(len(kaggle))}
-    unseen_metrics = {"dataset": "HumAID events held out of training (Kerala floods 2018, Hurricane Harvey 2017, California wildfires 2018, Puebla earthquake 2017, Cyclone Idai 2019): hazard type",
-                      "accuracy": ev_unseen["accuracy"], "f1": ev_unseen["macroF1"], "rows": int(ev_unseen["rows"])}
-    unseen_rel = {"dataset": "Same held-out events: relevance (humanitarian vs not)",
+    unseen_metrics = {"dataset": "HumAID events held out of training and used to pick the shipped candidate (Kerala floods 2018, Hurricane Harvey 2017, California wildfires 2018, Puebla earthquake 2017, Cyclone Idai 2019): hazard type, scored on the relevant posts only",
+                      "accuracy": ev_unseen["accuracy"], "f1": ev_unseen["macroF1"], "rows": int(ev_unseen["hazardRows"])}
+    unseen_rel = {"dataset": "Same held-out events: relevance (humanitarian vs not), all posts",
                   "accuracy": ev_unseen["relevanceAccuracy"], "f1": ev_unseen["relevanceF1"], "rows": int(ev_unseen["rows"])}
 
     metrics = {

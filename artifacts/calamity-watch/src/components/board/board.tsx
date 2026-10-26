@@ -48,7 +48,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
 
   const [picked, setPicked] = useState<Hazard | null>(null);
   const [sel, setSel] = useState<MapSelection | null>(null);
-  const [tab, setTab] = useState<"alerts" | "feed" | "hazards">("alerts");
+  const [tab, setTab] = useState<"alerts" | "feed" | "places" | "hazards">("alerts");
 
   const data = board.data;
   const colors = useMemo(() => {
@@ -91,12 +91,31 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       )}
       {openAlerts.length > 0 && (
         <ul>
-          {openAlerts.map((a) => <AlertRow key={a.id} alert={a} compact />)}
+          {openAlerts.map((a) => <AlertRow key={a.id} alert={a} compact scope={params} />)}
         </ul>
       )}
       <ExperimentalNote className="px-4 pb-3" />
     </div>
   );
+
+  // The same list serves the rail on wide screens and a tab on narrow ones, so the map is never the only way in.
+  const placeList =
+    places.length === 0 ? (
+      <EmptyState>{data ? "No place has a relevant post in the last 24 hours." : "Waiting for the board."}</EmptyState>
+    ) : (
+      <ul className="max-h-[260px] overflow-auto pb-2" data-testid="list-map-readout">
+        {placesSorted.map((p) => (
+          <li key={`${p.placeId}-${p.hazard}`}>
+            <button type="button" onClick={() => setSel({ kind: "place", signal: p })} data-testid={`button-select-place-${p.placeId}-${p.hazard}`} className="w-full text-left px-4 py-1.5 text-[13px] leading-5 hover:bg-surface-2 flex items-center gap-2">
+              <HazardDot hazard={p.hazard} color={colors[p.hazard]} />
+              <span className="truncate flex-1">{p.name}</span>
+              <LevelGlyph level={p.level} />
+              <span className="num text-muted-foreground">z {num(p.zScore, 1)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
 
   const feed = (
     <div>
@@ -131,25 +150,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       <div className="grid gap-3 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)_340px]">
         <div className="hidden lg:flex flex-col gap-3 min-w-0">
           <Panel title="Hazards" meta="fear mass in the last hour, change vs 24 h earlier">{hazardRail}</Panel>
-          <Panel title="Open alerts" meta={alerts.data ? `${openAlerts.length} open` : undefined} className="xl:hidden">{alertList}</Panel>
-          <Panel title="Places on the map" meta="sorted by z-score, select to read">
-            {places.length === 0 ? (
-              <EmptyState>{data ? "No place has a relevant post in the last 24 hours." : "Waiting for the board."}</EmptyState>
-            ) : (
-              <ul className="max-h-[260px] overflow-auto pb-2" data-testid="list-map-readout">
-                {placesSorted.map((p) => (
-                  <li key={`${p.placeId}-${p.hazard}`}>
-                    <button type="button" onClick={() => setSel({ kind: "place", signal: p })} data-testid={`button-select-place-${p.placeId}-${p.hazard}`} className="w-full text-left px-4 py-1.5 text-[13px] leading-5 hover:bg-surface-2 flex items-center gap-2">
-                      <HazardDot hazard={p.hazard} color={colors[p.hazard]} />
-                      <span className="truncate flex-1">{p.name}</span>
-                      <LevelGlyph level={p.level} />
-                      <span className="num text-muted-foreground">z {num(p.zScore, 1)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+          <Panel title="Places on the map" meta="sorted by z-score, select to read">{placeList}</Panel>
         </div>
 
         <div className="flex flex-col gap-3 min-w-0">
@@ -166,7 +167,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
           </div>
           <div className="xl:hidden">
             <div role="tablist" aria-label="Board panels" className="flex gap-1 border-b border-line">
-              {(["alerts", "feed", "hazards"] as const).map((t) => (
+              {(["alerts", "feed", "places", "hazards"] as const).map((t) => (
                 <button
                   key={t}
                   role="tab"
@@ -174,15 +175,16 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
                   aria-selected={tab === t}
                   onClick={() => setTab(t)}
                   data-testid={`tab-${t}`}
-                  className={cn("px-3 py-2 text-[14px] -mb-px border-b-2", tab === t ? "border-[#3D9BFF] text-foreground" : "border-transparent text-muted-foreground", t === "hazards" && "lg:hidden")}
+                  className={cn("px-3 py-2 text-[14px] -mb-px border-b-2", tab === t ? "border-[#3D9BFF] text-foreground" : "border-transparent text-muted-foreground", (t === "hazards" || t === "places") && "lg:hidden")}
                 >
-                  {t === "alerts" ? `Alerts${alerts.data ? ` (${openAlerts.length})` : ""}` : t === "feed" ? "Feed" : "Hazards"}
+                  {t === "alerts" ? `Alerts${alerts.data ? ` (${openAlerts.length})` : ""}` : t === "feed" ? "Feed" : t === "places" ? `Places${places.length ? ` (${placesSorted.length})` : ""}` : "Hazards"}
                 </button>
               ))}
             </div>
             <div className="bg-surface border border-t-0 border-line rounded-b-lg" role="tabpanel">
               {tab === "alerts" && alertList}
               {tab === "feed" && <div className="max-h-[480px] overflow-auto">{feed}</div>}
+              {tab === "places" && <div className="pt-2">{placeList}</div>}
               {tab === "hazards" && hazardRail}
             </div>
           </div>

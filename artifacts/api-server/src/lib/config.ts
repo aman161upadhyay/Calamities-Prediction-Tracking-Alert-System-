@@ -58,6 +58,8 @@ export const DETECTOR = {
   corroborationRadiusKm: 250,
   corroborationWindowHours: 48,
   corroborationLookbackHours: 24,
+  /** An official event with no recorded end counts as active for this long. */
+  corroborationActiveHours: 72,
   placeConfidenceMin: 0.5,
   relevanceThreshold: 0.5,
   staleAfterMinutes: 45,

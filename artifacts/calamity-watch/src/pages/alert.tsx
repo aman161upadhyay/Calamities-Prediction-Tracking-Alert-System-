@@ -1,10 +1,10 @@
-import { useParams, Link } from "wouter";
+import { useParams, useSearch, Link } from "wouter";
 import { useGetAlert, getGetAlertQueryKey } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
 import { EmptyState, ErrorState, HazardTag, LevelBadge, LoadingRows, PageTitle, Panel } from "@/components/kit";
 import { FearTimeline } from "@/components/charts/charts";
 import { PostRow } from "@/components/board/rows";
-import { HAZARD_FALLBACK_COLOR, HAZARD_LABEL, isNotFound, leadText, num, utcDateTime } from "@/lib/format";
+import { HAZARD_FALLBACK_COLOR, HAZARD_LABEL, isNotFound, leadText, num, utcDate, utcDateTime } from "@/lib/format";
 import { useTitle } from "./home";
 import NotFound from "./not-found";
 
@@ -12,15 +12,24 @@ const EVENT_LABEL: Record<string, string> = { opened: "Opened", level_changed: "
 
 export default function AlertPage() {
   const { alertId } = useParams<{ alertId: string }>();
+  const search = new URLSearchParams(useSearch());
+  // A replay link carries its scenario and playhead so the alert reads as of that moment, not its final state.
+  const scenario = search.get("scenario");
+  const asOf = search.get("asOf");
   const id = Number(alertId);
-  const q = useGetAlert(id, { query: { queryKey: getGetAlertQueryKey(id), enabled: Number.isFinite(id) } });
+  const params = asOf ? { asOf } : undefined;
+  const q = useGetAlert(id, params, { query: { queryKey: [...getGetAlertQueryKey(id), params ?? {}], enabled: Number.isFinite(id) } });
   const d = q.data;
   useTitle(d ? `${d.alert.placeName} ${d.alert.hazard} alert` : "Alert");
   if (!Number.isFinite(id) || (q.isError && isNotFound(q.error))) return <NotFound />;
+  const backHref = scenario ? `/replay?s=${encodeURIComponent(scenario)}${asOf ? `&t=${encodeURIComponent(asOf)}` : ""}` : "/alerts";
 
   return (
     <Page>
-      <p className="mb-3 text-[14px]"><Link href="/alerts" className="text-muted-foreground hover:text-foreground underline underline-offset-2" data-testid="link-back-alerts">All alerts</Link></p>
+      <p className="mb-3 text-[14px]">
+        <Link href={backHref} className="text-muted-foreground hover:text-foreground underline underline-offset-2" data-testid="link-back-alerts">{scenario ? "Back to the replay" : "All alerts"}</Link>
+        {scenario && asOf && <span className="text-muted-foreground"> · read as of <span className="num">{utcDateTime(asOf)}</span></span>}
+      </p>
       {q.isLoading && <LoadingRows rows={6} />}
       {q.isError && !d && <ErrorState what="this alert" onRetry={() => q.refetch()} />}
       {d && (() => {
@@ -52,11 +61,18 @@ export default function AlertPage() {
                 {c.state === "corroborated" ? (
                   <>
                     <p className="text-official font-bold">Corroborated by {c.feed ?? "an official feed"}</p>
-                    <p className="mt-1">{c.title}{c.officialAt && <> at <span className="num">{utcDateTime(c.officialAt)}</span></>}</p>
-                    <p className="mt-1" data-testid="text-lead-time">Lead time: <span className="num">{leadText(c.leadMinutes, c.feed === "Historical record" ? "the recorded event" : c.feed ?? "the official record")}</span></p>
+                    <p className="mt-1">
+                      {c.title}
+                      {c.officialAt && c.officialTimePrecision === "day" && <>, dated <span className="num">{utcDate(c.officialAt)}</span> (the source gives the day only)</>}
+                      {c.officialAt && c.officialTimePrecision === "hour" && <>, about <span className="num">{utcDateTime(c.officialAt)}</span> (the source gives the hour, not the minute)</>}
+                      {c.officialAt && (!c.officialTimePrecision || c.officialTimePrecision === "minute") && <> at <span className="num">{utcDateTime(c.officialAt)}</span></>}
+                      {c.officialUrl && <> · <a href={c.officialUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground" data-testid="link-official-source">source</a></>}
+                    </p>
+                    <p className="mt-1" data-testid="text-lead-time">{c.officialTimePrecision === "day" ? "Timing" : "Lead time"}: <span className="num">{leadText(c, a.openedAt)}</span></p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">A match means an official record of the same hazard existed near this place in the window; it does not show that the posts predicted it.</p>
                   </>
                 ) : c.state === "pending" ? (
-                  <p>Pending. The system checks GDACS, USGS, NWS and NASA FIRMS for a matching event for 48 hours after the alert opens.</p>
+                  <p>Pending. The system checks GDACS, USGS, NWS and NASA FIRMS for an event of the same hazard within 250 km (or the region's own extent) that is active between 24 hours before the alert opened and 48 hours after.</p>
                 ) : (
                   <p>Uncorroborated. No matching official event was found in the corroboration window. This may be a false alarm or an event the official feeds do not cover.</p>
                 )}

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { Pause, Play } from "lucide-react";
 import {
   useGetReplayScenario,
+  useListAlerts,
   useListReplayScenarios,
   usePrepareReplayScenario,
   getGetReplayScenarioQueryKey,
+  getListAlertsQueryKey,
   getListReplayScenariosQueryKey,
   type ReplayScenario,
 } from "@workspace/api-client-react";
@@ -14,7 +16,8 @@ import { Page } from "@/components/layout/shell";
 import { Board } from "@/components/board/board";
 import { StatusBar } from "@/components/board/status-bar";
 import { EmptyState, ErrorState, HazardTag, LoadingRows, PageTitle, Panel, btn, btnPrimary } from "@/components/kit";
-import { errorMessage, num, prepEstimate, utcDate, utcDateTime } from "@/lib/format";
+import { HAZARD_LABEL, errorMessage, leadText, num, prepEstimate, utcDate, utcDateTime } from "@/lib/format";
+import { scopeQuery } from "@/components/board/rows";
 import { cn } from "@/lib/utils";
 import { useTitle } from "./home";
 
@@ -28,7 +31,9 @@ const SPEEDS = [
 export default function ReplayPage() {
   const search = useSearch();
   const [, navigate] = useLocation();
-  const id = new URLSearchParams(search).get("s");
+  const sp = new URLSearchParams(search);
+  const id = sp.get("s");
+  const startAtParam = sp.get("t");
   const list = useListReplayScenarios();
   useTitle("Replay");
 
@@ -61,12 +66,12 @@ export default function ReplayPage() {
           )}
         </Page>
       )}
-      {id && <ScenarioRunner id={id} onBack={() => navigate("/replay")} />}
+      {id && <ScenarioRunner id={id} startAt={startAtParam} onBack={() => navigate("/replay")} />}
     </>
   );
 }
 
-function ScenarioRunner({ id, onBack }: { id: string; onBack: () => void }) {
+function ScenarioRunner({ id, startAt, onBack }: { id: string; startAt: string | null; onBack: () => void }) {
   const qc = useQueryClient();
   const sc = useGetReplayScenario(id, {
     query: {
@@ -122,14 +127,26 @@ function ScenarioRunner({ id, onBack }: { id: string; onBack: () => void }) {
       </Page>
     );
   }
-  return <Player s={s} onBack={onBack} />;
+  return <Player s={s} startAt={startAt} onBack={onBack} />;
 }
 
-function Player({ s, onBack }: { s: ReplayScenario; onBack: () => void }) {
+function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | null; onBack: () => void }) {
   const start = useMemo(() => new Date(s.startsAt).getTime(), [s.startsAt]);
   const end = useMemo(() => new Date(s.endsAt).getTime(), [s.endsAt]);
   // Open two hours in: the board reads the last complete hour, so the first hour of a collection is always empty.
-  const [clock, setClock] = useState(() => Math.min(end, Math.floor(start / 3_600_000) * 3_600_000 + 2 * 3_600_000));
+  // A link back from an alert page carries the playhead it was read at.
+  const [clock, setClock] = useState(() => {
+    const requested = startAt ? new Date(startAt).getTime() : Number.NaN;
+    if (Number.isFinite(requested)) return Math.min(end, Math.max(start, requested));
+    return Math.min(end, Math.floor(start / 3_600_000) * 3_600_000 + 2 * 3_600_000);
+  });
+  // The whole run's alerts, for the outcome line under the controls.
+  const finalParams = { scenario: s.id, asOf: s.endsAt, limit: 200 };
+  const finalAlerts = useListAlerts(finalParams, { query: { queryKey: getListAlertsQueryKey(finalParams), staleTime: 5 * 60_000 } });
+  const first = useMemo(() => {
+    const list = finalAlerts.data ?? [];
+    return list.reduce<(typeof list)[number] | null>((acc, a) => (acc === null || a.openedAt < acc.openedAt ? a : acc), null);
+  }, [finalAlerts.data]);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(SPEEDS[0]);
 
@@ -206,7 +223,24 @@ function Player({ s, onBack }: { s: ReplayScenario; onBack: () => void }) {
             </div>
           )}
           {s.alertsOpened != null && (
-            <p className="text-[12px] text-muted-foreground">Over the full scenario the detector opened <span className="num">{s.alertsOpened}</span> alerts{s.firstAlertAt && <>, the first at <span className="num">{utcDateTime(s.firstAlertAt)}</span></>}.</p>
+            <p className="text-[12px] text-muted-foreground max-w-[90ch]" data-testid="text-replay-outcome">
+              Over the full scenario the detector opened <span className="num">{s.alertsOpened}</span> {s.alertsOpened === 1 ? "alert" : "alerts"}
+              {first ? (
+                <>
+                  . The first, {first.placeName} {HAZARD_LABEL[first.hazard].toLowerCase()}, opened <span className="num">{utcDateTime(first.openedAt)}</span>
+                  {first.corroboration.state === "corroborated" ? <>, {leadText(first.corroboration, first.openedAt)}</> : <>; no official record matched it</>}
+                  {". "}
+                  <Link href={`/alerts/${first.id}${scopeQuery({ scenario: s.id, asOf: s.endsAt })}`} className="underline underline-offset-2 hover:text-foreground" data-testid="link-first-alert">
+                    Read its evidence
+                  </Link>
+                  .
+                </>
+              ) : s.firstAlertAt ? (
+                <>, the first at <span className="num">{utcDateTime(s.firstAlertAt)}</span>.</>
+              ) : (
+                "."
+              )}
+            </p>
           )}
         </div>
       </div>
