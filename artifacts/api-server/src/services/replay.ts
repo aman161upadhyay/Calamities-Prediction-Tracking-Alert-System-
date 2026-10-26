@@ -67,12 +67,14 @@ export const SCENARIOS: ScenarioDefinition[] = [
       { key: "nhc-hurricane-warning", hazard: "cyclone", title: "NHC hurricane warning for the Texas coast, Port Mansfield to Matagorda", severity: "warning", lat: 27.8, lon: -97.4, startsAt: "2017-08-24T15:00:00Z", timePrecision: "hour", url: "https://www.nhc.noaa.gov/data/tcr/AL092017_Harvey.pdf", source: "National Hurricane Center tropical cyclone report, watch and warning table" },
       { key: "landfall-rockport", hazard: "cyclone", title: "Harvey makes landfall on San Jose Island near Rockport as a category 4 hurricane", severity: "category 4", lat: 28.02, lon: -97.05, startsAt: "2017-08-26T03:00:00Z", timePrecision: "hour", url: "https://www.nhc.noaa.gov/data/tcr/AL092017_Harvey.pdf", source: "National Hurricane Center tropical cyclone report, best track (landfall listed at 0300 UTC)" },
       { key: "houston-flash-flood-emergency", hazard: "flood", title: "NWS Houston issues its first flash flood emergency for the Houston metro", severity: "emergency", lat: 29.76, lon: -95.37, startsAt: "2017-08-27T06:30:00Z", timePrecision: "hour", url: "https://www.weather.gov/hgx/hurricaneharvey", source: "NWS Houston/Galveston event summary (overnight 26 to 27 August, local time)" },
+      { key: "landfall-cameron", hazard: "cyclone", title: "Harvey makes its final landfall just west of Cameron, Louisiana as a tropical storm", severity: "tropical storm", lat: 29.8, lon: -93.33, startsAt: "2017-08-30T08:00:00Z", timePrecision: "hour", url: "https://www.nhc.noaa.gov/data/tcr/AL092017_Harvey.pdf", source: "National Hurricane Center tropical cyclone report, best track (final landfall listed at 0800 UTC 30 August)" },
     ],
     moments: [
       { at: "2017-08-25T00:00:00Z", label: "HumAID collection begins" },
       { at: "2017-08-26T03:00:00Z", label: "Landfall near Rockport, category 4" },
       { at: "2017-08-27T06:30:00Z", label: "Flash flood emergency, Houston" },
       { at: "2017-08-28T18:00:00Z", label: "Addicks and Barker reservoir releases under way" },
+      { at: "2017-08-30T08:00:00Z", label: "Final landfall near Cameron, Louisiana" },
     ],
   },
   {

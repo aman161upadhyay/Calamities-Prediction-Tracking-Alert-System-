@@ -28,6 +28,7 @@ US_STATE_NAMES = {
     "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin",
     "WY": "Wyoming", "DC": "District of Columbia", "PR": "Puerto Rico",
 }
+_STATE_CODE_ALT = "|".join(sorted(US_STATE_CODES))
 _DIRECTION_PREFIX = re.compile(r"^(?:" + "|".join(sorted(DIRECTION_WORDS, key=len, reverse=True)) + r")\s+(.{3,})$", re.I)
 # Words NER tags as places but which are not places or are too generic to resolve.
 # Place names that are also ordinary English words. They resolve only when something else in the text supports
@@ -39,6 +40,10 @@ COMMON_WORD_NAMES = {
     "home", "house", "church", "temple", "college", "university", "hospital", "airport", "station", "central",
     "little", "big", "new", "old", "north", "south", "east", "west", "summit", "valley", "river", "lake", "beach",
     "island", "mount", "hill", "bay", "point", "park", "garden", "forest", "field", "bridge", "ford", "mill", "wells",
+    "metro", "commonwealth", "gent", "capital", "county", "state", "province", "district", "region", "territory",
+    # Companies and brands that share a name with a town (Toyota, Japan; Shell, Wyoming): a brand in a disaster post.
+    "toyota", "honda", "nissan", "hyundai", "samsung", "sony", "shell", "chevron", "exxon", "walmart", "target",
+    "costco", "tesla", "boeing", "airbus", "ikea", "nestle", "apple", "oracle", "adobe", "cisco", "intel", "dell",
 }
 # Hazard words that are also town names ("Hurricane, Utah", "Flood, Virginia", "Tornado, West Virginia"). In a post about a
 # disaster they are almost always the hazard, so they resolve only with state-level support, never on country alone.
@@ -58,6 +63,10 @@ STORM_NAMES = {
 _LOCALITY_CUE = r"(?:\b(?:in|at|near|to|from|into|around|outside|downtown)|\b(?:suburb|town|city|village|county|parish|port)\s+of)\s+"
 _STORM_PREFIX = r"\b(?:hurricane|tropical\s+storm|storm|cyclone|typhoon|super\s+typhoon|remnants\s+of|wake\s+of|aftermath\s+of|path\s+of|eye\s+of)\s+"
 STOPLIST = {
+    # Institutions whose names GeoNames lists as translated place names ("White House" is an alternate name of Casablanca).
+    "white house", "the white house", "capitol hill", "downing street", "the pentagon", "pentagon", "wall street",
+    "the kremlin", "kremlin", "city hall", "the capitol", "capitol", "state house", "parliament", "congress", "senate",
+    "red cross", "the red cross", "salvation army", "national guard", "coast guard", "the coast guard",
     "earth", "world", "europe", "asia", "africa", "north america", "south america", "america", "the world", "mother earth",
     "heaven", "hell", "paradise lost", "twitter", "facebook", "instagram", "youtube", "google", "amazon", "google maps",
     "east", "west", "north", "south", "midwest", "west coast", "east coast", "gulf", "atlantic", "pacific", "caribbean",
@@ -143,6 +152,7 @@ class Geoparser:
         cleaned = clean_for_ner(text)
         # NER sometimes spans "Florence, South Carolina" as one mention; each part becomes its own mention and the
         # second supports the first through the usual context rules.
+        placed_by_pair: set[str] = set()
         for m in list(strength):
             if "," in m and not self.gazetteer.lookup(m):
                 parts = [p.strip(" .") for p in m.split(",") if p.strip(" .")]
@@ -150,6 +160,7 @@ class Geoparser:
                     weak = strength.pop(m)
                     for p in parts:
                         strength.setdefault(p, weak)
+                    placed_by_pair.add(parts[0])
         for m in list(strength):
             esc = re.escape(m)
             # "George R. Brown Convention Center": a first name followed by an initial is a person, not George, South Africa.
@@ -158,8 +169,9 @@ class Geoparser:
                 continue
             # A storm name is the storm unless the text places it ("Chicago suburb of Harvey"), and never when the
             # storm words precede it ("Hurricane Harvey", "remnants of Harvey").
-            if m.lower() in STORM_NAMES:
-                placed = re.search(_LOCALITY_CUE + esc + r"\b", cleaned, re.I) and not re.search(_STORM_PREFIX + esc + r"\b", cleaned, re.I)
+            if normalise(m) in STORM_NAMES:
+                cued = m in placed_by_pair or re.search(_LOCALITY_CUE + esc + r"\b", cleaned, re.I)
+                placed = cued and not re.search(_STORM_PREFIX + esc + r"\b", cleaned, re.I)
                 if not placed:
                     del strength[m]
         if not strength:
@@ -196,6 +208,12 @@ class Geoparser:
                         strength[base] = strength.pop(m)
                         m = base
             candidates[m] = cands
+        # "Stockport, TX up to Orange,TX": NER often leaves the state code outside the span; read it from the text.
+        for m in candidates:
+            if m not in state_hint:
+                sm = re.search(rf"\b{re.escape(m)},?\s+({_STATE_CODE_ALT})\b", cleaned)
+                if sm:
+                    state_hint[m] = sm.group(1)
         # Context: country codes and admin1 codes of unambiguous mentions (and of regions, which carry an admin1 code).
         # Kept per mention so that a mention never supports itself.
         ctx_by_mention: dict[str, tuple[set[str], set[tuple[str, str]]]] = {}
@@ -227,11 +245,17 @@ class Geoparser:
             # Support at state level (or the replay anchor) is strong; a shared country alone is weak evidence, since
             # any US mention would otherwise vouch for any US hamlet.
             strong_by_key: dict[str, bool] = {}
+            # "Georgia men heading to Texas": when a state shares its name with a country and the text or the stream
+            # points at the state's country, the name is the state, so the country loses its exact-name bonus.
+            region_supported = any(
+                c.kind == "region" and (c.country_code in ctx_cc or (context is not None and c.country_code == context.country_code))
+                for c in cands
+            )
             for c in cands:
                 s = math.log10((c.population or 1) + 1)
                 supported = False
                 strong = False
-                if c.kind == "country":
+                if c.kind == "country" and not region_supported:
                     s += 2.0 if m.lower() == c.name.lower() or m.lower() in ("usa", "us", "uk", "u.s.", "u.k.") else 0.0
                 if c.kind == "region":
                     # A state or province outranks a same-named town of a few hundred thousand ("Texas", "Kerala").
@@ -278,14 +302,19 @@ class Geoparser:
                 margin = max(0.0, best_s - second_s)
                 conf = min(0.9, 0.45 + 0.15 * margin)
             best_strong = strong_by_key.get(best.key, False)
+            # "Stockport, TX": a mention written with a US state code is a US place; when the gazetteer only knows
+            # a namesake abroad (Stockport, England), the mention is a town too small to resolve, not that namesake.
+            if m in state_hint and best.country_code != "US":
+                continue
             # A small town is only a resolution when its state, or the replay's region, is in evidence.
             if best.minor and not best_strong:
                 conf = min(conf, 0.4)
             # An ordinary English word is not a place mention unless the text also points at that country or state.
-            if m.lower() in COMMON_WORD_NAMES and not best_supported and best.kind != "country":
+            # Membership is tested on the normalised form so "the Toyota Center" is caught as "toyota".
+            if norm_m in COMMON_WORD_NAMES and not best_supported and best.kind != "country":
                 continue
             # A hazard word is the hazard unless the state itself is named ("Hurricane, Utah").
-            if m.lower() in HAZARD_WORD_NAMES and not best_strong:
+            if norm_m in HAZARD_WORD_NAMES and not best_strong:
                 continue
             # Three-letter or very short mentions are weak evidence, as are names lifted from organisation spans.
             if len(m) <= 3:
