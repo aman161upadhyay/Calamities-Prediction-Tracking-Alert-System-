@@ -115,14 +115,14 @@ export const SCENARIOS: ScenarioDefinition[] = [
     datasetSource: HUMAID,
     anchor: { key: "region:us-ca", name: "California", admin1: null, country: "United States", countryCode: "US", lat: 36.8, lon: -119.4, population: null, kind: "region" },
     officialEvents: [
-      { key: "camp-fire-ignition", hazard: "wildfire", title: "Camp Fire reported near Pulga, Butte County", severity: "major incident", lat: 39.81, lon: -121.44, startsAt: "2018-11-08T14:33:00Z", timePrecision: "minute", endsAt: "2018-11-25T18:00:00Z", url: "https://www.fire.ca.gov/incidents/2018/11/8/camp-fire/", source: "CAL FIRE incident page (started 8 November 2018, 6:33 a.m. PST; containment date 25 November)" },
+      { key: "camp-fire-ignition", hazard: "wildfire", title: "Camp Fire reported near Pulga, Butte County", severity: "major incident", lat: 39.81, lon: -121.44, startsAt: "2018-11-08T14:33:00Z", timePrecision: "minute", endsAt: "2018-11-25T16:00:00Z", url: "https://www.fire.ca.gov/incidents/2018/11/8/camp-fire/", source: "CAL FIRE incident page (started 8 November 2018, 6:33 a.m. PST; contained 25 November 2018, 8:00 a.m. PST)" },
       { key: "woolsey-fire-ignition", hazard: "wildfire", title: "Woolsey Fire reported near Simi Valley, Ventura County", severity: "major incident", lat: 34.24, lon: -118.7, startsAt: "2018-11-08T22:24:00Z", timePrecision: "minute", endsAt: "2018-11-22T02:00:00Z", url: "https://www.fire.ca.gov/incidents/2018/11/8/woolsey-fire/", source: "CAL FIRE incident page (started 8 November 2018, 2:24 p.m. PST; containment date 21 November)" },
     ],
     moments: [
       { at: "2018-11-08T14:33:00Z", label: "Camp Fire starts (before the collection starts)" },
       { at: "2018-11-10T05:54:00Z", label: "HumAID collection begins" },
       { at: "2018-11-21T18:00:00Z", label: "First significant rain over the Camp Fire area" },
-      { at: "2018-11-25T18:00:00Z", label: "Camp Fire fully contained" },
+      { at: "2018-11-25T16:00:00Z", label: "Camp Fire fully contained" },
     ],
   },
   {
@@ -139,11 +139,11 @@ export const SCENARIOS: ScenarioDefinition[] = [
     datasetSource: HUMAID,
     anchor: { key: "geonames:1052373", name: "Beira", admin1: "Sofala", country: "Mozambique", countryCode: "MZ", lat: -19.8436, lon: 34.8389, population: 530604, kind: "city" },
     officialEvents: [
-      { key: "landfall-beira", hazard: "cyclone", title: "Idai makes landfall near Beira", severity: "intense tropical cyclone", lat: -19.84, lon: 34.84, startsAt: "2019-03-14T22:30:00Z", timePrecision: "day", url: "https://www.gdacs.org/report.aspx?eventid=1000552&eventtype=TC", source: "GDACS tropical cyclone report; landfall is recorded for the night of 14 to 15 March, the hour is not fixed by the source" },
+      { key: "landfall-beira", hazard: "cyclone", title: "Idai makes landfall near Beira", severity: "intense tropical cyclone", lat: -19.84, lon: 34.84, startsAt: "2019-03-14T23:30:00Z", timePrecision: "hour", url: "https://www.gdacs.org/report.aspx?eventid=1000552&eventtype=TC", source: "GDACS tropical cyclone report, ECHO update of 15 March 2019: landfall on 14 March at 23:30 UTC close to Beira" },
       { key: "mozambique-emergency", hazard: "flood", title: "Mozambique declares a national emergency", severity: "national", lat: -19.84, lon: 34.84, startsAt: "2019-03-19T12:00:00Z", timePrecision: "day", url: "https://reliefweb.int/disaster/tc-2019-000021-moz", source: "ReliefWeb disaster page (date only)" },
     ],
     moments: [
-      { at: "2019-03-14T22:30:00Z", label: "Landfall at Beira (before the collection starts)" },
+      { at: "2019-03-14T23:30:00Z", label: "Landfall at Beira (before the collection starts)" },
       { at: "2019-03-15T09:38:00Z", label: "HumAID collection begins" },
       { at: "2019-03-19T12:00:00Z", label: "National emergency declared" },
     ],

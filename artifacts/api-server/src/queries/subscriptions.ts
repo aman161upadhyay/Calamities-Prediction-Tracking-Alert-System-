@@ -15,6 +15,10 @@ interface Input {
 
 export async function createSubscription(input: Input) {
   const email = input.email.trim().toLowerCase();
+  // The schema checks the shape; the SMTP length limits are checked here so an impossible address is refused before it
+  // is recorded as pending.
+  const local = email.split("@")[0] ?? "";
+  if (email.length > 254 || local.length > 64 || local.length === 0) throw new ApiError(400, "That email address cannot be delivered to: at most 254 characters, with at most 64 before the @");
   if (input.placeId) {
     const [place] = await db.select({ id: placesTable.id }).from(placesTable).where(eq(placesTable.id, input.placeId)).limit(1);
     if (!place) throw new ApiError(400, "Unknown place");

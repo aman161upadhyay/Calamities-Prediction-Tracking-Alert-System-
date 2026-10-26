@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams, useSearch, Link } from "wouter";
 import { useGetHazard, useGetHazardTimeline, useListOfficialEvents, getGetHazardQueryKey, getGetHazardTimelineQueryKey, getListOfficialEventsQueryKey, type Hazard } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
 import { EmptyState, ErrorState, HazardDot, LevelBadge, LoadingRows, PageTitle, Panel, Skel, TrendText, ExperimentalNote } from "@/components/kit";
 import { EmotionMix, FearTimeline } from "@/components/charts/charts";
-import { PostRow } from "@/components/board/rows";
+import { PostRow, scopeQuery } from "@/components/board/rows";
 import { HAZARD_LABEL, isHazard, isNotFound, num, placeLabel, signed, utcDateTime } from "@/lib/format";
 import { useTitle } from "./home";
 import NotFound from "./not-found";
@@ -19,10 +19,17 @@ export default function HazardPage() {
 
 function HazardInner({ hazard }: { hazard: Hazard }) {
   useTitle(`${HAZARD_LABEL[hazard]} signal`);
-  const detail = useGetHazard(hazard, undefined, { query: { queryKey: getGetHazardQueryKey(hazard), refetchInterval: 60_000 } });
-  const tlP = { hours: 168 };
+  const search = new URLSearchParams(useSearch());
+  // From a replay, the page reads the hazard as of the playhead; live otherwise.
+  const scenario = search.get("scenario");
+  const asOf = search.get("asOf");
+  const scope = scenario ? { scenario, asOf: asOf ?? undefined } : null;
+  const params = scope ? { scenario: scope.scenario, ...(scope.asOf ? { asOf: scope.asOf } : {}) } : undefined;
+  const refetchInterval = scope ? false : 60_000;
+  const detail = useGetHazard(hazard, params, { query: { queryKey: [...getGetHazardQueryKey(hazard), params ?? {}], refetchInterval } });
+  const tlP = { hours: 168, ...params };
   const tl = useGetHazardTimeline(hazard, tlP, { query: { queryKey: getGetHazardTimelineQueryKey(hazard, tlP) } });
-  const evP = { hazard, hours: 72, limit: 50 };
+  const evP = { hazard, hours: 72, limit: 50, ...params };
   const [showAllEvents, setShowAllEvents] = useState(false);
   const events = useListOfficialEvents(evP, { query: { queryKey: getListOfficialEventsQueryKey(evP) } });
   const d = detail.data;
@@ -32,6 +39,12 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
 
   return (
     <Page wide>
+      {scope && (
+        <p className="mb-3 text-[14px]" data-testid="text-hazard-scope">
+          <Link href={`/replay?s=${encodeURIComponent(scope.scenario)}${scope.asOf ? `&t=${encodeURIComponent(scope.asOf)}` : ""}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2" data-testid="link-back-replay">Back to the replay</Link>
+          <span className="text-muted-foreground"> · read as of <span className="num">{scope.asOf ? utcDateTime(scope.asOf) : "the end of the replay"}</span>; the levels, places, posts and official events below are from that replay, not live.</span>
+        </p>
+      )}
       <PageTitle sub={d ? d.summary.description : undefined}>
         <span className="inline-flex items-center gap-3"><HazardDot hazard={hazard} color={color} />{HAZARD_LABEL[hazard]}</span>
       </PageTitle>
@@ -40,7 +53,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
       {d && (
         <div className="grid gap-3">
           <dl className="flex flex-wrap gap-x-8 gap-y-2 text-[14px]" data-testid="stats-hazard">
-            <div><dt className="text-muted-foreground text-[12px]">Highest level now</dt><dd><LevelBadge level={d.summary.maxLevel} /></dd></div>
+            <div><dt className="text-muted-foreground text-[12px]">{scope ? "Highest level at the playhead" : "Highest level now"}</dt><dd><LevelBadge level={d.summary.maxLevel} /></dd></div>
             <div><dt className="text-muted-foreground text-[12px]">Fear mass, last hour</dt><dd className="num">{num(d.summary.fearIndexNow, 2)} <span className="text-muted-foreground">({signed(d.summary.fearIndexDelta24h, 2)} vs 24 h ago)</span></dd></div>
             <div><dt className="text-muted-foreground text-[12px]">Relevant posts, 24 h</dt><dd className="num">{num(d.summary.relevantLast24h)} of {num(d.summary.postsLast24h)}</dd></div>
             <div><dt className="text-muted-foreground text-[12px]">Open alerts</dt><dd className="num">{d.summary.openAlerts}</dd></div>
@@ -67,7 +80,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
                     <tbody>
                       {[...d.places].sort((a, b) => b.zScore - a.zScore).map((p) => (
                         <tr key={p.placeId} className="border-t border-line">
-                          <td className="px-4 py-2"><Link href={`/places/${p.placeId}`} className="hover:underline" data-testid={`link-place-${p.placeId}`}>{placeLabel(p.name, p.country)}</Link></td>
+                          <td className="px-4 py-2"><Link href={`/places/${p.placeId}${scopeQuery(scope)}`} className="hover:underline" data-testid={`link-place-${p.placeId}`}>{placeLabel(p.name, p.country)}</Link></td>
                           <td className="px-2"><LevelBadge level={p.level} /></td>
                           <td className="px-2 text-right num">{num(p.zScore, 1)}</td>
                           <td className="px-2 text-right num">{p.relevantPostsLastHour}</td>
@@ -84,9 +97,9 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
 
           <div className="grid gap-3 xl:grid-cols-[3fr_2fr]">
             <Panel title="Recent posts" meta="with relevance and fear scores">
-              {d.recentPosts.length === 0 ? <EmptyState>No recent {hazard} posts.</EmptyState> : <ul>{d.recentPosts.map((p) => <PostRow key={p.id} post={p} color={color} full />)}</ul>}
+              {d.recentPosts.length === 0 ? <EmptyState>No recent {hazard} posts.</EmptyState> : <ul>{d.recentPosts.map((p) => <PostRow key={p.id} post={p} color={color} full scope={scope} />)}</ul>}
             </Panel>
-            <Panel title="Official events, last 72 hours" meta="GDACS, USGS, NWS, NASA FIRMS">
+            <Panel title="Official events, last 72 hours" meta={scope ? "the replay's historical record" : "GDACS, USGS, NWS, NASA FIRMS"}>
               {events.isLoading && <LoadingRows rows={3} />}
               {events.isError && <ErrorState what="official events" onRetry={() => events.refetch()} />}
               {events.data && events.data.length === 0 && <EmptyState>No official {hazard} events in the last 72 hours.</EmptyState>}

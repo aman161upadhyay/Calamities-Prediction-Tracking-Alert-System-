@@ -2,7 +2,7 @@
 
 Hazard warnings read from what people post, before the sirens.
 
-Calamity Watch pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are checked against GDACS, USGS, NWS and NASA FIRMS, and the lead time between the social signal and the official one is recorded.
+Calamity Watch pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are checked against GDACS, USGS, NWS and NASA FIRMS, and the time between the social signal and the official record is kept, whichever came first (in the replays the official record usually did).
 
 This is the 2026 rebuild of [sacredgamers_codefundoMS](https://github.com/aman161upadhyay/sacredgamers_codefundoMS), a Microsoft CodeFunDo++ 2018 hackathon entry. The original is kept unchanged; a redacted copy of its sources is in `reference/original-2018/` and the audit is in `docs/research/01-original-system-audit.md`.
 
@@ -18,9 +18,9 @@ This is the 2026 rebuild of [sacredgamers_codefundoMS](https://github.com/aman16
 
 | Step | 2018 | 2026 |
 |---|---|---|
-| Posts | Twitter streaming API, four Indian cities | X recent search on a daily budget plus the Bluesky firehose, any place |
+| Posts | Twitter streaming API, four Indian cities | X recent search on a daily budget plus Bluesky public search, any place |
 | Understanding | Azure key phrases and generic sentiment | Trained hazard classifier plus a multilabel emotion model for fear |
-| Place | The city a stream was filtered on | Named-entity recognition against a 13,583-place gazetteer, with platform geotags |
+| Place | The city a stream was filtered on | Named-entity recognition against a 34,665-place gazetteer; the text has to name the place |
 | Alert rule | Fixed threshold on negative tweets | Robust z-score against each place's own 7-day baseline |
 | Checking | None | Every alert matched against GDACS, USGS, NWS and NASA FIRMS; lead time recorded |
 | Storage and UI | CSV and a Flask page | Postgres, a typed API and a React board with replay of past events |

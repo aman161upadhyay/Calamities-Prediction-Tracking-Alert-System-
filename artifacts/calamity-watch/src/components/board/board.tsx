@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { keepPreviousData } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -93,7 +93,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       {data && (
         <ul className="stagger">
           {hazards.map((h) => (
-            <HazardRailRow key={h.hazard} h={h} active={h.hazard === selected} onPick={() => setPicked(h.hazard)} />
+            <HazardRailRow key={h.hazard} h={h} active={h.hazard === selected} onPick={() => setPicked(h.hazard)} scope={params} />
           ))}
         </ul>
       )}
@@ -258,7 +258,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
   );
 }
 
-function HazardRailRow({ h, active, onPick }: { h: HazardSummary; active: boolean; onPick: () => void }) {
+function HazardRailRow({ h, active, onPick, scope }: { h: HazardSummary; active: boolean; onPick: () => void; scope?: { scenario?: string | null; asOf?: string | null } | null }) {
   return (
     <li className={cn("border-t border-line first:border-t-0", active && "bg-surface-2")}>
       <div className="px-4 py-2 flex items-center gap-2">
@@ -272,7 +272,7 @@ function HazardRailRow({ h, active, onPick }: { h: HazardSummary; active: boolea
       <div className="px-4 pb-2 -mt-1 flex items-center gap-2 text-[12px] leading-4 text-muted-foreground">
         {h.maxLevel !== "insufficient" && h.maxLevel !== "low" ? <LevelBadge level={h.maxLevel} testId={`status-hazard-level-${h.hazard}`} /> : <span><LevelGlyph level={h.maxLevel} /></span>}
         <span className="whitespace-nowrap"><span className="num">{h.relevantLast24h}</span> relevant / 24 h</span>
-        <Link href={`/hazards/${h.hazard}`} className="ml-auto underline underline-offset-2 hover:text-foreground" data-testid={`link-hazard-detail-${h.hazard}`}>Detail</Link>
+        <Link href={`/hazards/${h.hazard}${scopeQuery(scope)}`} className="ml-auto underline underline-offset-2 hover:text-foreground" data-testid={`link-hazard-detail-${h.hazard}`}>Detail</Link>
       </div>
     </li>
   );
@@ -289,8 +289,26 @@ function MapLegend() {
 }
 
 function Readout({ sel, onClose, color, scope }: { sel: MapSelection; onClose: () => void; color: string; scope?: { scenario?: string | null; asOf?: string | null } | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const selKey = sel.kind === "place" ? `place:${sel.signal.placeId}:${sel.signal.hazard}` : `event:${sel.event.id}`;
+  // The readout opens from a button that stays where it was (a map dot or a row in the Places list), so focus moves into
+  // the readout, Escape closes it, and focus returns to that button when it closes.
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    ref.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (previous && previous.isConnected) previous.focus();
+    };
+  }, [selKey]);
   return (
-    <div role="dialog" aria-label="Map readout" className="absolute left-2 bottom-8 w-[min(320px,calc(100%-16px))] bg-surface-2 border border-line rounded-lg p-3 text-[13px] leading-5 shadow-[0_8px_24px_rgba(4,8,16,.5)] fade-in" data-testid="panel-map-readout">
+    <div ref={ref} tabIndex={-1} role="dialog" aria-label="Map readout" className="absolute left-2 bottom-8 w-[min(320px,calc(100%-16px))] bg-surface-2 border border-line rounded-lg p-3 text-[13px] leading-5 shadow-[0_8px_24px_rgba(4,8,16,.5)] fade-in outline-none focus-visible:ring-2 focus-visible:ring-[#7FB8FF]" data-testid="panel-map-readout">
       <button type="button" onClick={onClose} aria-label="Close readout" className="absolute right-1.5 top-1.5 p-1.5 text-muted-foreground hover:text-foreground" data-testid="button-close-readout">
         <X size={14} />
       </button>
@@ -308,7 +326,7 @@ function Readout({ sel, onClose, color, scope }: { sel: MapSelection; onClose: (
           <p className="mt-1 text-[11px] text-muted-foreground">updated <span className="num">{utcDateTime(sel.signal.updatedAt)}</span></p>
           <div className="mt-2 flex gap-2">
             <Link href={`/places/${sel.signal.placeId}${scopeQuery(scope)}`} className={btn} data-testid="link-readout-place">Open {sel.signal.name}</Link>
-            <Link href={`/hazards/${sel.signal.hazard}`} className={btn} data-testid="link-readout-hazard">{HAZARD_LABEL[sel.signal.hazard]} detail</Link>
+            <Link href={`/hazards/${sel.signal.hazard}${scopeQuery(scope)}`} className={btn} data-testid="link-readout-hazard">{HAZARD_LABEL[sel.signal.hazard]} detail</Link>
           </div>
         </>
       ) : (
@@ -319,7 +337,7 @@ function Readout({ sel, onClose, color, scope }: { sel: MapSelection; onClose: (
           <p className="num text-[12px] mt-1">from {utcDateTime(sel.event.startsAt)}</p>
           <div className="mt-2 flex gap-2">
             {sel.event.url && <a href={sel.event.url} target="_blank" rel="noreferrer" className={btn} data-testid="link-readout-official">Open feed record</a>}
-            <Link href={`/hazards/${sel.event.hazard}`} className={btn} data-testid="link-readout-event-hazard">{HAZARD_LABEL[sel.event.hazard]} detail</Link>
+            <Link href={`/hazards/${sel.event.hazard}${scopeQuery(scope)}`} className={btn} data-testid="link-readout-event-hazard">{HAZARD_LABEL[sel.event.hazard]} detail</Link>
           </div>
         </>
       )}

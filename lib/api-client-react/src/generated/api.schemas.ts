@@ -696,6 +696,10 @@ export interface ReplayScenario {
 }
 
 export interface SubscriptionInput {
+  /**
+     * A deliverable address; at most 254 characters with a local part of at most 64 (RFC 5321)
+     * @maxLength 254
+     */
   email: string;
   /** @nullable */
   placeId?: number | null;

@@ -1562,6 +1562,8 @@ components:
         email:
           type: string
           format: email
+          maxLength: 254
+          description: A deliverable address; at most 254 characters with a local part of at most 64 (RFC 5321)
         placeId:
           type: ["integer", "null"]
         hazard:

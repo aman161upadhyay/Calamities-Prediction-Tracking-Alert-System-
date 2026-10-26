@@ -960,8 +960,12 @@ export const PrepareReplayScenarioResponse = zod.object({
 /**
  * @summary Subscribe an email to alerts for a place and/or hazard
  */
+export const createSubscriptionBodyEmailMax = 254;
+
+
+
 export const CreateSubscriptionBody = zod.object({
-  "email": zod.string().email(),
+  "email": zod.string().email().max(createSubscriptionBodyEmailMax).describe('A deliverable address; at most 254 characters with a local part of at most 64 (RFC 5321)'),
   "placeId": zod.number().int().nullish(),
   "hazard": zod.union([zod.enum(['flood', 'storm', 'cyclone', 'wildfire', 'earthquake', 'landslide', 'heat', 'tsunami']).describe('Hazard family. storm covers heavy rain and thunderstorms; cyclone covers hurricanes and typhoons; heat covers heatwaves and drought.'),zod.null()]).optional(),
   "minLevel": zod.enum(['insufficient', 'low', 'elevated', 'high', 'severe']).describe('insufficient means fewer relevant posts than the minimum needed to judge.')

@@ -142,7 +142,7 @@ const EMO: { key: keyof EmotionPoint; label: string; color: string }[] = [
   { key: "fear", label: "Fear", color: "#FF5C7A" },
   { key: "anger", label: "Anger", color: "#FF8A3D" },
   { key: "sadness", label: "Sadness", color: "#7FB8FF" },
-  { key: "optimism", label: "Optimism", color: "#5EEAD4" },
+  { key: "optimism", label: "Optimism", color: "#9AD86B" },
   { key: "other", label: "Other", color: "#8A97AB" },
 ];
 
@@ -175,9 +175,9 @@ export function EmotionMix({ points }: { points: EmotionPoint[] }) {
       ) : (
         <div className="h-[180px] mt-2" aria-hidden>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={withData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <LineChart data={withData} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
               <CartesianGrid stroke="#263247" vertical={false} />
-              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#263247" />
+              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#263247" padding={{ left: 24, right: 8 }} />
               <YAxis tick={axis} domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} tickFormatter={(v: number) => v.toFixed(2)} stroke="#263247" width={44} />
               <Tooltip content={<TipBox rows={(p) => EMO.map((e) => [e.label, (p[e.key] as number).toFixed(2)] as [string, string])} />} />
               {EMO.map((e) => <Line key={e.key} dataKey={e.key} stroke={e.color} dot={false} strokeWidth={1.4} isAnimationActive={false} />)}

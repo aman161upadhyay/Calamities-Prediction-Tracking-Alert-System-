@@ -10,7 +10,11 @@ import { btnPrimary } from "@/components/kit";
 import { useMemo, useState } from "react";
 
 const schema = z.object({
-  email: z.string().email("Enter an email address like name@example.org"),
+  email: z
+    .string()
+    .email("Enter an email address like name@example.org")
+    .max(254, "An email address has at most 254 characters")
+    .refine((v) => (v.split("@")[0] ?? "").length <= 64, "The part before the @ has at most 64 characters"),
   placeId: z.string(),
   hazard: z.string(),
   minLevel: z.enum(["elevated", "high", "severe"]),
@@ -65,7 +69,7 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
             <FormLabel>Email</FormLabel>
-            <FormControl><Input type="email" autoComplete="email" className="bg-surface-2 border-line rounded-[4px] h-10" data-testid="input-email" {...field} /></FormControl>
+            <FormControl><Input type="email" autoComplete="email" maxLength={254} className="bg-surface-2 border-line rounded-[4px] h-10" data-testid="input-email" {...field} /></FormControl>
             <FormDescription>
               {emailOff ? (
                 <span style={{ color: "#E8B04B" }} data-testid="text-email-provider-missing">No email provider is configured on this deployment, so no confirmation link can be sent yet. A request is recorded as pending and sends nothing until a provider is added and the address is confirmed.</span>

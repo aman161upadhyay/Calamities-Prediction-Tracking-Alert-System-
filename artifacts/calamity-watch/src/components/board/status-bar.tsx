@@ -4,6 +4,7 @@ import type { SourceHealth, SystemStatus } from "@workspace/api-client-react";
 import { SOURCE_STATE_LABEL, ago, utcTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+// Health is shown in neutrals and the warning colours; the teal (--cw-official) stays reserved for official evidence.
 const STATE_COLOR: Record<string, string> = {
   ok: "#9DA9BC",
   idle: "#9DA9BC",
@@ -16,7 +17,7 @@ const STATE_COLOR: Record<string, string> = {
 function SourceChip({ s }: { s: SourceHealth }) {
   return (
     <span title={s.detail} data-testid={`status-source-${s.name}`} className="inline-flex items-center gap-1 whitespace-nowrap">
-      <span aria-hidden className="inline-block size-1.5 rounded-full" style={{ background: s.state === "ok" ? "#5EEAD4" : STATE_COLOR[s.state] }} />
+      <span aria-hidden className="inline-block size-1.5 rounded-full" style={{ background: STATE_COLOR[s.state] }} />
       {s.label} <span style={{ color: STATE_COLOR[s.state] }}>{SOURCE_STATE_LABEL[s.state]}</span>
     </span>
   );
@@ -53,7 +54,7 @@ export function StatusBar({ status, isLoading, isError, onRetry, replayLabel }: 
         {status && (
           <>
             <span className="inline-flex items-center gap-1.5 font-bold" data-testid="status-live">
-              <span aria-hidden className="inline-block size-2 rounded-full" style={{ background: status.isStale ? "#E8B04B" : "#5EEAD4" }} />
+              <span aria-hidden className="inline-block size-2 rounded-full" style={{ background: status.isStale ? "#E8B04B" : "#E6EBF2" }} />
               {status.isStale ? "Stale" : "Live"}
             </span>
             <span className="text-muted-foreground" data-testid="text-last-ingest">
