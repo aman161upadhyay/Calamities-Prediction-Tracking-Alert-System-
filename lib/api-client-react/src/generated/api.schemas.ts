@@ -195,6 +195,18 @@ export interface PlaceSignal {
   updatedAt: string;
 }
 
+/**
+ * How precisely the source dates the record; a day-precision record's startsAt is a nominal noon and should be shown as a date only
+ */
+export type OfficialEventTimePrecision = typeof OfficialEventTimePrecision[keyof typeof OfficialEventTimePrecision];
+
+
+export const OfficialEventTimePrecision = {
+  minute: 'minute',
+  hour: 'hour',
+  day: 'day',
+} as const;
+
 export interface OfficialEvent {
   id: number;
   /** gdacs, usgs, nws, firms */
@@ -212,6 +224,8 @@ export interface OfficialEvent {
   /** @nullable */
   country?: string | null;
   startsAt: string;
+  /** How precisely the source dates the record; a day-precision record's startsAt is a nominal noon and should be shown as a date only */
+  timePrecision: OfficialEventTimePrecision;
   /** @nullable */
   endsAt?: string | null;
   /** @nullable */
@@ -701,7 +715,12 @@ export interface SubscriptionInput {
      * @maxLength 254
      */
   email: string;
-  /** @nullable */
+  /**
+     * A tracked place id, or null for every place
+     * @minimum 1
+     * @maximum 2147483647
+     * @nullable
+     */
   placeId?: number | null;
   hazard?: Hazard | null;
   minLevel: RiskLevel;

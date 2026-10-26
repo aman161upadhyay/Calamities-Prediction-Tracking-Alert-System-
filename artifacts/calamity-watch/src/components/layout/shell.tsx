@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { Menu, X } from "lucide-react";
 import { useGetSystemStatus, getGetSystemStatusQueryKey, type SourceHealth, type SystemStatus } from "@workspace/api-client-react";
@@ -30,7 +30,8 @@ function stateMark(s: SourceHealth["state"]) {
   if (s === "ok") return { glyph: "●", color: "#15140F" };
   if (s === "idle") return { glyph: "○", color: "#5B5A54" };
   if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#9A6700" };
-  return { glyph: "▲", color: "#C8102E" };
+  // Failure states are ink (the brief keeps red for fear and alert readings); the triangle and the state word carry the message.
+  return { glyph: "▲", color: "#15140F" };
 }
 
 function SourceLine({ s }: { s: SourceHealth }) {
@@ -49,15 +50,42 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
   const [open, setOpen] = useState(false);
   const [loc] = useLocation();
   const search = useSearch();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Escape closes the sheet and returns focus to its trigger; a click or a focus move outside closes it as well.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      setOpen(false);
+      triggerRef.current?.focus();
+    };
+    const onPointer = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onFocus = (e: FocusEvent) => {
+      if (rootRef.current && e.target instanceof Node && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("focusin", onFocus);
+    };
+  }, [open]);
   // A page scoped to a replay scenario (the console itself, or an evidence page opened from it) reads as "Replay", not as the live clock.
   const sp = new URLSearchParams(search);
   const replay = (loc.startsWith("/replay") && sp.has("s")) || sp.has("scenario");
   const all = status ? [...status.sources, ...status.officialFeeds] : [];
   const ok = all.filter((s) => s.state === "ok").length;
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         type="button"
+        ref={triggerRef}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="status-sheet"
@@ -111,6 +139,17 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
 export function TopNav() {
   const [loc] = useLocation();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      menuRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
   const status = useGetSystemStatus({ query: { queryKey: getGetSystemStatusQueryKey(), refetchInterval: 60_000 } });
   const active = (h: string) => (h === "/" ? loc === "/" : loc.startsWith(h));
   return (
@@ -138,7 +177,7 @@ export function TopNav() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <StatusPlate status={status.data} isLoading={status.isLoading} isError={status.isError} onRetry={() => status.refetch()} />
-          <button type="button" className="md:hidden press size-9 flex items-center justify-center border border-rule-strong bg-sheet" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} data-testid="button-menu" onClick={() => setOpen((o) => !o)}>
+          <button type="button" ref={menuRef} className="md:hidden press size-9 flex items-center justify-center border border-rule-strong bg-sheet" aria-expanded={open} aria-label={open ? "Close menu" : "Open menu"} data-testid="button-menu" onClick={() => setOpen((o) => !o)}>
             {open ? <X size={16} /> : <Menu size={16} />}
           </button>
         </div>

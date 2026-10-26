@@ -19,11 +19,13 @@ export async function createSubscription(input: Input) {
   // is recorded as pending.
   const local = email.split("@")[0] ?? "";
   if (email.length > 254 || local.length > 64 || local.length === 0) throw new ApiError(400, "That email address cannot be delivered to: at most 254 characters, with at most 64 before the @");
-  if (input.placeId) {
+  // Any non-null place id is checked, including values the schema's bounds let through, so an unknown place is a 400 and never an insert error.
+  if (input.placeId != null) {
+    if (!Number.isInteger(input.placeId) || input.placeId < 1 || input.placeId > 2147483647) throw new ApiError(400, "placeId must be a positive integer id of a tracked place");
     const [place] = await db.select({ id: placesTable.id }).from(placesTable).where(eq(placesTable.id, input.placeId)).limit(1);
     if (!place) throw new ApiError(400, "Unknown place");
   }
-  const scopeText = [input.placeId ? "one place" : "all places", input.hazard ? hazardMeta(input.hazard).label.toLowerCase() : "all hazards", `${input.minLevel} and above`].join(", ");
+  const scopeText = [input.placeId != null ? "one place" : "all places", input.hazard ? hazardMeta(input.hazard).label.toLowerCase() : "all hazards", `${input.minLevel} and above`].join(", ");
   const existing = await db
     .select()
     .from(subscriptionsTable)

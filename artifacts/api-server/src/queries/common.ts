@@ -77,6 +77,7 @@ export function mapOfficialEvent(e: OfficialEventRow) {
     lon: e.lon,
     country: e.country,
     startsAt: e.startsAt.toISOString(),
+    timePrecision: (e.timePrecision === "hour" || e.timePrecision === "day" ? e.timePrecision : "minute") as "minute" | "hour" | "day",
     endsAt: e.endsAt ? e.endsAt.toISOString() : null,
     url: e.url,
   };

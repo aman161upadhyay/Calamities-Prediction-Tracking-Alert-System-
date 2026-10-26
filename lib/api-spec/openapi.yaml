@@ -794,7 +794,7 @@ components:
 
     OfficialEvent:
       type: object
-      required: [id, feed, feedLabel, hazard, title, severity, startsAt]
+      required: [id, feed, feedLabel, hazard, title, severity, startsAt, timePrecision]
       properties:
         id:
           type: integer
@@ -821,6 +821,10 @@ components:
         startsAt:
           type: string
           format: date-time
+        timePrecision:
+          type: string
+          enum: [minute, hour, day]
+          description: How precisely the source dates the record; a day-precision record's startsAt is a nominal noon and should be shown as a date only
         endsAt:
           type: ["string", "null"]
           format: date-time
@@ -1574,6 +1578,9 @@ components:
           description: A deliverable address; at most 254 characters with a local part of at most 64 (RFC 5321)
         placeId:
           type: ["integer", "null"]
+          minimum: 1
+          maximum: 2147483647
+          description: A tracked place id, or null for every place
         hazard:
           oneOf:
             - $ref: "#/components/schemas/Hazard"

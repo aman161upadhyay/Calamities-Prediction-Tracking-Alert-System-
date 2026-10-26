@@ -50,6 +50,7 @@ export * from './modelInfo';
 export * from './modelInfoGeoparser';
 export * from './notFoundResponse';
 export * from './officialEvent';
+export * from './officialEventTimePrecision';
 export * from './officialMarker';
 export * from './pipelineStage';
 export * from './place';

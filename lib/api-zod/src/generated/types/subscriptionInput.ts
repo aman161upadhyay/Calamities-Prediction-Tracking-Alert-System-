@@ -14,7 +14,12 @@ export interface SubscriptionInput {
      * @maxLength 254
      */
   email: string;
-  /** @nullable */
+  /**
+     * A tracked place id, or null for every place
+     * @minimum 1
+     * @maximum 2147483647
+     * @nullable
+     */
   placeId?: number | null;
   hazard?: Hazard | null;
   minLevel: RiskLevel;

@@ -159,6 +159,7 @@ export const GetBoardResponse = zod.object({
   "lon": zod.number().nullish(),
   "country": zod.string().nullish(),
   "startsAt": zod.coerce.date(),
+  "timePrecision": zod.enum(['minute', 'hour', 'day']).describe('How precisely the source dates the record; a day-precision record\'s startsAt is a nominal noon and should be shown as a date only'),
   "endsAt": zod.coerce.date().nullish(),
   "url": zod.string().nullish()
 })).describe('Official events from the last 72 hours with coordinates')
@@ -464,6 +465,7 @@ export const GetPlaceResponse = zod.object({
   "lon": zod.number().nullish(),
   "country": zod.string().nullish(),
   "startsAt": zod.coerce.date(),
+  "timePrecision": zod.enum(['minute', 'hour', 'day']).describe('How precisely the source dates the record; a day-precision record\'s startsAt is a nominal noon and should be shown as a date only'),
   "endsAt": zod.coerce.date().nullish(),
   "url": zod.string().nullish()
 })),
@@ -740,6 +742,7 @@ export const ListOfficialEventsResponseItem = zod.object({
   "lon": zod.number().nullish(),
   "country": zod.string().nullish(),
   "startsAt": zod.coerce.date(),
+  "timePrecision": zod.enum(['minute', 'hour', 'day']).describe('How precisely the source dates the record; a day-precision record\'s startsAt is a nominal noon and should be shown as a date only'),
   "endsAt": zod.coerce.date().nullish(),
   "url": zod.string().nullish()
 })
@@ -972,11 +975,13 @@ export const PrepareReplayScenarioResponse = zod.object({
  */
 export const createSubscriptionBodyEmailMax = 254;
 
+export const createSubscriptionBodyPlaceIdMax = 2147483647;
+
 
 
 export const CreateSubscriptionBody = zod.object({
   "email": zod.string().email().max(createSubscriptionBodyEmailMax).describe('A deliverable address; at most 254 characters with a local part of at most 64 (RFC 5321)'),
-  "placeId": zod.number().int().nullish(),
+  "placeId": zod.number().int().min(1).max(createSubscriptionBodyPlaceIdMax).nullish().describe('A tracked place id, or null for every place'),
   "hazard": zod.union([zod.enum(['flood', 'storm', 'cyclone', 'wildfire', 'earthquake', 'landslide', 'heat', 'tsunami']).describe('Hazard family. storm covers heavy rain and thunderstorms; cyclone covers hurricanes and typhoons; heat covers heatwaves and drought.'),zod.null()]).optional(),
   "minLevel": zod.enum(['insufficient', 'low', 'elevated', 'high', 'severe']).describe('insufficient means fewer relevant posts than the minimum needed to judge.')
 })

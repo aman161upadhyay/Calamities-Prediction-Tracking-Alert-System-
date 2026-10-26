@@ -4,7 +4,7 @@ import { useListReplayScenarios, type Alert, type OfficialEvent } from "@workspa
 import { HazardDot, LevelBadge } from "@/components/kit";
 import { StampGlyph } from "@/components/instruments/stamp";
 import { scopeQuery } from "@/components/board/rows";
-import { HAZARD_LABEL, num, stampLead, utcDateTime } from "@/lib/format";
+import { HAZARD_LABEL, num, stampLead, utcDateTime, officialTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type Scope = { scenario: string; asOf?: string } | null;
@@ -93,7 +93,11 @@ function windowText(a: Alert) {
   return `${h} h`;
 }
 
-const COLS = "grid gap-x-4 items-baseline grid-cols-[minmax(0,1fr)_auto] @3xl:grid-cols-[140px_minmax(0,1fr)_124px_60px_minmax(180px,240px)] @4xl:grid-cols-[140px_minmax(0,1fr)_124px_60px_56px_56px_minmax(184px,250px)]";
+// The place track keeps a floor of 148 px at every width that shows the wide layout, and the official-record track a
+// floor of 208 px, which holds "after official by about 38 h" on one line in the mono face. With 12 px gaps the fixed
+// tracks, floors, gaps and padding sum to 760 px at @3xl and 896 px at @4xl, within the 768 and 896 px thresholds; the
+// place/hazard group wraps, so a long name never runs into the level column.
+const COLS = "grid gap-x-4 @3xl:gap-x-3 items-baseline grid-cols-[minmax(0,1fr)_auto] @3xl:grid-cols-[140px_minmax(148px,1fr)_124px_60px_minmax(208px,240px)] @4xl:grid-cols-[140px_minmax(148px,1fr)_124px_60px_56px_56px_minmax(208px,240px)]";
 
 /** The printed ledger of alerts: one hairline row per alert, the whole row opens the dossier. */
 export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace = true, atEnd = false }: { alerts: Alert[]; scope: Scope; testId?: string; showPlace?: boolean; atEnd?: boolean }) {
@@ -118,7 +122,7 @@ export function AlertLedger({ alerts, scope, testId = "ledger-alerts", showPlace
               <Link href={`/alerts/${a.id}${scopeQuery(scope ?? (a.scenario ? { scenario: a.scenario } : null))}`} className={cn(COLS, "group px-4 py-3 hover:bg-paper focus-visible:bg-paper")} data-testid={`link-alert-${a.id}`}>
                 <span className="mono text-[12px] text-ink-muted hidden @3xl:block">{utcDateTime(a.openedAt)}</span>
                 <span className="min-w-0">
-                  <span className="inline-flex items-center gap-2 font-semibold text-[15px] leading-5 group-hover:underline underline-offset-2">
+                  <span className="inline-flex flex-wrap items-center gap-x-2 font-semibold text-[15px] leading-5 group-hover:underline underline-offset-2">
                     <HazardDot hazard={a.hazard} />
                     {showPlace ? a.placeName : HAZARD_LABEL[a.hazard]}
                     {showPlace && <span className="font-normal text-ink-muted">{HAZARD_LABEL[a.hazard].toLowerCase()}</span>}
@@ -149,7 +153,7 @@ export function OfficialLedger({ events, testId = "ledger-official" }: { events:
     <ol className="divide-y divide-rule" data-testid={testId}>
       {events.map((e) => (
         <li key={e.id} className="grid grid-cols-[minmax(0,1fr)] sm:grid-cols-[140px_minmax(0,1fr)] gap-x-4 gap-y-1 px-4 py-3" data-testid={`ledger-official-${e.id}`}>
-          <span className="mono text-[12px] text-ink-muted">{utcDateTime(e.startsAt)}</span>
+          <span className="mono text-[12px] text-ink-muted">{officialTime(e.startsAt, e.timePrecision)}</span>
           <div className="min-w-0 text-[14px] leading-5 break-words">
             <span className="stamp inline-block max-w-full break-words border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px mr-2 align-[1px] font-semibold">{e.feed}{e.severity ? ` ${e.severity}` : ""}</span>
             {e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="ink-link" data-testid={`link-official-${e.id}`}>{e.title}</a> : e.title}

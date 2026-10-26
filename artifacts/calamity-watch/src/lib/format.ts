@@ -84,6 +84,12 @@ export function utcDateTime(iso: string | null | undefined): string {
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
 }
 
+/** A record's time at the precision its source gives it: "19 Mar 2019 (date only)" for a day-dated record, otherwise the UTC clock time. */
+export function officialTime(iso: string | null | undefined, precision?: "minute" | "hour" | "day" | null): string {
+  if (precision === "day") return `${utcDate(iso)} (date only)`;
+  return utcDateTime(iso);
+}
+
 export function utcDate(iso: string | null | undefined): string {
   const d = toDate(iso);
   if (!d) return "unknown";

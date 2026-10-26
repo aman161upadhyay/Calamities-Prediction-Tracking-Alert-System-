@@ -23,7 +23,7 @@ import { EmptyState, ErrorState, HazardDot, LoadingRows, btn, btnPrimary } from 
 import { Plate, PlateLabel } from "@/components/instruments/plate";
 import { Recorder } from "@/components/instruments/recorder";
 import { AlertLedger, OfficialLedger } from "@/components/evidence/parts";
-import { HAZARD_LABEL, errorMessage, leadText, num, prepEstimate, utcDate, utcDateTime } from "@/lib/format";
+import { HAZARD_LABEL, errorMessage, leadText, num, officialTime, prepEstimate, utcDate, utcDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useTitle } from "./home";
 
@@ -235,11 +235,17 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
     return () => window.clearTimeout(h);
   }, [playing, asOf, s.id]);
 
-  // The whole tape plus a week before it, so a record that precedes the collection (Idai's landfall) still shows; the API accepts up to 2160 h.
   const spanH = Math.ceil((end - start) / HOUR);
-  const hours = Math.min(2160, Math.max(6, spanH + 1));
+  // The official records are read first (the whole span plus a week before it), so the recorder can be asked for the hours before the collection that hold its earliest record.
+  const offParams = { scenario: s.id, asOf: s.endsAt, hours: Math.min(2160, spanH + 24 * 7), limit: 100 };
+  const official = useListOfficialEvents(offParams, { query: { queryKey: getListOfficialEventsQueryKey(offParams), staleTime: 10 * 60_000 } });
+  const officialSettled = official.isSuccess || official.isError;
+  const earliestOfficial = useMemo(() => (official.data ?? []).reduce<number | null>((acc, e) => { const t = +new Date(e.startsAt); return acc === null || t < acc ? t : acc; }, null), [official.data]);
+  // The tape, plus the hours before the collection back to its earliest official record (at most a week), so that record sits on the tape rather than off its left edge; the API accepts up to 2160 h.
+  const leadH = earliestOfficial !== null && earliestOfficial < start ? Math.min(24 * 7, Math.ceil((start - earliestOfficial) / HOUR) + 6) : 0;
+  const hours = Math.min(2160, Math.max(6, spanH + 1 + leadH));
   const tlParams = { hours, scenario: s.id, asOf: s.endsAt };
-  const tl = useGetHazardTimeline(s.hazard, tlParams, { query: { queryKey: getGetHazardTimelineQueryKey(s.hazard, tlParams), staleTime: 10 * 60_000 } });
+  const tl = useGetHazardTimeline(s.hazard, tlParams, { query: { queryKey: getGetHazardTimelineQueryKey(s.hazard, tlParams), staleTime: 10 * 60_000, enabled: officialSettled } });
 
   const alertParams = { scenario: s.id, asOf, limit: 200 };
   const alerts = useListAlerts(alertParams, { query: { queryKey: getListAlertsQueryKey(alertParams), placeholderData: keepPreviousData } });
@@ -250,18 +256,19 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
     // Earliest opening; when two open in the same hour, the tape's own hazard is the first alert that matters.
     return list.reduce<(typeof list)[number] | null>((acc, a) => (acc === null || a.openedAt < acc.openedAt || (a.openedAt === acc.openedAt && a.hazard === s.hazard && acc.hazard !== s.hazard) ? a : acc), null);
   }, [finalAlerts.data, s.hazard]);
-  const offParams = { scenario: s.id, asOf: s.endsAt, hours: Math.min(2160, spanH + 24 * 7), limit: 100 };
-  const official = useListOfficialEvents(offParams, { query: { queryKey: getListOfficialEventsQueryKey(offParams), staleTime: 10 * 60_000 } });
 
   const togglePlay = () => { if (clock >= end) setClock(start); setPlaying((p) => !p); };
   const pct = ((clock - start) / Math.max(1, end - start)) * 100;
 
   // One chronology: key moments, the first alert, the official records.
   const chronology = useMemo(() => {
-    const rows: { at: string; kind: "moment" | "alert" | "official"; label: string; sub?: string }[] = [];
-    s.keyMoments.forEach((k) => rows.push({ at: k.at, kind: "moment", label: k.label }));
-    if (s.firstAlertAt) rows.push({ at: s.firstAlertAt, kind: "alert", label: "First alert opens", sub: first ? `${first.placeName}, ${HAZARD_LABEL[first.hazard].toLowerCase()}` : undefined });
-    (official.data ?? []).forEach((e) => rows.push({ at: e.startsAt, kind: "official", label: e.title, sub: `${e.feedLabel}${e.severity ? `, ${e.severity}` : ""}` }));
+    const rows: { at: string; when: string; kind: "moment" | "alert" | "official"; label: string; sub?: string }[] = [];
+    // A key moment that marks a day-dated official record inherits its precision.
+    const dayDated = new Set((official.data ?? []).filter((e) => e.timePrecision === "day").map((e) => +new Date(e.startsAt)));
+    s.keyMoments.forEach((k) => rows.push({ at: k.at, when: officialTime(k.at, dayDated.has(+new Date(k.at)) ? "day" : "minute"), kind: "moment", label: k.label }));
+    if (s.firstAlertAt) rows.push({ at: s.firstAlertAt, when: utcDateTime(s.firstAlertAt), kind: "alert", label: "First alert opens", sub: first ? `${first.placeName}, ${HAZARD_LABEL[first.hazard].toLowerCase()}` : undefined });
+    // A day-dated record is printed as a date; its nominal noon only places it on the tape.
+    (official.data ?? []).forEach((e) => rows.push({ at: e.startsAt, when: officialTime(e.startsAt, e.timePrecision), kind: "official", label: e.title, sub: `${e.feedLabel}${e.severity ? `, ${e.severity}` : ""}` }));
     return rows.sort((a, b) => +new Date(a.at) - +new Date(b.at));
   }, [s.keyMoments, s.firstAlertAt, first, official.data]);
 
@@ -334,14 +341,14 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
           <Recorder
             lanes={[{ hazard: s.hazard, label: `${HAZARD_LABEL[s.hazard]}, all places`, timeline: tl.data }]}
             label={["Recorder", `${HAZARD_LABEL[s.hazard].toLowerCase()} fear`, "whole tape", "UTC"]}
-            loading={tl.isLoading}
+            loading={tl.isLoading || !officialSettled}
             laneHeight={168}
             cursor={{ at: asOf, label: "playhead" }}
             testId="recorder-replay"
             empty="The tape stored no hourly trace for this hazard."
           />
         )}
-        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once; the black rule is the playhead. Red trace is fear mass per hour summed over every place, dashed is its 7-day baseline, green stamps are the scenario's official records.</p>
+        <p className="mt-2 text-[12px] text-ink-muted max-w-[100ch]">The whole tape is drawn at once{leadH > 0 ? `, with the ${leadH} hours before the collection that hold its earliest official record` : ""}; the black rule is the playhead. Red trace is fear mass per hour summed over every place, dashed is its 7-day baseline, green stamps are the scenario's official records.</p>
       </div>
 
       <section aria-labelledby="board-h" className="mt-12 md:mt-16">
@@ -393,8 +400,8 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
                 const passed = +new Date(r.at) <= clock;
                 return (
                   <li key={i} className="grid grid-cols-[96px_minmax(0,1fr)] sm:grid-cols-[132px_minmax(0,1fr)] gap-x-3 border-t border-rule first:border-t-0">
-                    <button type="button" onClick={() => { setPlaying(false); setClock(Math.min(end, Math.max(start, +new Date(r.at)))); }} className={cn("press text-left px-4 py-2.5 mono text-[11px] leading-4 hover:bg-paper", passed ? "text-ink" : "text-ink-muted")} data-testid={`button-moment-${i}`} aria-label={`Move the playhead to ${utcDateTime(r.at)}`}>
-                      {utcDateTime(r.at)}
+                    <button type="button" onClick={() => { setPlaying(false); setClock(Math.min(end, Math.max(start, +new Date(r.at)))); }} className={cn("press text-left px-4 py-2.5 mono text-[11px] leading-4 hover:bg-paper", passed ? "text-ink" : "text-ink-muted")} data-testid={`button-moment-${i}`} aria-label={`Move the playhead to ${r.when}`}>
+                      {r.when}
                     </button>
                     <div className="py-2.5 pr-4 text-[13px] leading-5 min-w-0 break-words">
                       {r.kind === "official" && <span className="stamp inline-block border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px mr-2 font-semibold">Official</span>}
@@ -408,7 +415,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
             </ol>
             {official.isError && <ErrorState what="the official records" onRetry={() => official.refetch()} />}
           </div>
-          <p className="mt-2 text-[12px] text-ink-muted">Click a time to move the playhead there. Hour-dated records support whole hours only, so their gap is printed as "about N h".</p>
+          <p className="mt-2 text-[12px] text-ink-muted">Click a time to move the playhead there. Hour-dated records support whole hours only, so their gap is printed as "about N h"; a record its source dates only to a day is printed as a date and sits at noon on the tape.</p>
         </section>
       </div>
 

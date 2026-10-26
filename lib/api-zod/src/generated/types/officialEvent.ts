@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Hazard } from './hazard';
+import type { OfficialEventTimePrecision } from './officialEventTimePrecision';
 
 export interface OfficialEvent {
   id: number;
@@ -24,6 +25,8 @@ export interface OfficialEvent {
   /** @nullable */
   country?: string | null;
   startsAt: Date;
+  /** How precisely the source dates the record; a day-precision record's startsAt is a nominal noon and should be shown as a date only */
+  timePrecision: OfficialEventTimePrecision;
   /** @nullable */
   endsAt?: Date | null;
   /** @nullable */
