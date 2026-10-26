@@ -43,7 +43,7 @@ export default function PlacePage() {
         <>
           <header className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-end">
             <h1 className="display h1-station" data-testid="text-place-name">{d.place.name}</h1>
-            <dl className="border border-rule-strong grid grid-cols-2 gap-px bg-rule" data-testid="figures-place">
+            <dl className="border-y border-rule-strong grid grid-cols-2 gap-px bg-rule" data-testid="figures-place">
               <Figure label="Region">{[d.place.admin1 && !/^[A-Z0-9]{1,3}$|^\d+$/i.test(d.place.admin1.trim()) ? d.place.admin1 : null, d.place.country].filter(Boolean).join(", ") || "n/a"}</Figure>
               <Figure label="Coordinates"><span className="mono text-[13px]">{d.place.lat.toFixed(3)}, {d.place.lon.toFixed(3)}</span></Figure>
               <Figure label="Population"><span className="mono">{d.place.population ? num(d.place.population) : "not recorded"}</span></Figure>

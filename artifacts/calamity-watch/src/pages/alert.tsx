@@ -91,12 +91,12 @@ export default function AlertPage() {
                     </p>
                   </div>
                 ) : c.state === "pending" ? (
-                  <div className="border border-dashed border-rule-strong p-4 text-[14px] leading-5">
+                  <div className="border-y border-dashed border-rule-strong py-3 text-[14px] leading-5">
                     <p className="font-semibold">Awaiting an official record</p>
                     <p className="mt-1 text-ink-muted">The feeds are checked for a matching event within 250 km, from 24 h before the alert opened to 48 h after.</p>
                   </div>
                 ) : (
-                  <div className="border border-rule-strong p-4 text-[14px] leading-5">
+                  <div className="border-y border-rule-strong py-3 text-[14px] leading-5">
                     <p className="font-semibold">No official record matched within 72 h</p>
                     <p className="mt-1 text-ink-muted">This may be a false alarm, or an event the official feeds do not cover.</p>
                   </div>
@@ -104,9 +104,9 @@ export default function AlertPage() {
               </aside>
             </header>
 
-            <dl className="mt-10 border border-rule-strong grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-px bg-rule [&>*:last-child]:col-span-2 min-[480px]:[&>*:last-child]:col-span-3 md:[&>*:last-child]:col-span-2 xl:[&>*:last-child]:col-span-1" data-testid="figures-alert">
+            <dl className="mt-10 border-y border-rule-strong grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-px bg-rule [&>*:last-child]:col-span-2 min-[480px]:[&>*:last-child]:col-span-3 md:[&>*:last-child]:col-span-2 xl:[&>*:last-child]:col-span-1" data-testid="figures-alert">
               <Figure label="Opened" testId="text-opened"><span className="mono text-[13px]">{utcDateTime(a.openedAt)}</span></Figure>
-              <Figure label={a.status === "open" ? "Status" : "Closed"} testId="text-closed">{a.status === "open" ? <span className="text-pen font-semibold">Open</span> : <span className="mono text-[13px]">{utcDateTime(a.closedAt)}</span>}</Figure>
+              <Figure label={a.status === "open" ? "Status" : "Closed"} testId="text-closed">{a.status === "open" ? <span className="font-semibold">Open</span> : <span className="mono text-[13px]">{utcDateTime(a.closedAt)}</span>}</Figure>
               <Figure label="Open for" testId="text-duration"><span className="mono">{span(a.openedAt, end)}</span>{a.status === "open" && <span className="text-ink-muted text-[12px]"> so far</span>}</Figure>
               <Figure label="Peak level"><LevelBadge level={a.peakLevel} testId="status-peak-level" /></Figure>
               <Figure label="Peak hour" testId="text-peak-at"><span className="mono text-[13px]">{utcDateTime(a.peakAt)}</span></Figure>
@@ -132,7 +132,7 @@ export default function AlertPage() {
                 <PlateLabel id="peak-h" parts={["Detector", "peak hour", peak ? utcDateTime(peak.hour) : utcDateTime(a.peakAt)]} />
                 {peak ? (
                   <dl className="grid grid-cols-2 gap-px bg-rule border-t-0" data-testid="figures-peak">
-                    <Figure label="Fear mass, sum of relevance × fear" testId="text-peak-fear"><span className="mono text-pen">{num(peak.fearMass, 2)}</span></Figure>
+                    <Figure label="Fear mass, p_relevant × p_fear summed over every scored post" testId="text-peak-fear"><span className="mono text-pen">{num(peak.fearMass, 2)}</span></Figure>
                     <Figure label="7-day baseline median" testId="text-peak-baseline"><span className="mono">{peak.baselineMedian == null ? "n/a" : num(peak.baselineMedian, 2)}</span></Figure>
                     <Figure label="z against the baseline" testId="text-peak-zscore"><span className="mono">{peak.zScore == null ? "n/a" : num(peak.zScore, 1)}</span></Figure>
                     <Figure label="Relevant posts that hour" testId="text-peak-posts"><span className="mono">{num(peak.nRelevant)}</span> <span className="text-[12px] text-ink-muted">of {num(peak.nPosts)}</span></Figure>
@@ -191,7 +191,7 @@ export default function AlertPage() {
                 <ol className="border-l border-ink ml-1" data-testid="ledger-events">
                   {d.events.map((e, i) => (
                     <li key={i} className="relative pl-6 pb-5 last:pb-0" data-testid={`row-alert-event-${i}`}>
-                      <span aria-hidden className={`absolute -left-[5px] top-1.5 size-[9px] ${e.type === "corroborated" ? "border-[1.5px] border-stamp bg-sheet" : e.type === "opened" ? "bg-pen" : "bg-ink"}`} />
+                      <span aria-hidden className={`absolute -left-[5px] top-1.5 size-[9px] ${e.type === "corroborated" ? "border-[1.5px] border-stamp bg-sheet" : e.type === "opened" ? "bg-ink" : "bg-ink-muted"}`} />
                       <p className="mono text-[12px] text-ink-muted">{utcDateTime(e.at)}</p>
                       <p className="text-[14px] leading-5"><span className="font-semibold">{EVENT_LABEL[e.type] ?? e.type}.</span> {e.detail}</p>
                     </li>

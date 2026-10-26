@@ -117,7 +117,7 @@ export function Recorder({
   controls?: ReactNode;
   /** Optional shaded span (an alert window), drawn as a faint ink wash across every lane. */
   shade?: { from: string; to: string; label?: string };
-  /** Optional marked moment (an alert opening), drawn as a pen rule with a label. */
+  /** Optional marked moment (an alert opening), drawn as an ink rule with a label. */
   mark?: { at: string; label: string };
   /** Optional playhead (a replay clock), drawn as an ink rule with a mono label. */
   cursor?: { at: string; label?: string };
@@ -169,8 +169,12 @@ export function Recorder({
   const lastDone = Math.max(0, hours.length - (inProgress ? 2 : 1));
   const idx = cursor ?? playheadIdx ?? lastDone;
 
+  const cursorRef = useRef(cursor);
+  cursorRef.current = cursor;
   useEffect(() => {
     if (!narrow || !scrollRef.current) return;
+    // A refresh that redraws the tape (a new hour, a changed window) never moves it while the reader has an hour selected.
+    if (cursorRef.current !== null) return;
     // With a shaded window, start with the window about 24 px inside the visible area; with a playhead, keep it a third of the way in; otherwise at the latest hour.
     const el = scrollRef.current;
     el.scrollLeft = shade ? Math.max(0, x(+new Date(shade.from)) - 24) : playhead ? Math.max(0, x(+new Date(playhead.at)) - el.clientWidth / 3) : el.scrollWidth;
@@ -214,6 +218,14 @@ export function Recorder({
     if (next === null) return;
     e.preventDefault();
     setCursor(next);
+    // On the scrolling narrow tape, keep the selected hour in view; a hand scroll is left alone otherwise.
+    const el = scrollRef.current;
+    if (narrow && el && hours[next] !== undefined) {
+      const px = x(hours[next]);
+      const pad = 32;
+      if (px - pad < el.scrollLeft) el.scrollLeft = Math.max(0, px - pad);
+      else if (px + pad > el.scrollLeft + el.clientWidth) el.scrollLeft = px + pad - el.clientWidth;
+    }
   };
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!hours.length) return;
@@ -297,7 +309,7 @@ export function Recorder({
                     <rect x={a} y={M.t} width={b - a} height={H - M.t - M.b + 4} fill="color-mix(in srgb, var(--cr-ink) 6%, transparent)" />
                     <line x1={a} x2={a} y1={M.t} y2={H - M.b + 4} stroke="var(--cr-ink)" strokeWidth={0.75} strokeDasharray="2 2" />
                     <line x1={b} x2={b} y1={M.t} y2={H - M.b + 4} stroke="var(--cr-ink)" strokeWidth={0.75} strokeDasharray="2 2" />
-                    {shade.label && <text x={Math.min(b - 4, W - M.r - 4)} y={H - M.b - 2} textAnchor="end" fontSize={10} fill="var(--cr-ink)" fontFamily="var(--app-font-mono)">{shade.label}</text>}
+                    {shade.label && <text x={Math.min(b - 4, W - M.r - 4)} y={H - M.b - 2} textAnchor="end" fontSize={10} fill="var(--cr-ink)" stroke="var(--cr-paper)" strokeWidth={3} paintOrder="stroke" fontFamily="var(--app-font-mono)">{shade.label}</text>}
                   </g>
                 );
               })()}
@@ -306,8 +318,8 @@ export function Recorder({
                 if (mx < M.l || mx > W - M.r) return null;
                 return (
                   <g data-testid="recorder-mark">
-                    <line x1={mx} x2={mx} y1={M.t} y2={H - M.b + 4} stroke="var(--cr-pen)" strokeWidth={1.5} />
-                    <text x={mx + 4} y={H - M.b - 2} fontSize={10} fill="var(--cr-pen)" fontWeight={600} fontFamily="var(--app-font-mono)">{mark.label}</text>
+                    <line x1={mx} x2={mx} y1={M.t} y2={H - M.b + 4} stroke="var(--cr-ink)" strokeWidth={1.5} />
+                    <text x={mx + 4} y={H - M.b - 2} fontSize={10} fill="var(--cr-ink)" stroke="var(--cr-paper)" strokeWidth={3} paintOrder="stroke" fontWeight={600} fontFamily="var(--app-font-mono)">{mark.label}</text>
                   </g>
                 );
               })()}
@@ -319,7 +331,7 @@ export function Recorder({
                   <g data-testid="recorder-cursor" className="cursor-glide" style={{ transform: `translate(${cx}px, 0)` }}>
                     <line x1={0} x2={0} y1={M.t} y2={H - M.b + 4} stroke="var(--cr-ink)" strokeWidth={1.5} />
                     <path d={`M-5 ${M.t} L5 ${M.t} L0 ${M.t + 7}Z`} fill="var(--cr-ink)" />
-                    <text x={cx > W - M.r - 90 ? -4 : 4} textAnchor={cx > W - M.r - 90 ? "end" : "start"} y={H - M.b - 2} fontSize={10} fill="var(--cr-ink)" fontWeight={600} fontFamily="var(--app-font-mono)">{playhead.label ?? "playhead"}</text>
+                    <text x={cx > W - M.r - 90 ? -4 : 4} textAnchor={cx > W - M.r - 90 ? "end" : "start"} y={H - M.b - 2} fontSize={10} fill="var(--cr-ink)" stroke="var(--cr-paper)" strokeWidth={3} paintOrder="stroke" fontWeight={600} fontFamily="var(--app-font-mono)">{playhead.label ?? "playhead"}</text>
                   </g>
                 );
               })()}
@@ -413,7 +425,7 @@ export function Recorder({
             </svg>
             {!anyData && !loading && (
               <div className="absolute inset-x-0 flex justify-center px-4" style={{ top: M.t + STRIP + 16 }}>
-                <div className="plate px-4 py-3 max-w-[52ch] text-center text-[14px] leading-5" data-testid="status-recorder-empty">
+                <div className="card px-4 py-3 max-w-[52ch] text-center text-[14px] leading-5" data-testid="status-recorder-empty">
                   {empty ?? "No relevant posts in this window, so every hour sits at zero."}
                 </div>
               </div>

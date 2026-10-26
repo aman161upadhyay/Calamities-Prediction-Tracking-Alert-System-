@@ -46,7 +46,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
         <p className="text-ink-muted max-w-[56ch]">{d ? d.summary.description : "\u00A0"}</p>
       </header>
 
-      <dl className="mt-8 border border-rule-strong grid grid-cols-2 md:grid-cols-4 gap-px bg-rule min-h-[74px]" data-testid="figures-hazard">
+      <dl className="mt-8 border-y border-rule-strong grid grid-cols-2 md:grid-cols-4 gap-px bg-rule min-h-[74px]" data-testid="figures-hazard">
         {d ? (
           <>
             <Figure label={scope ? "Highest level at the playhead" : "Highest level now"}><LevelBadge level={d.summary.maxLevel} /></Figure>
@@ -55,9 +55,9 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
             <Figure label="Open alerts" testId="text-open-alerts"><span className="mono">{d.summary.openAlerts}</span></Figure>
           </>
         ) : detail.isError ? (
-          <div className="col-span-full bg-sheet"><ErrorState what={`the ${label.toLowerCase()} summary`} onRetry={() => detail.refetch()} /></div>
+          <div className="col-span-full bg-cell"><ErrorState what={`the ${label.toLowerCase()} summary`} onRetry={() => detail.refetch()} /></div>
         ) : (
-          <div className="col-span-full bg-sheet"><LoadingRows rows={1} /></div>
+          <div className="col-span-full bg-cell"><LoadingRows rows={1} /></div>
         )}
       </dl>
 

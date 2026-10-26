@@ -116,7 +116,7 @@ function Specimen() {
         <ErrorState what="the specimen alert" onRetry={() => q.refetch()} />
       ) : (
         <div className="p-4">
-          <div className="bg-paper border border-rule-strong mono text-[12px] leading-[18px] text-ink" data-testid="text-specimen">
+          <div className="bg-paper border-y border-rule-strong mono text-[12px] leading-[18px] text-ink" data-testid="text-specimen">
             <p className="px-3 py-2 break-words"><span className="text-ink-muted">Subject: </span>{subject}</p>
             <pre className="px-3 py-2 border-t border-rule whitespace-pre-wrap break-words font-[inherit]">{body}</pre>
           </div>

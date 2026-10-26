@@ -168,7 +168,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
             <g key={key} {...roving(key)} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} className="static-marker" role="button" aria-label={`${p.name}, ${HAZARD_LABEL[p.hazard]}, ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "place", signal: p }); } }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
               <StationGlyph p={p} stamp={hasNearbyOfficial(p, events)} />
               {labelled.has(key) && (
-                <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--cr-ink)" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="var(--cr-sheet)" strokeWidth={3.5}>
+                <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="var(--cr-ink)" fontFamily="var(--app-font-sans)" paintOrder="stroke" stroke="var(--cr-sheet)" strokeWidth={3.5}>
                   {p.name}
                 </text>
               )}

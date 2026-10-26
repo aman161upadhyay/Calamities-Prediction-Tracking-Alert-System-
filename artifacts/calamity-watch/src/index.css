@@ -61,6 +61,7 @@
   /* theme tokens (design brief v3); the cr- names are kept so every component reads the same variables */
   --color-paper: var(--cr-paper);
   --color-sheet: var(--cr-sheet);
+  --color-cell: var(--cr-cell);
   --color-rule: var(--cr-rule);
   --color-rule-strong: var(--cr-rule-strong);
   --color-ink: var(--cr-ink);
@@ -115,6 +116,7 @@
 
   --cr-paper: #FAFAF8;
   --cr-sheet: #FFFFFF;
+  --cr-cell: #FAFAF8;
   --cr-rule: #E4E4E0;
   --cr-rule-strong: #C9C9C4;
   --cr-ink: #121316;
@@ -206,6 +208,7 @@ html[data-variant="b"] {
 
   --cr-paper: #F4F1EA;
   --cr-sheet: #FBF9F4;
+  --cr-cell: #FBF9F4;
   --cr-rule: #DAD6CB;
   --cr-rule-strong: #B8B3A4;
   --cr-ink: #1B1D18;
@@ -291,6 +294,7 @@ html[data-variant="b"] {
 .night {
   --cr-paper: var(--night-ground);
   --cr-sheet: var(--night-sheet);
+  --cr-cell: var(--night-sheet);
   --cr-rule: var(--night-rule);
   --cr-rule-strong: var(--night-rule-strong);
   --cr-ink: var(--night-ink);
@@ -336,7 +340,7 @@ html[data-variant="b"] {
   letter-spacing: var(--display-tracking);
 }
 /* The wordmark on the landing page: heavy and tight, never poster-sized. */
-.wordmark { font-size: clamp(38px, 4.8vw, 68px); line-height: 0.95; }
+.wordmark { font-size: clamp(38px, 4.8vw, 68px); line-height: 0.95; text-wrap: balance; }
 /* Page titles share the wordmark's weight at the H2 size, so no page carries a second poster. */
 .h1-station { font-size: clamp(30px, 2.9vw, 44px); line-height: 1.02; letter-spacing: var(--h2-tracking); }
 .h2-station { font-size: clamp(28px, 2.6vw, 40px); line-height: 1.04; font-weight: 700; letter-spacing: var(--h2-tracking); }
@@ -365,9 +369,12 @@ html[data-variant="b"] {
 .press:active { transform: scale(0.97); }
 
 /* ---------- instruments ---------- */
-/* An instrument sits on the sheet behind a hairline; version B rules it top and bottom only, as a newspaper would. */
-.plate { background: var(--cr-sheet); border: 1px solid var(--cr-rule); }
-html[data-variant="b"] .plate { border-left: 0; border-right: 0; border-color: var(--cr-rule-strong); }
+/* An instrument is an open-sided section: ruled above and below, never boxed. Version A rules it with hairlines on the
+   ground; version B sets it on the sheet between stronger rules, as a newspaper would. */
+.plate { background: transparent; border-top: 1px solid var(--cr-rule); border-bottom: 1px solid var(--cr-rule); }
+html[data-variant="b"] .plate { background: var(--cr-sheet); border-color: var(--cr-rule-strong); }
+/* A card floats over something else (a popover, a map key, a message over an empty map) and so keeps a full frame. */
+.card { background: var(--cr-sheet); border: 1px solid var(--cr-rule-strong); }
 /* The recorder tape has no outer frame; version B rules it above and below on the sheet. */
 .tape { background: transparent; }
 html[data-variant="b"] .tape { background: var(--cr-sheet); border-top: 1px solid var(--cr-rule-strong); border-bottom: 1px solid var(--cr-rule-strong); }
@@ -400,7 +407,10 @@ html[data-variant="b"] .dateline { display: flex; }
 .scene-halo { transform-box: fill-box; transform-origin: center; transform: scale(0.2); transition: transform 1200ms var(--ease-out), opacity 260ms ease-out; opacity: 0; }
 .scene-dot.on .scene-halo { transform: scale(1); opacity: 1; }
 @keyframes cursor-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-.term-cursor { display: inline-block; width: 0.55em; height: 1.05em; vertical-align: -0.18em; background: currentColor; animation: cursor-blink 1s steps(1, end) infinite; }
+/* The block cursor takes no width of its own, so typing never changes where a line wraps; it sits on the next character
+   as a terminal's does. */
+.term-cursor { display: inline-block; position: relative; width: 0; height: 1.05em; vertical-align: -0.18em; }
+.term-cursor::after { content: ""; position: absolute; left: 0; top: 0; width: 0.55em; height: 100%; background: currentColor; animation: cursor-blink 1s steps(1, end) infinite; }
 
 /* ---------- map ---------- */
 .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--cr-sheet) 90%, transparent) !important; color: var(--cr-ink-muted) !important; font-size: 11px; font-family: var(--app-font-sans); }
@@ -412,13 +422,13 @@ html[data-variant="b"] .dateline { display: flex; }
 .station-btn:focus-visible { outline: 2px solid var(--cr-ink); outline-offset: 2px; border-radius: 50%; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pen-reveal, .pipeline-pulse, .pen-head, .term-cursor { animation: none; }
+  .pen-reveal, .pipeline-pulse, .pen-head, .term-cursor::after { animation: none; }
   .stamp-press, .log-print, .fade-in { animation: cw-fade 120ms linear both; }
   .cursor-glide, .needle, .scene-dot, .scene-halo { transition: none; }
   .press:active { transform: none; }
 }
 /* Same rules, forced by ?motion=reduce (see main.tsx). */
-html[data-motion="reduce"] .pen-reveal, html[data-motion="reduce"] .pipeline-pulse, html[data-motion="reduce"] .pen-head, html[data-motion="reduce"] .term-cursor { animation: none; }
+html[data-motion="reduce"] .pen-reveal, html[data-motion="reduce"] .pipeline-pulse, html[data-motion="reduce"] .pen-head, html[data-motion="reduce"] .term-cursor::after { animation: none; }
 html[data-motion="reduce"] .stamp-press, html[data-motion="reduce"] .log-print, html[data-motion="reduce"] .fade-in { animation: cw-fade 120ms linear both; }
 html[data-motion="reduce"] .cursor-glide, html[data-motion="reduce"] .needle, html[data-motion="reduce"] .scene-dot, html[data-motion="reduce"] .scene-halo { transition: none; }
 html[data-motion="reduce"] .press:active { transform: none; }

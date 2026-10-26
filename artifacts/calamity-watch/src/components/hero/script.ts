@@ -143,9 +143,14 @@ export function typedAt(t: number): TypedBlock[] {
     if (t >= hDone) {
       const keep = "posts ".length;
       const typed = Math.min(full.length - keep, Math.floor((t - lastChange) / CHAR_S));
-      // The first typing of the figure starts from its beginning; a retype keeps the word "posts" on the line.
+      // The first typing of the figure starts from its beginning. A retype overwrites in place, as a terminal would:
+      // the new figures up to the cursor, the previous line beyond it, so the line never empties while the count climbs.
       const firstPass = n <= 1;
-      figure = firstPass ? full.slice(0, Math.min(full.length, Math.floor((t - hDone) / CHAR_S))) : full.slice(0, keep + Math.max(0, typed));
+      if (firstPass) figure = full.slice(0, Math.min(full.length, Math.floor((t - hDone) / CHAR_S)));
+      else {
+        const at = keep + Math.max(0, typed);
+        figure = full.slice(0, at) + figureLine(r, n - 1).slice(at);
+      }
     }
     const activity = t >= hDone ? lastChange : r.start;
     if (activity >= cursorAt) {

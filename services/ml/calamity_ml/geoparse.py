@@ -226,7 +226,7 @@ class Geoparser:
         # "Stockport, TX up to Orange,TX": NER often leaves the state code outside the span; read it from the text.
         for m in candidates:
             if m not in state_hint:
-                sm = re.search(rf"\b{re.escape(m)},?\s+({_STATE_CODE_ALT})\b", cleaned)
+                sm = re.search(rf"\b{re.escape(m)}(?:\s+(?:Co\.?|County|Parish))?(?:,|\s*[\[(])?\s*({_STATE_CODE_ALT})\b", cleaned)
                 if sm:
                     state_hint[m] = sm.group(1)
         # Context: country codes and admin1 codes of unambiguous mentions (and of regions, which carry an admin1 code).
@@ -330,6 +330,14 @@ class Geoparser:
             # a namesake abroad (Stockport, England), the mention is a town too small to resolve, not that namesake.
             if m in state_hint and best.country_code != "US":
                 continue
+            # "Lincoln, NM": the gazetteer knows Lincolns in six states but none in New Mexico, so the mention names a
+            # place there too small to resolve; the state is the resolution, not the namesake city elsewhere.
+            if m in state_hint and best.admin1 != state_hint[m] and not any(c.admin1 == state_hint[m] for c in cands):
+                state_name = US_STATE_NAMES.get(state_hint[m])
+                state_c = next((c for c in self.gazetteer.lookup(state_name) if c.kind == "region" and c.country_code == "US"), None) if state_name else None
+                if state_c is None:
+                    continue
+                best, conf = state_c, 0.6
             # A small town is only a resolution when its state, or the replay's region, is in evidence.
             if best.minor and not best_strong:
                 conf = min(conf, 0.4)

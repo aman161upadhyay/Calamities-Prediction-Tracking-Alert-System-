@@ -207,7 +207,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
                 <HazardMap places={places} events={events} onSelect={setSel} selected={sel?.kind === "place" ? `${sel.signal.placeId}:${sel.signal.hazard}` : null} fitKey={fitKey} className="absolute inset-0" />
               </Suspense>
               {data && places.length === 0 && events.length === 0 && (
-                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 mx-auto max-w-[44ch] text-center text-[14px] leading-5 plate p-4">
+                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 mx-auto max-w-[44ch] text-center text-[14px] leading-5 card p-4">
                   <NoDataHint replay={replay} />
                 </div>
               )}
@@ -247,7 +247,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
                 ))}
               </div>
             </div>
-            <div id="board-tabpanel" className="bg-sheet border border-t-0 border-rule-strong" role="tabpanel" aria-labelledby={`board-tab-${tab}`} tabIndex={0}>
+            <div id="board-tabpanel" className="border-b border-rule-strong" role="tabpanel" aria-labelledby={`board-tab-${tab}`} tabIndex={0}>
               {tab === "alerts" && alertList}
               {tab === "feed" && <div className="max-h-[520px] overflow-auto">{feed}</div>}
               {tab === "places" && placeList}
@@ -341,7 +341,7 @@ function Readout({ sel, onClose, scope }: { sel: MapSelection; onClose: () => vo
     };
   }, [selKey]);
   return (
-    <div ref={ref} tabIndex={-1} role="dialog" aria-label="Map readout" className="fade-in absolute right-3 top-3 w-[min(320px,calc(100%-24px))] bg-sheet border border-ink text-[13px] leading-5 shadow-lg outline-none" data-testid="panel-map-readout">
+    <div ref={ref} tabIndex={-1} role="dialog" aria-label="Map readout" className="fade-in absolute right-3 top-3 w-[min(320px,calc(100%-24px))] card text-[13px] leading-5 shadow-lg outline-none" data-testid="panel-map-readout">
       <div className="flex items-center justify-between h-8 pl-3 border-b border-rule-strong">
         <span className="plate-label">{sel.kind === "place" ? "Station readout" : "Official record"}</span>
         <button type="button" onClick={onClose} aria-label="Close readout" className="size-8 flex items-center justify-center hover:bg-paper" data-testid="button-close-readout"><X size={14} /></button>

@@ -32,7 +32,7 @@ the integrity rules of v2 stand; the visual language changes. Two full-site vers
 Both versions share one codebase, one component set and one hero sequence; they differ in tokens (palette, type,
 rules, radii), in the hero composition, and in a few section treatments. The version is selected by `?v=a` / `?v=b`
 (remembered in `localStorage`, applied before first paint through a `data-variant` attribute on `<html>`), and a small
-fixed switch in the footer corner lets Aman flip between them on any page. Nothing else about the two sites differs:
+fixed switch at the bottom-left corner lets Aman flip between them on any page. Nothing else about the two sites differs:
 same copy, same data, same routes.
 
 ### 2.1 Version A — "Night watch" (cool, neutral, instrument-like)
@@ -53,8 +53,8 @@ same copy, same data, same routes.
 | fear reading (pen) | `#FF6B5A` | `#D9361E` |
 | elevated / high / severe | glyph + word, ink | glyph + word, ink |
 
-Type: **Inter Tight** (variable, OFL) for everything proportional; wordmark 800 at `clamp(40px, 5.2vw, 76px)`,
-`letter-spacing -0.045em`, `line-height 0.95`; H2 700 at `clamp(28px, 2.6vw, 40px)` `-0.03em`; body 400 16/24;
+Type: **Inter Tight** (variable, OFL) for everything proportional; wordmark 800 at `clamp(38px, 4.8vw, 68px)`,
+`letter-spacing -0.045em`, `line-height 0.95`, one line at 1440; H2 700 at `clamp(28px, 2.6vw, 40px)` `-0.03em`; body 400 16/24;
 **Geist Mono** (variable, OFL) for the readout, axes, timestamps and figures, 12.5–13 px, no uppercase tracking labels.
 Rules: hairlines only where they separate data rows; sections are separated by space (120 px desktop / 72 px phone),
 not by heavy top rules; no corner brackets, no numbered headings, no rotated stamps, no chart-paper grid. Radii 0 on
@@ -62,7 +62,7 @@ instruments, 4 px on buttons and inputs. Buttons: ink-filled primary, hairline s
 
 Hero composition: full-viewport (min 640 px, `100svh` cap 900 px) night ground; wordmark top-left over the map with the
 tagline beneath (max 46ch, muted); nav links top-right in the same bar; the map is equirectangular, clipped to
-lat −56…78, land as a faint fill, borders as 0.6 px lines, a 30° graticule at 5% ink; the readout sits bottom-right
+lat −56…78, land as a faint fill, borders as 0.6 px lines, no graticule; the readout sits bottom-right
 as a borderless mono block, three lines plus a header line, cursor a 7×14 block blinking at 1 Hz on the active line;
 "Scripted illustration, not live data" and a replay / pause control sit in the readout header. Below the hero the page
 is day: the recorder first, then the board, how it works, models, lineage, classifier, subscribe.
@@ -85,7 +85,7 @@ is day: the recorder first, then the board, how it works, models, lineage, class
 | fear reading (pen) | `#FF7A66` | `#C8381F` |
 | elevated / high / severe | glyph + word, ink | glyph + word, ink |
 
-Type: **Schibsted Grotesk** (variable 400–900, OFL) for proportional text; wordmark 800 at `clamp(40px, 5.2vw, 76px)`
+Type: **Schibsted Grotesk** (variable 400–900, OFL) for proportional text; wordmark 800 at `clamp(38px, 4.8vw, 68px)`
 `-0.035em`; H2 700 `clamp(28px, 2.6vw, 40px)` `-0.025em`; body 400 16/24; **Fragment Mono** (OFL) for figures,
 axes, the readout and datelines, 12.5–13 px. Rules: B uses hairline rules as a newspaper does: a rule above each
 section head with a small mono dateline (section name left, UTC right); column rules between lineage items; the
@@ -101,8 +101,8 @@ a hard edge; the day page begins with the recorder.
 ### 2.3 Shared hazard language
 
 The three hero hazards and the recorder dots use one scale in both versions: a crisp core dot (r 2.4 px on the map,
-3 px on the recorder) and a soft halo (radial gradient of the same hue, r 5× core, peak alpha 0.35 on night and 0.22
-on day). Halo radius grows with the quantity (posts on the map, fear mass on the recorder) on a square-root scale.
+3 px on the recorder) and a soft halo (radial gradient of the same hue, r 5× core, peak alpha 0.26 on night and 0.22
+on day; 6 px alone, 18 px in a full cloud). Halo radius grows with the quantity (posts on the map, fear mass on the recorder) on a square-root scale.
 Hazard hue and risk level never share a channel: levels are glyph + word in ink. The fear reading (the pen hue) is
 only used where fear itself is plotted or stated.
 
@@ -158,13 +158,17 @@ A scripted illustration. The caption says so in the readout header and the `aria
 
 ## 6. Elsewhere
 
-- Top bar: wordmark text only (no glyph); on the home hero it is light on night ground and becomes dark on day ground
-  as the hero scrolls out (`data-nav` switches at the hero's bottom edge). Other pages: day from the top.
-- Alerts, Replay, Model, Subscribe, About and the evidence pages keep their structure; Plate becomes a hairline
-  section with a sentence-case mono header line; stamps become chips; numbered heads are removed; copy keeps the
-  v2 integrity rules (lead/lag wording, "experimental research system" line on every page).
-- Footer: a single row of small text, the two licences updated to the chosen fonts (both named while two versions
-  exist), the A/B switch at its right end.
+- Top bar: not sticky. On the home page it belongs to the night hero and carries no wordmark (the hero wordmark is
+  the masthead); on every other page it is the day bar with the wordmark as the way home.
+- Alerts, Replay, Model, Subscribe, About and the evidence pages keep their structure; Plate becomes an open-sided
+  section, ruled above and below and never boxed (A: hairlines on the ground; B: stronger rules with the sheet fill),
+  with a sentence-case mono header line; figure strips are ruled the same way; only things that float over something
+  else (the status sheet, the map key, a message over an empty map or tape) keep a full frame. Stamps become chips;
+  numbered heads are removed; the red pen is used only where fear is plotted or stated, never for an alert's state or
+  its opening time; copy keeps the v2 integrity rules (lead/lag wording, "experimental research system" line on
+  every page).
+- Footer: small text in three columns, the type licence naming both font pairs while two versions exist; the A/B
+  switch is a fixed control at the bottom-left of every page, outside the footer.
 
 ## 7. Done means
 

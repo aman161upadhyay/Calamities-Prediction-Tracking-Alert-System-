@@ -8,10 +8,16 @@
  *   pnpm --filter @workspace/api-server run replay:rebuild                 # every scenario
  *   pnpm --filter @workspace/api-server run replay:rebuild -- kerala-floods-2018 hurricane-harvey-2017
  *   pnpm --filter @workspace/api-server run replay:rebuild -- --live       # live posts only (last 10 days)
+ *
+ * With --live the live ledger is redone the way a forced scenario rebuild is: posts re-geoparsed, the hourly signals
+ * rebuilt, the live alerts deleted and raised again from the completed hours, then corroborated. Live alert ids change.
  */
-import { HOUR_MS } from "../lib/time";
+import { alertsTable, db } from "@workspace/db";
+import { eq } from "drizzle-orm";
+import { HOUR_MS, floorHour } from "../lib/time";
 import { logger } from "../lib/logger";
 import { mlHealth } from "../ml/client";
+import { corroborateAlerts, runDetector } from "../services/detector";
 import { SCENARIOS, prepareScenario, scenarioById, scenarioStates } from "../services/replay";
 import { regeoparseScenario } from "../services/scoring";
 import { rebuildSignals } from "../services/signals";
@@ -38,10 +44,13 @@ async function main(): Promise<void> {
   }
   if (live) {
     const n = await regeoparseScenario({ scenario: "" });
-    const to = new Date(Math.ceil(Date.now() / HOUR_MS) * HOUR_MS);
-    const from = new Date(to.getTime() - 10 * 24 * HOUR_MS);
-    const rows = await rebuildSignals("", from, to);
-    logger.info({ regeoparsed: n, seriesHours: rows.length }, "live posts re-geoparsed and signals rebuilt");
+    const currentHour = floorHour(new Date());
+    const from = new Date(currentHour.getTime() - 10 * 24 * HOUR_MS);
+    await db.delete(alertsTable).where(eq(alertsTable.scenario, ""));
+    const rows = await rebuildSignals("", from, currentHour);
+    const outcome = await runDetector({ scenario: "", rows, firstIncompleteHour: currentHour, live: false });
+    const corroborated = await corroborateAlerts("", new Date());
+    logger.info({ regeoparsed: n, seriesHours: rows.length, opened: outcome.opened.length, closed: outcome.closed, corroborated }, "live posts re-geoparsed, signals and alerts rebuilt");
   }
 }
 

@@ -26,16 +26,22 @@ function useSize<T extends HTMLElement>() {
   return { ref, size };
 }
 
+/**
+ * The two actions, then one line naming the latest alert once the ledger has answered. The line keeps its height
+ * while the answer is pending (and when there is none), so the hero does not grow under the reader after load.
+ */
 function Actions({ kerala, latest }: { kerala?: string; latest?: { id: number | string; text: string } }) {
   return (
-    <div className="mt-7 flex flex-wrap items-center gap-3">
-      {latest ? (
-        <Link href={`/alerts/${latest.id}`} className={`${btnPrimary} px-5`} data-testid="link-latest-alert">Open the latest alert</Link>
-      ) : (
-        <a href="#recorder" className={`${btnPrimary} px-5`} data-testid="link-see-board">Read the recorder</a>
-      )}
-      <Link href={kerala ? `/replay?s=${kerala}` : "/replay"} className={`${btn} px-5`} data-testid="link-replay-kerala">Replay Kerala floods 2018</Link>
-      {latest && <span className="text-[13px] text-ink-muted">{latest.text}</span>}
+    <div className="mt-7">
+      <div className="flex flex-wrap items-center gap-3">
+        {latest ? (
+          <Link href={`/alerts/${latest.id}`} className={`${btnPrimary} px-5`} data-testid="link-latest-alert">Open the latest alert</Link>
+        ) : (
+          <a href="#recorder" className={`${btnPrimary} px-5`} data-testid="link-see-board">Read the recorder</a>
+        )}
+        <Link href={kerala ? `/replay?s=${kerala}` : "/replay"} className={`${btn} px-5`} data-testid="link-replay-kerala">Replay Kerala floods 2018</Link>
+      </div>
+      <p className="mt-3 min-h-[20px] text-[13px] leading-5 text-ink-muted" data-testid="text-latest-alert">{latest?.text ?? ""}</p>
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function AboutPage() {
             <p>A research instrument. Posts about floods, fires, storms and quakes are scored for relevance and fear, summed per place and hour, and compared with each place's own 7-day baseline. When a place stays above it, an alert opens, and the official feeds are searched for a record that matches it in place and time.</p>
             <p>The lead or lag against that record is measured and printed either way. In the five replays the first alert opens hours to days after the earliest official record, because each collection itself begins after that record; the replay page prints the gap for each event.</p>
           </div>
-          <div className="border-2 border-ink bg-sheet p-5 md:p-6" data-testid="panel-not">
+          <div className="plate p-5 md:p-6" data-testid="panel-not">
             <p className="plate-label mb-3">Not an official warning source</p>
             <ul className="space-y-3 text-[15px] leading-6">
               <li><span className="font-semibold">Never decide an evacuation from it.</span> It has no link to any emergency agency. Follow your national meteorological service and local authorities.</li>
@@ -77,7 +77,7 @@ export default function AboutPage() {
               <dt className="text-ink-muted">Official</dt><dd>GDACS, USGS, US National Weather Service, NASA FIRMS</dd>
               <dt className="text-ink-muted">Weather</dt><dd>Open-Meteo</dd>
               <dt className="text-ink-muted">Map</dt><dd>OpenFreeMap positron tiles from OpenMapTiles, data from OpenStreetMap contributors (ODbL)</dd>
-              <dt className="text-ink-muted">Type</dt><dd>Archivo and Martian Mono, served from this site under the SIL Open Font License</dd>
+              <dt className="text-ink-muted">Type</dt><dd>Inter Tight and Geist Mono (theme A), Schibsted Grotesk and Fragment Mono (theme B), served from this site under the SIL Open Font License</dd>
             </dl>
           </Plate>
           <Plate label={["Sources", "state now", "UTC"]} testId="plate-source-state">

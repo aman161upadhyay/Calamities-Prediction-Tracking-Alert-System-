@@ -1,6 +1,6 @@
 # Calamity Watch Post
 
-Hazard warnings read from what people post, before the sirens. Public posts about floods, storms, wildfires, earthquakes, landslides and heat are scored for relevance and fear, resolved to a place, and turned into alerts when a place breaks from its own baseline; every alert is checked against official feeds and the lead time is recorded. It is Aman's 2026 rebuild of the 2018 CodeFunDo++ project `sacredgamers_codefundoMS` (read-only reference; never modify that repository).
+Hazard warnings read from public posts, scored for fear, and checked against the official record. Public posts about floods, storms, wildfires, earthquakes, landslides and heat are scored for relevance and fear, resolved to a place, and turned into alerts when a place breaks from its own baseline; every alert is checked against official feeds and the lead time is recorded. It is Aman's 2026 rebuild of the 2018 CodeFunDo++ project `sacredgamers_codefundoMS` (read-only reference; never modify that repository).
 
 ## Run & Operate
 

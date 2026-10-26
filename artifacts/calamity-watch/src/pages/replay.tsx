@@ -74,11 +74,11 @@ function ScenarioIndex({ onPick }: { onPick: (id: string) => void }) {
               <div className="p-4 md:p-5 flex flex-col gap-3 flex-1">
                 <h2 className="h3-station">{s.name}</h2>
                 <p className="text-[13px] text-ink-muted inline-flex items-center gap-2 flex-wrap"><HazardDot hazard={s.hazard} />{s.region}, {s.country}<span className="mono">{s.lat.toFixed(2)}, {s.lon.toFixed(2)}</span></p>
-                <dl className="grid grid-cols-2 gap-px bg-rule border border-rule text-[12px]">
-                  <div className="bg-sheet px-3 py-2"><dt className="text-ink-muted">Clock</dt><dd className="mono">{utcDate(s.startsAt)} to {utcDate(s.endsAt)}</dd></div>
-                  <div className="bg-sheet px-3 py-2"><dt className="text-ink-muted">Posts on tape</dt><dd className="mono" data-testid={`text-postcount-${s.id}`}>{num(s.postCount)}</dd></div>
-                  <div className="bg-sheet px-3 py-2"><dt className="text-ink-muted">Alerts opened</dt><dd className="mono">{s.alertsOpened ?? "n/a"}</dd></div>
-                  <div className="bg-sheet px-3 py-2"><dt className="text-ink-muted">First alert</dt><dd className="mono">{s.firstAlertAt ? utcDateTime(s.firstAlertAt) : "none"}</dd></div>
+                <dl className="grid grid-cols-2 gap-px bg-rule border-y border-rule text-[12px]">
+                  <div className="bg-cell px-3 py-2"><dt className="text-ink-muted">Clock</dt><dd className="mono">{utcDate(s.startsAt)} to {utcDate(s.endsAt)}</dd></div>
+                  <div className="bg-cell px-3 py-2"><dt className="text-ink-muted">Posts on tape</dt><dd className="mono" data-testid={`text-postcount-${s.id}`}>{num(s.postCount)}</dd></div>
+                  <div className="bg-cell px-3 py-2"><dt className="text-ink-muted">Alerts opened</dt><dd className="mono">{s.alertsOpened ?? "n/a"}</dd></div>
+                  <div className="bg-cell px-3 py-2"><dt className="text-ink-muted">First alert</dt><dd className="mono">{s.firstAlertAt ? utcDateTime(s.firstAlertAt) : "none"}</dd></div>
                 </dl>
                 <p className="text-[14px] leading-5 max-w-[68ch]">{s.description}</p>
                 <p className="text-[12px] text-ink-muted">Data: {s.datasetSource}{s.state !== "ready" && ` · every post is scored once before playing, ${prepEstimate(s.postCount)}`}</p>
@@ -287,7 +287,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
       </Page>
 
       {/* Transport: sticky under the header on wide screens, docked to the bottom (compact, opaque, the only shadow) on narrow ones. */}
-      <div ref={dockRef} className="fixed md:sticky bottom-0 md:bottom-auto md:top-16 inset-x-0 z-30 bg-paper border-t md:border-t-0 md:border-b border-ink shadow-[0_-6px_18px_rgba(0,0,0,0.12)] md:shadow-none" data-testid="panel-replay-controls">
+      <div ref={dockRef} className="fixed md:sticky bottom-0 md:bottom-auto md:top-16 inset-x-0 z-30 bg-paper border-t md:border-t-0 md:border-b border-rule-strong shadow-[0_-6px_18px_rgba(0,0,0,0.12)] md:shadow-none" data-testid="panel-replay-controls">
         <div className="mx-auto max-w-[1440px] px-4 md:px-8 py-2 md:py-3 grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_auto_minmax(0,1fr)_auto] gap-x-3 gap-y-1 md:gap-y-2 items-center">
           <button type="button" className={cn(btnPrimary, "order-1 w-[104px] md:w-[112px]")} onClick={togglePlay} data-testid="button-play-pause" aria-label={playing ? "Pause the replay" : "Play the replay"}>
             {playing ? <Pause size={14} aria-hidden /> : <Play size={14} aria-hidden />}
@@ -316,7 +316,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               const at = ((+new Date(k.at) - start) / Math.max(1, end - start)) * 100;
               return at >= 0 && at <= 100 ? <span key={i} aria-hidden className="absolute top-1/2 -translate-y-1/2 w-px h-3 bg-ink-muted" style={{ left: `${at}%` }} /> : null;
             })}
-            {s.firstAlertAt && <span aria-hidden className="absolute top-1/2 -translate-y-1/2 w-[2px] h-4 bg-pen" style={{ left: `${((+new Date(s.firstAlertAt) - start) / Math.max(1, end - start)) * 100}%` }} />}
+            {s.firstAlertAt && <span aria-hidden className="absolute top-1/2 -translate-y-1/2 w-[2px] h-4 bg-ink" style={{ left: `${((+new Date(s.firstAlertAt) - start) / Math.max(1, end - start)) * 100}%` }} />}
             <input
               id="scrub"
               type="range"
@@ -338,7 +338,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               data-testid="input-scrub"
             />
           </div>
-          <div className="hidden md:flex order-6 col-span-4 justify-between mono text-[11px] text-ink-muted"><span>{utcDateTime(s.startsAt)}</span><span><span className="inline-block w-[2px] h-2.5 bg-pen align-middle mr-1" />first alert · <span className="inline-block w-px h-2.5 bg-ink-muted align-middle mx-1" />key moment</span><span>{utcDateTime(s.endsAt)}</span></div>
+          <div className="hidden md:flex order-6 col-span-4 justify-between mono text-[11px] text-ink-muted"><span>{utcDateTime(s.startsAt)}</span><span><span className="inline-block w-[2px] h-2.5 bg-ink align-middle mr-1" />first alert · <span className="inline-block w-px h-2.5 bg-ink-muted align-middle mx-1" />key moment</span><span>{utcDateTime(s.endsAt)}</span></div>
         </div>
       </div>
 
@@ -413,8 +413,8 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
                     </button>
                     <div className="py-2.5 pr-4 text-[13px] leading-5 min-w-0 break-words">
                       {r.kind === "official" && <span className="inline-block border border-ink text-ink mono text-[11px] px-1.5 py-px mr-2 font-medium">Official</span>}
-                      {r.kind === "alert" && <span className="inline-block w-[2px] h-3 bg-pen mr-2 align-[-1px]" aria-hidden />}
-                      <span className={r.kind === "alert" ? "font-semibold text-pen" : r.kind === "moment" ? "font-semibold" : ""}>{r.label}</span>
+                      {r.kind === "alert" && <span className="inline-block w-[2px] h-3 bg-ink mr-2 align-[-1px]" aria-hidden />}
+                      <span className={r.kind === "alert" || r.kind === "moment" ? "font-semibold" : ""}>{r.label}</span>
                       {r.sub && <span className="block text-[12px] text-ink-muted">{r.sub}</span>}
                     </div>
                   </li>

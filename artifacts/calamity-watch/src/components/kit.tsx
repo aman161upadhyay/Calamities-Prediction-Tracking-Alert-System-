@@ -58,7 +58,7 @@ export function TrendText({ trend }: { trend: Trend }) {
   );
 }
 
-/** A plate: sheet surface, 1 px frame, one mono label strip. */
+/** A plate: an open-sided section ruled above and below, with one mono label line. */
 export function Panel({ title, meta, children, className, actions, testId }: { title?: ReactNode; meta?: ReactNode; children: ReactNode; className?: string; actions?: ReactNode; testId?: string }) {
   return (
     <section data-testid={testId} className={cn("plate min-w-0", className)}>

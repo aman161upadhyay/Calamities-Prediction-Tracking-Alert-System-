@@ -1,6 +1,6 @@
 # Calamity Watch Post
 
-Hazard warnings read from what people post, before the sirens.
+Hazard warnings read from public posts, scored for fear, and checked against the official record.
 
 Calamity Watch Post pulls public posts about floods, storms, wildfires, earthquakes, landslides and heat from X and Bluesky, scores each one for hazard relevance and fear with two models, resolves it to a place, and raises an alert when a place's fear-weighted signal breaks from its own baseline. Alerts are checked against GDACS, USGS, NWS and NASA FIRMS, and the time between the social signal and the official record is kept, whichever came first (in the replays the official record usually did).
 

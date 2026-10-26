@@ -168,7 +168,7 @@ export function OfficialLedger({ events, testId = "ledger-official" }: { events:
 /** One measured figure: what it is, the value, the unit. */
 export function Figure({ label, children, testId }: { label: ReactNode; children: ReactNode; testId?: string }) {
   return (
-    <div className="min-w-0 px-4 py-3 bg-sheet">
+    <div className="min-w-0 px-4 py-3 bg-cell">
       <dt className="text-[12px] leading-4 text-ink-muted">{label}</dt>
       <dd className="mt-1 text-[15px] leading-5" data-testid={testId}>{children}</dd>
     </div>

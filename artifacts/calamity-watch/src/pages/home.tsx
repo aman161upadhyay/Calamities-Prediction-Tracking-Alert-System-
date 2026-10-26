@@ -117,7 +117,7 @@ export default function Home() {
         )}
         <div className="mt-3 grid gap-x-8 gap-y-1 md:grid-cols-2 text-[12px] leading-[17px] text-ink-muted max-w-[1100px]" data-testid="text-recorder-caption">
           <p>
-            Each dot is one hour: its height is fear mass, the sum over relevant posts of p_relevant × p_fear, and its glow widens with it. The dashed line is the hazard's 7-day baseline for that hour.
+            Each dot is one hour: its height is fear mass, the sum of p_relevant × p_fear over every post scored for that hazard (a weighted sum, not the count of relevant posts), and its glow widens with it. The dashed line is the hazard's 7-day baseline for that hour.
           </p>
           <p>
             A lane's level mark is the total crossing its thresholds, not an alert: alerts open per place and are listed in the ledger below. The chips are the official feeds' records for that hazard in the window, from anywhere, shown as context; they are not matches to this trace.

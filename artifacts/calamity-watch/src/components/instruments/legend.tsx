@@ -8,7 +8,7 @@ export function LegendPlate({ places, events }: { places: PlaceSignal[]; events:
   const stamp = top ? hasNearbyOfficial(top, events) : false;
   const box = top ? Math.ceil(markerGeom(top).R + 12) : 20;
   return (
-    <div className="plate text-[12px] leading-4 w-[260px]" data-testid="panel-map-legend">
+    <div className="card text-[12px] leading-4 w-[260px]" data-testid="panel-map-legend">
       <p className="plate-label px-3 h-7 flex items-center border-b border-rule">Key{top ? `, read on ${top.name}` : ""}</p>
       <div className="p-3 flex gap-3">
         {top && (

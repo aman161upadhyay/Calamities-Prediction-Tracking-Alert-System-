@@ -95,7 +95,7 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
         <span aria-hidden className={cn("text-[9px] transition-transform duration-150", open && "rotate-180")}>▼</span>
       </button>
       {open && (
-        <div id="status-sheet" className="fade-in absolute right-0 top-11 z-50 w-[min(560px,calc(100vw-24px))] plate rounded-[var(--r-control)] shadow-lg" data-testid="panel-status-sheet">
+        <div id="status-sheet" className="fade-in absolute right-0 top-11 z-50 w-[min(560px,calc(100vw-24px))] card rounded-[var(--r-control)] shadow-lg" data-testid="panel-status-sheet">
           <p className="plate-label px-3 h-8 flex items-center border-b border-rule">System status, UTC</p>
           {isError && !status && (
             <div className="p-3 text-[13px]">
@@ -217,10 +217,23 @@ export function VariantSwitch() {
     setV(next);
   };
   return (
-    <div role="radiogroup" aria-label="Theme under review" data-testid="switch-variant" className="fixed bottom-3 left-3 z-50 inline-flex items-center h-8 border border-rule-strong bg-sheet text-ink mono text-[12px] leading-none rounded-[var(--r-control)] shadow-lg">
+    <div
+      role="radiogroup"
+      aria-label="Theme under review"
+      data-testid="switch-variant"
+      className="fixed bottom-3 left-3 z-50 inline-flex items-center h-8 border border-rule-strong bg-sheet text-ink mono text-[12px] leading-none rounded-[var(--r-control)] shadow-lg"
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+          e.preventDefault();
+          const next = v === "a" ? "b" : "a";
+          pick(next);
+          (e.currentTarget.querySelector(`[data-testid="button-variant-${next}"]`) as HTMLButtonElement | null)?.focus();
+        }
+      }}
+    >
       <span className="pl-2.5 pr-1.5 text-ink-muted">theme</span>
       {(["a", "b"] as Variant[]).map((o) => (
-        <button key={o} type="button" role="radio" aria-checked={v === o} onClick={() => pick(o)} data-testid={`button-variant-${o}`} className={cn("h-8 px-2.5 uppercase", v === o ? "bg-ink text-paper" : "text-ink-muted hover:text-ink")}>
+        <button key={o} type="button" role="radio" aria-checked={v === o} tabIndex={v === o ? 0 : -1} onClick={() => pick(o)} data-testid={`button-variant-${o}`} className={cn("h-8 px-2.5 uppercase", v === o ? "bg-ink text-paper" : "text-ink-muted hover:text-ink")}>
           {o}
         </button>
       ))}

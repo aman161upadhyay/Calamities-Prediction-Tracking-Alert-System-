@@ -44,8 +44,8 @@ export default function ModelPage() {
 
       {m && (
         <>
-          <section className="relative bg-sheet border-2 border-ink" aria-labelledby="cert-h" data-testid="plate-version">
-            <div className="flex items-center justify-between px-4 h-9 border-b border-ink">
+          <section className="plate relative" aria-labelledby="cert-h" data-testid="plate-version">
+            <div className="flex items-center justify-between px-4 h-9 border-b border-rule-strong">
               <p id="cert-h" className="plate-label">Certificate / hazard classifier / {m.stageOne.name}</p>
               <p className="plate-label text-ink-muted hidden sm:block">Issued {utcDate(m.stageOne.trainedAt)}</p>
             </div>
@@ -93,7 +93,7 @@ export default function ModelPage() {
           </Part>
 
           <Part id="cross" title="On data it did not train on" note="Expect lower figures than the test split.">
-            <div className="border-l-2 border-ink pl-4 mb-6 max-w-[80ch] text-[15px] leading-6" data-testid="text-selection-set">
+            <div className="border-l border-rule-strong pl-4 mb-6 max-w-[80ch] text-[15px] leading-6" data-testid="text-selection-set">
               <p>The shipped candidate was chosen by macro F1 on the five held-out replay events, so those events are a <span className="font-semibold">selection set, not a blind test</span>. The Kaggle set played no part in training or selection.</p>
               <p className="mt-2 text-[13px] text-ink-muted">Hazard-type metrics are computed on relevant posts only and relevance metrics on all rows, so each line reports the rows actually scored.</p>
             </div>
@@ -216,7 +216,7 @@ export default function ModelPage() {
 
 function Fig({ label, v, testId }: { label: string; v: string; testId: string }) {
   return (
-    <div className="bg-sheet px-5 py-4">
+    <div className="bg-cell px-5 py-4">
       <dt className="text-[12px] text-ink-muted">{label}</dt>
       <dd className="mono text-[26px] md:text-[32px] leading-tight mt-1" data-testid={testId}>{v}</dd>
     </div>
