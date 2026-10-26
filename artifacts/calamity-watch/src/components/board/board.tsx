@@ -149,7 +149,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
         <p className="mb-3 text-[13px] leading-5 text-ochre" data-testid="text-stale">◆ Ingest is behind. Showing the board as of {utcTime(data.lastIngestAt)}.</p>
       )}
       {board.isError && data && (
-        <p role="alert" className="mb-3 text-[13px] leading-5 text-pen">
+        <p role="alert" className="mb-3 text-[13px] leading-5 text-ink font-semibold">
           ▲ Couldn't refresh. Showing {utcTime(data.generatedAt)}.{" "}
           <button type="button" className="ink-link text-ink" onClick={() => board.refetch()} data-testid="button-retry-board">Refresh the board</button>
         </p>
@@ -157,7 +157,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
       <div className="grid gap-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[256px_minmax(0,1fr)_360px]">
         <div className="hidden lg:flex flex-col gap-6 min-w-0">
           <section className="bg-sheet border border-rule-strong">
-            <PlateLabel parts={["Hazards", "fear, last hour"]} />
+            <PlateLabel parts={["Hazards", "fear, last 60 min"]} />
             {hazardRail}
           </section>
           <section className="bg-sheet border border-rule-strong">
@@ -182,7 +182,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
             </div>
           </div>
           <p className="sm:hidden text-[12px] leading-4 text-ink-muted" data-testid="text-map-legend-compact">
-            Fill is the hazard, size is relevant posts per hour, the <span className="text-pen font-semibold">red ring</span> fills at fear z 3, a <span className="text-stamp font-semibold">green square</span> marks an official event within 300 km in 72 h.
+            Fill is the hazard, size is relevant posts per hour, the <span className="text-pen font-semibold">red ring</span> fills at fear z 3, a <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg] align-middle" /> stamp square marks an official event within 300 km in 72 h.
           </p>
           <div className="xl:hidden">
             <div role="tablist" aria-label="Board panels" className="flex border-b border-ink" onKeyDown={onTabKey}>
@@ -269,8 +269,8 @@ function HazardRailRow({ h, active, onPick, scope }: { h: HazardSummary; active:
         <svg width="64" height="16" aria-hidden className="shrink-0"><path d={d} fill="none" stroke="#C8102E" strokeWidth="1.2" /></svg>
       </div>
       <div className="px-4 pb-2.5 pt-1 flex items-center gap-3 text-[12px] leading-4 text-ink-muted">
-        <span className="mono text-ink" title="fear mass in the last hour">{num(h.fearIndexNow, 1)}</span>
-        <span className="mono" title="change vs same hour yesterday">{signed(h.fearIndexDelta24h)}</span>
+        <span className="mono text-ink" title="fear mass in the last 60 minutes">{num(h.fearIndexNow, 1)}</span>
+        <span className="mono" title="change against the same 60 minutes a day earlier">{signed(h.fearIndexDelta24h)}</span>
         {LEVEL_RANK[h.maxLevel] >= 2 ? <LevelBadge level={h.maxLevel} testId={`status-hazard-level-${h.hazard}`} className="text-[12px]" /> : <span className="mono">{h.relevantLast24h} rel/24h</span>}
         <Link href={`/hazards/${h.hazard}${scopeQuery(scope)}`} className="ml-auto ink-link" data-testid={`link-hazard-detail-${h.hazard}`}>Detail</Link>
       </div>
@@ -284,7 +284,8 @@ function Readout({ sel, onClose, scope }: { sel: MapSelection; onClose: () => vo
   onCloseRef.current = onClose;
   const selKey = sel.kind === "place" ? `place:${sel.signal.placeId}:${sel.signal.hazard}` : `event:${sel.event.id}`;
   useEffect(() => {
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const active = document.activeElement;
+    const previous = active instanceof HTMLElement || active instanceof SVGElement ? active : null;
     ref.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCloseRef.current();
@@ -321,7 +322,7 @@ function Readout({ sel, onClose, scope }: { sel: MapSelection; onClose: () => vo
           </>
         ) : (
           <>
-            <p className="mono text-[11px] text-stamp uppercase tracking-[0.06em]">{sel.event.feedLabel}</p>
+            <p><span className="stamp inline-block border-[1.5px] border-stamp text-stamp mono uppercase text-[10px] px-1.5 py-px font-semibold tracking-[0.06em]">{sel.event.feedLabel}</span></p>
             <p className="font-semibold">{sel.event.title}</p>
             <p className="text-ink-muted">{HAZARD_LABEL[sel.event.hazard]}, severity {sel.event.severity}{sel.event.country ? `, ${sel.event.country}` : ""}</p>
             <p className="mono text-[12px] mt-1">from {utcDateTime(sel.event.startsAt)}</p>

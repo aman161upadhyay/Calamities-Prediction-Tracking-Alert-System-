@@ -32,6 +32,8 @@ export function markerRank(m: OfficialMarker): number {
 export function markerText(m: OfficialMarker, compact = false): string {
   const feed = (m.feed || m.feedLabel || "Official").toUpperCase();
   const f = m.feed.toLowerCase();
+  // Replay scenarios carry curated records (feed "scenario", severity such as "national"); the stamp names them as records, not as a feed called SCENARIO.
+  if (f === "scenario") return compact || !m.severity ? "RECORD" : `RECORD ${m.severity}`;
   if (f === "usgs") {
     const mag = usgsMag(m);
     return mag != null ? `${feed} M${mag.toFixed(1)}` : feed;
@@ -100,6 +102,8 @@ export function Recorder({
   testId = "recorder",
   loading = false,
   controls,
+  shade,
+  mark,
 }: {
   lanes: RecorderLane[];
   live?: boolean;
@@ -109,6 +113,10 @@ export function Recorder({
   testId?: string;
   loading?: boolean;
   controls?: ReactNode;
+  /** Optional shaded span (an alert window), drawn in ink hatching across every lane. */
+  shade?: { from: string; to: string; label?: string };
+  /** Optional marked moment (an alert opening), drawn as a pen tick with a label. */
+  mark?: { at: string; label: string };
 }) {
   const { ref, w: ow } = useWidth<HTMLDivElement>();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -143,11 +151,15 @@ export function Recorder({
   const idx = cursor ?? Math.max(0, hours.length - 1);
 
   useEffect(() => {
-    if (narrow && scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-  }, [narrow, drawKey]);
+    if (!narrow || !scrollRef.current) return;
+    // With a shaded window, start with the window about 24 px inside the visible area; otherwise at the latest hour.
+    scrollRef.current.scrollLeft = shade ? Math.max(0, x(+new Date(shade.from)) - 24) : scrollRef.current.scrollWidth;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrow, drawKey, shade?.from]);
 
   const sixes: number[] = [];
-  const step = compact || span > 36 ? 6 : 3;
+  // Tick spacing is the finest of 3, 6, 12 or 24 h that leaves at least 56 px between labels, so an 88 h dossier at 1024 wide still reads in 6 h steps while a 168 h week falls back to days.
+  const step = ([3, 6, 12, 24] as const).find((h) => (plotW / span) * h >= 56 && !(compact && h < 6)) ?? 24;
   for (let t = Math.ceil(t0 / (step * HOUR)) * step * HOUR; t <= t1; t += step * HOUR) sixes.push(t);
 
   // Per-lane official records: every record is a tick; the strongest per bin gets the stamp label.
@@ -205,8 +217,8 @@ export function Recorder({
               <span className="hidden lg:inline-flex items-center gap-4">
                 <Key kind="trace">fear mass</Key>
                 <Key kind="base">7-day baseline</Key>
-                <Key kind="tick">alert level</Key>
-                <Key kind="stamp">official record</Key>
+                <Key kind="tick">level mark</Key>
+                <Key kind="stamp">{lanes.every((l) => l.timeline && l.timeline.placeId == null) ? "official record (context)" : "official record"}</Key>
               </span>
               {controls}
             </span>
@@ -249,6 +261,29 @@ export function Recorder({
                     </g>
                   );
                 })}
+                {shade && (() => {
+                  const a = Math.max(M.l, x(+new Date(shade.from)));
+                  const b = Math.min(W - M.r, x(+new Date(shade.to)));
+                  if (!(b > a)) return null;
+                  return (
+                    <g data-testid="recorder-shade">
+                      <rect x={a} y={M.t} width={b - a} height={H - M.t - M.b + 4} fill="rgba(21,20,15,0.07)" />
+                      <line x1={a} x2={a} y1={M.t} y2={H - M.b + 4} stroke="#15140F" strokeWidth={0.75} strokeDasharray="2 2" />
+                      <line x1={b} x2={b} y1={M.t} y2={H - M.b + 4} stroke="#15140F" strokeWidth={0.75} strokeDasharray="2 2" />
+                      {shade.label && <text x={Math.min(b - 4, W - M.r - 4)} y={H - M.b - 4} textAnchor="end" fontSize={10} fill="#15140F" fontFamily="Martian Mono, monospace">{shade.label}</text>}
+                    </g>
+                  );
+                })()}
+                {mark && (() => {
+                  const mx = x(+new Date(mark.at));
+                  if (mx < M.l || mx > W - M.r) return null;
+                  return (
+                    <g data-testid="recorder-mark">
+                      <line x1={mx} x2={mx} y1={M.t} y2={H - M.b + 4} stroke="#C8102E" strokeWidth={1.5} />
+                      <text x={mx + 4} y={H - M.b - 4} fontSize={10} fill="#C8102E" fontWeight={600} fontFamily="Martian Mono, monospace">{mark.label}</text>
+                    </g>
+                  );
+                })()}
                 <g clipPath={`url(#${clipId})`}>
                   {lanes.map((l, i) => {
                     const ys = laneTop(i);
@@ -260,7 +295,8 @@ export function Recorder({
                           <line key={m.eventId} x1={x(+new Date(m.at))} x2={x(+new Date(m.at))} y1={ys + STRIP - 8} y2={ys + STRIP + lh - 4} stroke="#1E7A4A" strokeWidth={1} opacity={0.55} />
                         ))}
                         {labels.map((g) => {
-                          const w = Math.ceil(g.text.length * 6.6 + 12);
+                          // Martian Mono at 11 px with wdth 90 advances about 7.4 px per character; measured on screen, not from the font metrics.
+                          const w = Math.ceil(g.text.length * 7.4 + 12);
                           let gx = x(+new Date(g.top.at)) + 3;
                           gx = Math.min(W - M.r - w - 4, gx); // never cross the lane's right edge
                           if (gx < M.l + 2 || gx < lastEnd + 4) return null; // the tick stays; its record is in the title and readout
@@ -347,6 +383,7 @@ export function Recorder({
 function Readout({ lanes, idx, pinned, onKey, t }: { lanes: RecorderLane[]; idx: number; pinned: boolean; onKey: (e: KeyboardEvent<HTMLDivElement>) => void; t?: number }) {
   const official = t === undefined ? [] : lanes.flatMap((l) => (l.timeline?.officialMarkers ?? []).filter((m) => { const a = +new Date(m.at); return a >= t && a < t + HOUR; }));
   const uniq = [...new Map(official.map((m) => [m.eventId, m])).values()];
+  const aggregate = lanes.length > 0 && lanes.every((l) => l.timeline && l.timeline.placeId == null);
   return (
     <div
       tabIndex={0}
@@ -358,23 +395,26 @@ function Readout({ lanes, idx, pinned, onKey, t }: { lanes: RecorderLane[]; idx:
       data-testid="readout-recorder"
     >
       <p className="mono text-ink whitespace-nowrap" aria-live="polite">
-        <span className="text-ink-muted">{pinned ? "Cursor" : "Latest"}</span> {t !== undefined ? utcDateTime(new Date(t).toISOString()) : "no hours yet"}
+        {aggregate && <span className="text-ink-muted">All places, </span>}
+        <span className="text-ink-muted">{pinned ? "cursor" : "latest"}</span> {t !== undefined ? utcDateTime(new Date(t).toISOString()) : "no hours yet"}
       </p>
       <div>
         <ul className="flex flex-wrap gap-x-6 gap-y-1">
           {lanes.map((l) => {
             const p = l.timeline?.points[idx];
             return (
-              <li key={l.hazard} className="inline-flex items-center gap-2 whitespace-nowrap" data-testid={`readout-lane-${l.hazard}`}>
+              <li key={l.hazard} className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5" data-testid={`readout-lane-${l.hazard}`}>
                 <span className="font-semibold">{l.label}</span>
                 {l.failed ? (
-                  <span className="text-pen">trace unavailable</span>
+                  <span className="text-ink font-semibold whitespace-nowrap">Error: trace unavailable</span>
                 ) : p ? (
                   <>
-                    <span className="mono"><span className="text-ink-muted">fear</span> {num(p.fearMass, 2)}</span>
-                    <span className="mono"><span className="text-ink-muted">z</span> {p.zScore == null ? "n/a" : num(p.zScore, 1)}</span>
-                    <span className="mono"><span className="text-ink-muted">posts</span> {p.nRelevant}</span>
-                    <span className="inline-flex items-center gap-1" style={{ color: LEVEL_COLOR[p.level] }}><LevelGlyph level={p.level} size={9} />{LEVEL_LABEL[p.level]}</span>
+                    <span className="mono whitespace-nowrap"><span className="text-ink-muted">fear mass</span> {num(p.fearMass, 2)}</span>
+                    <span className="mono whitespace-nowrap"><span className="text-ink-muted">baseline</span> {p.baselineMedian == null ? "n/a" : num(p.baselineMedian, 2)}</span>
+                    <span className="mono whitespace-nowrap"><span className="text-ink-muted">z</span> {p.zScore == null ? "n/a" : num(p.zScore, 1)}</span>
+                    <span className="mono whitespace-nowrap"><span className="text-ink-muted">posts</span> {p.nRelevant}</span>
+                    {/* On an all-places lane the level is the aggregate crossing its thresholds, which never opens an alert; a place lane's level is the detector's own. */}
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap" style={{ color: LEVEL_COLOR[p.level] }}><LevelGlyph level={p.level} size={9} />{LEVEL_LABEL[p.level]}{aggregate && <span className="text-ink-muted font-normal"> (lane, not an alert)</span>}</span>
                   </>
                 ) : (
                   <span className="text-ink-muted">reading</span>
@@ -384,9 +424,9 @@ function Readout({ lanes, idx, pinned, onKey, t }: { lanes: RecorderLane[]; idx:
           })}
         </ul>
         {uniq.length > 0 && (
-          <ul className="mt-1 text-stamp" data-testid="readout-official">
+          <ul className="mt-1 text-ink" data-testid="readout-official">
             {uniq.map((m) => (
-              <li key={m.eventId}><span className="mono font-semibold">{markerText(m)}</span> <span className="text-ink-muted">{m.title}, {utcDateTime(m.at)}</span></li>
+              <li key={m.eventId} className="flex items-center gap-1.5 flex-wrap"><span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg]" /><span className="mono font-semibold">{markerText(m)}</span> <span className="text-ink-muted">{m.title}, {utcDateTime(m.at)}</span></li>
             ))}
           </ul>
         )}

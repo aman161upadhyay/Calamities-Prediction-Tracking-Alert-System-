@@ -15,7 +15,8 @@ export function ModelSummary({ m }: { m: ModelInfo }) {
   ];
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <table className="w-full text-[14px] leading-5" data-testid="table-model-summary">
+      <div className="min-w-0">
+      <table className="hidden sm:table w-full text-[14px] leading-5" data-testid="table-model-summary">
         <caption className="text-left text-[12px] text-muted-foreground pb-2">
           {s.name}: {s.algorithm.replace(/\.?\s*$/, ".")} Trained {utcDate(s.trainedAt)}, version <span className="num">{m.version}</span>
         </caption>
@@ -29,6 +30,21 @@ export function ModelSummary({ m }: { m: ModelInfo }) {
           ))}
         </tbody>
       </table>
+      {/* Below 640 px: the label at full width, its named metrics on one mono line underneath. */}
+      <div className="sm:hidden text-[14px] leading-5" data-testid="list-model-summary">
+        <p className="text-[12px] text-muted-foreground pb-2">
+          {s.name}: {s.algorithm.replace(/\.?\s*$/, ".")} Trained {utcDate(s.trainedAt)}, version <span className="num">{m.version}</span>
+        </p>
+        <ul>
+          {rows.map(([a, b, c]) => (
+            <li key={a} className="border-t border-line py-2">
+              <p>{a}</p>
+              <p className="num text-[13px]">{b}, {c}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      </div>
       <dl className="text-[14px] leading-5 space-y-3">
         <div><dt className="text-muted-foreground">Emotion model</dt><dd><a className="underline underline-offset-2" href={m.emotionModel.url} target="_blank" rel="noreferrer" data-testid="link-emotion-model">{m.emotionModel.name}</a>, {m.emotionModel.reportedMetric}</dd></div>
         <div><dt className="text-muted-foreground">Sentiment model</dt><dd><a className="underline underline-offset-2" href={m.sentimentModel.url} target="_blank" rel="noreferrer" data-testid="link-sentiment-model">{m.sentimentModel.name}</a>, {m.sentimentModel.reportedMetric}</dd></div>

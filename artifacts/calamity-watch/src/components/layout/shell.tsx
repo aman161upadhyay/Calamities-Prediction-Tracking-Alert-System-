@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { Menu, X } from "lucide-react";
 import { useGetSystemStatus, getGetSystemStatusQueryKey, type SourceHealth, type SystemStatus } from "@workspace/api-client-react";
 import { SOURCE_STATE_LABEL, ago, utcTime } from "@/lib/format";
@@ -48,7 +48,9 @@ function SourceLine({ s }: { s: SourceHealth }) {
 function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemStatus; isLoading: boolean; isError: boolean; onRetry: () => void }) {
   const [open, setOpen] = useState(false);
   const [loc] = useLocation();
-  const replay = loc.startsWith("/replay");
+  const search = useSearch();
+  // A page scoped to a replay scenario (the console itself, or an evidence page opened from it) reads as "Replay", not as the live clock.
+  const replay = loc.startsWith("/replay") || new URLSearchParams(search).has("scenario");
   const all = status ? [...status.sources, ...status.officialFeeds] : [];
   const ok = all.filter((s) => s.state === "ok").length;
   return (
@@ -62,7 +64,7 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
         className="press flex items-center gap-3 h-9 whitespace-nowrap shrink-0 pl-2.5 pr-3 border border-rule-strong bg-sheet text-[12px] leading-4 hover:border-ink"
       >
         {isLoading && <span className="mono text-ink-muted">Reading status</span>}
-        {isError && !status && <span className="text-pen font-semibold">▲ Status unavailable</span>}
+        {isError && !status && <span className="text-ink font-semibold">▲ Status unavailable</span>}
         {status && (
           <>
             <span className="inline-flex items-center gap-1.5 font-semibold" data-testid="status-live">
@@ -179,6 +181,7 @@ export function Footer() {
           <ul>
             <li>Map: OpenFreeMap, OpenMapTiles, OpenStreetMap contributors (ODbL)</li>
             <li>Type: Archivo and Martian Mono (SIL OFL)</li>
+            <li>Land outlines: Natural Earth (public domain)</li>
             <li>
               Datasets and model cards: <Link href="/model" className="ink-link" data-testid="link-footer-model">model page</Link>
             </li>

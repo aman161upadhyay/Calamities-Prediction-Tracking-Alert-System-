@@ -108,7 +108,7 @@ function ScenarioRunner({ id, startAt, onBack }: { id: string; startAt: string |
           <div className="px-4 pb-4">
             {s.state === "failed" || prepare.isError ? (
               <>
-                <p style={{ color: "#C8102E" }}>{prepare.isError ? errorMessage(prepare.error) : "The scenario could not be prepared."}</p>
+                <p className="font-semibold">{prepare.isError ? errorMessage(prepare.error) : "The scenario could not be prepared."}</p>
                 <button type="button" className={cn(btnPrimary, "mt-3")} onClick={() => prepare.mutate({ scenarioId: s.id }, { onSuccess: () => sc.refetch() })} data-testid="button-retry-prepare">Try preparing again</button>
               </>
             ) : (

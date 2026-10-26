@@ -98,7 +98,7 @@ export function ErrorState({ what, onRetry, lastGood, className }: { what: strin
   return (
     <div role="alert" data-testid="status-error" className={cn("p-4 text-[14px] leading-5", className)}>
       <p>
-        <span className="font-semibold text-pen">Couldn't load {what}.</span>{" "}
+        <span className="font-semibold text-ink">Error: couldn't load {what}.</span>{" "}
         {lastGood ? <span className="text-ink-muted">Showing {utcTime(lastGood)}.</span> : <span className="text-ink-muted">The API did not answer. Try again; nothing you entered is lost.</span>}
       </p>
       {onRetry && (

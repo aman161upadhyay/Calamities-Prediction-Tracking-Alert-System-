@@ -59,8 +59,8 @@ export function ClassifierDemo() {
           <Dial label="Fear" value={result?.pFear ?? null} pen testId="dial-fear" />
         </div>
         {classify.isError && (
-          <p role="alert" className="text-[14px]" style={{ color: "#C8102E" }}>
-            Couldn't classify: {errorMessage(classify.error)}. If the model is still loading, try again in a minute.
+          <p role="alert" className="text-[14px] text-ink">
+            <span className="font-semibold">Error: couldn't classify:</span> {errorMessage(classify.error)}. If the model is still loading, try again in a minute.
           </p>
         )}
         {!result && !classify.isError && <p className="text-[14px] text-muted-foreground">The result shows relevance, hazard type, emotions, sentiment and any place found, with the model version and latency.</p>}

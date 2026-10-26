@@ -111,7 +111,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
 
   return (
     <div ref={box} className="absolute inset-0 map-paper" data-testid="map-static">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="img" aria-label="Plotting sheet of place signals and official events, drawn without a basemap">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="group" aria-label="Plotting sheet of place signals and official events. Tab to a marker and press Enter to read it.">
         <defs><clipPath id="sheet-clip"><rect x={0} y={0} width={W} height={H} /></clipPath></defs>
         {landPath && <path d={landPath} clipPath="url(#sheet-clip)" fill="rgba(21,20,15,0.035)" stroke="var(--cr-rule-strong)" strokeWidth={0.8} strokeLinejoin="round" data-testid="map-static-land" />}
         {lons.map((l) => (
@@ -127,7 +127,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
           </g>
         ))}
         {events.filter((e) => e.lat != null && e.lon != null).map((e) => (
-          <g key={`e${e.id}`} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
+          <g key={`e${e.id}`} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} className="static-marker" tabIndex={0} role="button" aria-label={`Official record, ${e.feedLabel}: ${e.title}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "official", event: e }); } }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
             <rect x={-4} y={-4} width={8} height={8} fill="#FCFBF8" stroke="#1E7A4A" strokeWidth={1.5} />
             <title>{`${e.feedLabel}: ${e.title} (${e.severity})`}</title>
           </g>
@@ -136,7 +136,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
           const key = `${p.placeId}:${p.hazard}`;
           const px = x(p.lon), py = y(p.lat);
           return (
-            <g key={key} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
+            <g key={key} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} className="static-marker" tabIndex={0} role="button" aria-label={`${p.name}, ${HAZARD_LABEL[p.hazard]}, ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}`} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect({ kind: "place", signal: p }); } }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
               <StationGlyph p={p} stamp={hasNearbyOfficial(p, events)} />
               {labelled.has(key) && (
                 <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="#15140F" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="#FCFBF8" strokeWidth={3.5}>
@@ -148,7 +148,7 @@ export function StaticMap({ places, events, onSelect, selected }: { places: Plac
           );
         })}
       </svg>
-      <p className="absolute right-3 bottom-2 mono text-[10px] text-ink-muted bg-sheet/90 px-1.5">Plotting sheet, equirectangular, no basemap in this browser</p>
+      <p className="absolute right-3 bottom-2 mono text-[10px] text-ink-muted bg-sheet/90 px-1.5">Plotting sheet: Natural Earth 110m land outlines (public domain), equirectangular; interactive tiles are unavailable in this browser</p>
     </div>
   );
 }

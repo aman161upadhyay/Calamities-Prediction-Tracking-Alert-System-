@@ -190,6 +190,12 @@ export function stampLead(c: { leadMinutes?: number | null; officialTimePrecisio
   const m = c.leadMinutes;
   if (m === null || m === undefined) return "no lead time recorded";
   const a = Math.abs(m);
+  if (c.officialTimePrecision === "hour") {
+    // An hour-dated record supports no finer claim than whole hours; under half an hour it is the same hour.
+    const h = Math.round(a / 60);
+    if (h === 0) return "same hour as official";
+    return m > 0 ? `lead about ${h} h` : `after official by about ${h} h`;
+  }
   const t = a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
   if (m > 0) return `lead ${t}`;
   if (m === 0) return "same minute as official";

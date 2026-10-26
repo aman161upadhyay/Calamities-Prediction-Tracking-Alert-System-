@@ -20,9 +20,14 @@ export function LegendPlate({ places, events }: { places: PlaceSignal[]; events:
           <div><dt className="inline font-semibold">Fill</dt> <dd className="inline text-ink-muted">hazard{top ? `: ${HAZARD_LABEL[top.hazard].toLowerCase()}` : ""}</dd></div>
           <div><dt className="inline font-semibold">Size</dt> <dd className="inline text-ink-muted">relevant posts per hour{top ? <>: <span className="num text-ink">{top.relevantPostsLastHour}</span></> : ""}</dd></div>
           <div><dt className="inline font-semibold text-pen">Ring</dt> <dd className="inline text-ink-muted">fear z, full at 3σ{top ? <>: <span className="num text-ink">{num(top.zScore, 1)}</span></> : ""}</dd></div>
-          <div><dt className="inline font-semibold text-stamp">Square</dt> <dd className="inline text-ink-muted">official event within {STAMP_RADIUS_KM} km, 72 h{top ? `: ${stamp ? "yes" : "none"}` : ""}</dd></div>
+          <div><dt className="inline font-semibold"><span className="inline-block align-middle mr-1"><StampMini /></span>Square</dt> <dd className="inline text-ink-muted">official event within {STAMP_RADIUS_KM} km, 72 h{top ? `: ${stamp ? "yes" : "none"}` : ""}</dd></div>
         </dl>
       </div>
     </div>
   );
+}
+
+/** The stamp form in miniature: green border only, slightly turned. */
+function StampMini() {
+  return <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg]" />;
 }

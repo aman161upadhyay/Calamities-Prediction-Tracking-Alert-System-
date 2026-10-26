@@ -39,7 +39,7 @@ export function Stamp({ c, openedAt, size = "md", testId }: { c: Corroboration; 
 export function StampGlyph({ state }: { state: Corroboration["state"] }) {
   if (state === "corroborated")
     return (
-      <span className="inline-flex items-center gap-1.5 text-stamp">
+      <span className="inline-flex items-center gap-1.5 text-ink">
         <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg]" />
         Official match
       </span>

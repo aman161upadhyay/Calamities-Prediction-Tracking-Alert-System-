@@ -21,7 +21,7 @@ export function StatusBar({ status, isLoading, isError, onRetry, replayLabel }: 
     return (
       <div className="border-b border-rule bg-paper text-[13px]">
         <p className="mx-auto max-w-[1440px] px-4 md:px-8 py-2">
-          <span className="text-pen font-semibold">▲ Status unavailable.</span>{" "}
+          <span className="text-ink font-semibold">▲ Status unavailable.</span>{" "}
           <button type="button" className="ink-link" onClick={onRetry} data-testid="button-retry-status">Ask again</button>
         </p>
       </div>

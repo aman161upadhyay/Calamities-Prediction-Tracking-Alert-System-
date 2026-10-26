@@ -83,7 +83,7 @@ export default function Home() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,9fr)_minmax(0,3fr)] items-end">
           <h1 id="hero-h" className="display h1-station lg:max-w-[14ch]">Hazard warnings read from what people post, before the sirens.</h1>
           <div className="text-[15px] leading-[22px] text-ink-muted max-w-[40ch]" data-testid="text-statement">
-            Public posts about floods, fires, storms and quakes, scored for relevance and fear, plotted against each place's own 7-day baseline. Official records stamp what they confirm. <a href="#how" className="ink-link text-ink" data-testid="link-how">How it works</a>
+            Public posts about floods, fires, storms and quakes, scored for relevance and fear. An alert opens when a place breaks from its own 7-day baseline, and every alert is checked against the official record within 300 km and 72 h: whether the posts came first is measured, and the lag is printed when they did not. <a href="#how" className="ink-link text-ink" data-testid="link-how">How it works</a>
           </div>
         </div>
 
@@ -95,15 +95,20 @@ export default function Home() {
               lanes={lanes.length ? lanes : [{ hazard: "flood", label: "Flood" }]}
               live
               loading={board.isLoading || traces.some((t) => t.isLoading)}
-              label={["Recorder", "fear index", `last ${win} h`, "UTC"]}
+              label={["Recorder", "fear mass", "all places", `last ${win} h`, "UTC"]}
               controls={<WindowSwitch value={win} options={WINDOWS} onChange={(v) => setWin(v === 72 ? 72 : 24)} />}
               testId="recorder-hero"
               empty={<>No relevant posts in the last {win} hours, so the pen rests at zero. <Link href={kerala ? `/replay?s=${kerala.id}` : "/replay"} className="ink-link text-ink">Replay a past flood</Link> to see a trace under load.</>}
             />
           )}
-          <p className="mt-2 text-[12px] text-ink-muted">
-            {hasOpen ? "One lane per hazard with an open alert." : "No alert is open; showing the hazards with the most fear in the last hour."} Red is posted fear, dashed is the baseline, green stamps are official records.
-          </p>
+          <div className="mt-2 grid gap-x-8 gap-y-1 md:grid-cols-2 text-[12px] leading-[17px] text-ink-muted max-w-[1100px]" data-testid="text-recorder-caption">
+            <p>
+              {hasOpen ? "One lane per hazard with an open alert." : "No alert is open; showing the hazards with the most fear in the last hour."} Each lane sums every place for one hazard against that hazard's own 7-day baseline (dashed). Fear mass per hour is the sum over relevant posts of p_relevant × p_fear.
+            </p>
+            <p>
+              A lane's level mark is the total crossing its thresholds, not an alert: alerts open per place and are listed in the ledger below. The stamps are the official feeds' records for that hazard in the window, from anywhere, shown as context; they are not matches to this trace.
+            </p>
+          </div>
         </div>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">

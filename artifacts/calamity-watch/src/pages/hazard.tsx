@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { useParams, useSearch, Link } from "wouter";
-import { useGetHazard, useGetHazardTimeline, useListOfficialEvents, getGetHazardQueryKey, getGetHazardTimelineQueryKey, getListOfficialEventsQueryKey, type Hazard } from "@workspace/api-client-react";
+import { useParams, Link } from "wouter";
+import { useGetHazard, useGetHazardTimeline, useListOfficialEvents, useListAlerts, getGetHazardQueryKey, getGetHazardTimelineQueryKey, getListOfficialEventsQueryKey, getListAlertsQueryKey, type Hazard } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
-import { EmptyState, ErrorState, HazardDot, LevelBadge, LoadingRows, PageTitle, Panel, Skel, TrendText, ExperimentalNote } from "@/components/kit";
-import { EmotionMix, FearTimeline } from "@/components/charts/charts";
+import { EmptyState, ErrorState, ExperimentalNote, HazardDot, LevelBadge, LoadingRows, TrendText, btn } from "@/components/kit";
+import { Recorder, WindowSwitch } from "@/components/instruments/recorder";
 import { PostRow, scopeQuery } from "@/components/board/rows";
-import { HAZARD_LABEL, isHazard, isNotFound, num, placeLabel, signed, utcDateTime } from "@/lib/format";
+import { AlertLedger, Figure, OfficialLedger, Part, ScopeNote, useScope } from "@/components/evidence/parts";
+import { HAZARD_LABEL, isHazard, isNotFound, num, placeLabel, signed } from "@/lib/format";
 import { useTitle } from "./home";
 import NotFound from "./not-found";
 
+const WINDOWS: (24 | 72 | 168)[] = [24, 72, 168];
 const EVENT_LIST = 20;
 
 export default function HazardPage() {
@@ -19,112 +21,131 @@ export default function HazardPage() {
 
 function HazardInner({ hazard }: { hazard: Hazard }) {
   useTitle(`${HAZARD_LABEL[hazard]} signal`);
-  const search = new URLSearchParams(useSearch());
-  // From a replay, the page reads the hazard as of the playhead; live otherwise.
-  const scenario = search.get("scenario");
-  const asOf = search.get("asOf");
-  const scope = scenario ? { scenario, asOf: asOf ?? undefined } : null;
-  const params = scope ? { scenario: scope.scenario, ...(scope.asOf ? { asOf: scope.asOf } : {}) } : undefined;
-  const refetchInterval = scope ? false : 60_000;
-  const detail = useGetHazard(hazard, params, { query: { queryKey: [...getGetHazardQueryKey(hazard), params ?? {}], refetchInterval } });
-  const tlP = { hours: 168, ...params };
-  const tl = useGetHazardTimeline(hazard, tlP, { query: { queryKey: getGetHazardTimelineQueryKey(hazard, tlP) } });
-  const evP = { hazard, hours: 72, limit: 50, ...params };
-  const [showAllEvents, setShowAllEvents] = useState(false);
-  const events = useListOfficialEvents(evP, { query: { queryKey: getListOfficialEventsQueryKey(evP) } });
+  const { scope, params, ready, atEnd, levelLabel } = useScope();
+  const refetchInterval = scope ? (false as const) : 60_000;
+  const detail = useGetHazard(hazard, params, { query: { queryKey: [...getGetHazardQueryKey(hazard), params], refetchInterval, enabled: ready } });
+  const [win, setWin] = useState<24 | 72 | 168>(24);
+  const tlP = { hours: win, ...params };
+  const tl = useGetHazardTimeline(hazard, tlP, { query: { queryKey: getGetHazardTimelineQueryKey(hazard, tlP), refetchInterval, enabled: ready } });
+  const evP = { hazard, hours: 168, limit: 100, ...params };
+  const events = useListOfficialEvents(evP, { query: { queryKey: getListOfficialEventsQueryKey(evP), enabled: ready } });
+  const alP = { hazard, limit: 50, ...params };
+  const alerts = useListAlerts(alP, { query: { queryKey: getListAlertsQueryKey(alP), refetchInterval, enabled: ready } });
+  const [showAll, setShowAll] = useState(false);
   const d = detail.data;
-  const color = d?.summary.color ?? "#15140F";
+  const label = HAZARD_LABEL[hazard];
 
   if (detail.isError && isNotFound(detail.error)) return <NotFound />;
+  const places = d ? [...d.places].sort((a, b) => b.zScore - a.zScore).slice(0, 12) : [];
 
   return (
     <Page wide>
-      {scope && (
-        <p className="mb-3 text-[14px]" data-testid="text-hazard-scope">
-          <Link href={`/replay?s=${encodeURIComponent(scope.scenario)}${scope.asOf ? `&t=${encodeURIComponent(scope.asOf)}` : ""}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2" data-testid="link-back-replay">Back to the replay</Link>
-          <span className="text-muted-foreground"> · read as of <span className="num">{scope.asOf ? utcDateTime(scope.asOf) : "the end of the replay"}</span>; the levels, places, posts and official events below are from that replay, not live.</span>
-        </p>
-      )}
-      <PageTitle sub={d ? d.summary.description : undefined}>
-        <span className="inline-flex items-center gap-3"><HazardDot hazard={hazard} color={color} />{HAZARD_LABEL[hazard]}</span>
-      </PageTitle>
-      {detail.isLoading && <LoadingRows rows={6} />}
-      {detail.isError && !d && <ErrorState what={`the ${hazard} detail`} onRetry={() => detail.refetch()} />}
-      {d && (
-        <div className="grid gap-3">
-          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-[14px]" data-testid="stats-hazard">
-            <div><dt className="text-muted-foreground text-[12px]">{scope ? "Highest level at the playhead" : "Highest level now"}</dt><dd><LevelBadge level={d.summary.maxLevel} /></dd></div>
-            <div><dt className="text-muted-foreground text-[12px]">Fear mass, last hour</dt><dd className="num">{num(d.summary.fearIndexNow, 2)} <span className="text-muted-foreground">({signed(d.summary.fearIndexDelta24h, 2)} vs 24 h ago)</span></dd></div>
-            <div><dt className="text-muted-foreground text-[12px]">Relevant posts, 24 h</dt><dd className="num">{num(d.summary.relevantLast24h)} of {num(d.summary.postsLast24h)}</dd></div>
-            <div><dt className="text-muted-foreground text-[12px]">Open alerts</dt><dd className="num">{d.summary.openAlerts}</dd></div>
-          </dl>
-          <p className="text-[12px] text-muted-foreground">Search terms: {d.keywords.join(", ") || "none listed"}</p>
+      <ScopeNote atEnd={atEnd} scope={scope} what="The trace, places, alerts and official records" />
+      <header className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] items-end">
+        <h1 className="display h1-station inline-flex items-center gap-4" data-testid="text-hazard-name"><HazardDot hazard={hazard} />{label}</h1>
+        <p className="text-ink-muted max-w-[56ch]">{d ? d.summary.description : "\u00A0"}</p>
+      </header>
 
-          <Panel title="Fear index, last 7 days" meta="hourly, all places combined; dashed line is the baseline median">
-            <div className="px-3 pb-4">
-              {tl.isLoading && <Skel className="h-[220px]" />}
-              {tl.isError && <ErrorState what="the timeline" onRetry={() => tl.refetch()} />}
-              {tl.data && <FearTimeline timeline={tl.data} color={color} height={220} />}
-            </div>
-          </Panel>
+      <dl className="mt-8 border border-rule-strong grid grid-cols-2 md:grid-cols-4 gap-px bg-rule min-h-[74px]" data-testid="figures-hazard">
+        {d ? (
+          <>
+            <Figure label={scope ? "Highest level at the playhead" : "Highest level now"}><LevelBadge level={d.summary.maxLevel} /></Figure>
+            <Figure label="Fear mass, last 60 min" testId="text-fear-now"><span className="mono">{num(d.summary.fearIndexNow, 2)}</span> <span className="text-[12px] text-ink-muted mono" title={`${signed(d.summary.fearIndexDelta24h, 2)} vs the same 60 min a day earlier`}>{signed(d.summary.fearIndexDelta24h, 2)} vs a day earlier</span></Figure>
+            <Figure label="Relevant posts, 24 h" testId="text-relevant"><span className="mono">{num(d.summary.relevantLast24h)}</span> <span className="text-[12px] text-ink-muted">of {num(d.summary.postsLast24h)}</span></Figure>
+            <Figure label="Open alerts" testId="text-open-alerts"><span className="mono">{d.summary.openAlerts}</span></Figure>
+          </>
+        ) : detail.isError ? (
+          <div className="col-span-full bg-sheet"><ErrorState what={`the ${label.toLowerCase()} summary`} onRetry={() => detail.refetch()} /></div>
+        ) : (
+          <div className="col-span-full bg-sheet"><LoadingRows rows={1} /></div>
+        )}
+      </dl>
 
-          <div className="grid gap-3 xl:grid-cols-2">
-            <Panel title="Emotion mix, last 72 hours"><EmotionMix points={d.emotionMix} /></Panel>
-            <Panel title="Places" meta="one row per place with a relevant post in the last 24 hours">
-              {d.places.length === 0 ? (
-                <EmptyState>No place has a relevant {hazard} post in the last 24 hours. <Link href="/replay" className="text-[#15140F] underline">Replay a past event</Link>.</EmptyState>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[14px] leading-5" data-testid="table-hazard-places">
-                    <thead className="text-[12px] text-muted-foreground"><tr><th className="text-left font-medium px-4 py-1">Place</th><th className="text-left font-medium px-2">Level</th><th className="text-right font-medium px-2">z</th><th className="text-right font-medium px-2">Relevant, 1 h</th><th className="text-right font-medium px-2">Relevant, 24 h</th><th className="text-left font-medium px-4">Trend</th></tr></thead>
-                    <tbody>
-                      {[...d.places].sort((a, b) => b.zScore - a.zScore).map((p) => (
-                        <tr key={p.placeId} className="border-t border-line">
-                          <td className="px-4 py-2"><Link href={`/places/${p.placeId}${scopeQuery(scope)}`} className="hover:underline" data-testid={`link-place-${p.placeId}`}>{placeLabel(p.name, p.country)}</Link></td>
-                          <td className="px-2"><LevelBadge level={p.level} /></td>
-                          <td className="px-2 text-right num">{num(p.zScore, 1)}</td>
-                          <td className="px-2 text-right num">{p.relevantPostsLastHour}</td>
-                          <td className="px-2 text-right num">{p.relevantPostsLast24h}</td>
-                          <td className="px-4"><TrendText trend={p.trend} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </Panel>
-          </div>
+      <div className="mt-10">
+        {tl.isError && !tl.data ? (
+          <div className="bg-sheet border border-rule-strong"><ErrorState what="the trace" onRetry={() => tl.refetch()} /></div>
+        ) : (
+          <Recorder
+            lanes={[{ hazard, label: `${label}, all places`, timeline: tl.data }]}
+            live={!scope}
+            loading={tl.isPending || !ready}
+            laneHeight={150}
+            label={["Recorder", "fear mass", label, `last ${win} h`, "UTC"]}
+            controls={<WindowSwitch value={win} options={WINDOWS} onChange={(v) => setWin(v === 24 ? 24 : v === 72 ? 72 : 168)} />}
+            testId="recorder-hazard"
+            empty={<>No relevant {label.toLowerCase()} posts anywhere in this window.</>}
+          />
+        )}
+        <p className="mt-2 text-[12px] text-ink-muted">Hourly fear mass across every place combined. Dashed is the 7-day baseline, green stamps are official {label.toLowerCase()} records.</p>
+        {d && d.keywords.length > 0 && <p className="mt-1 text-[12px] text-ink-muted">Search terms: <span className="mono">{d.keywords.join(", ")}</span></p>}
+      </div>
 
-          <div className="grid gap-3 xl:grid-cols-[3fr_2fr]">
-            <Panel title="Recent posts" meta="with relevance and fear scores">
-              {d.recentPosts.length === 0 ? <EmptyState>No recent {hazard} posts.</EmptyState> : <ul>{d.recentPosts.map((p) => <PostRow key={p.id} post={p} color={color} full scope={scope} />)}</ul>}
-            </Panel>
-            <Panel title="Official events, last 72 hours" meta={scope ? "the replay's historical record" : "GDACS, USGS, NWS, NASA FIRMS"}>
-              {events.isLoading && <LoadingRows rows={3} />}
-              {events.isError && <ErrorState what="official events" onRetry={() => events.refetch()} />}
-              {events.data && events.data.length === 0 && <EmptyState>No official {hazard} events in the last 72 hours.</EmptyState>}
-              {events.data && events.data.length > 0 && (
-                <ul>
-                  {(showAllEvents ? events.data : events.data.slice(0, EVENT_LIST)).map((e) => (
-                    <li key={e.id} className="px-4 py-2 border-t border-line first:border-t-0 text-[14px] leading-5" data-testid={`row-event-${e.id}`}>
-                      <p><span className="text-official">{e.feedLabel}</span> <span className="num text-[12px] text-muted-foreground">{utcDateTime(e.startsAt)}</span></p>
-                      <p>{e.url ? <a href={e.url} target="_blank" rel="noreferrer" className="hover:underline">{e.title}</a> : e.title} <span className="text-muted-foreground">({e.severity})</span></p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {events.data && events.data.length > EVENT_LIST && (
-                <div className="px-4 py-3 border-t border-line">
-                  <button type="button" className="text-[13px] text-muted-foreground underline underline-offset-2 hover:text-foreground" onClick={() => setShowAllEvents((v) => !v)} data-testid="button-toggle-events">
-                    {showAllEvents ? `Show the first ${EVENT_LIST} only` : `Show all ${events.data.length} events`}
-                  </button>
-                </div>
-              )}
-            </Panel>
-          </div>
-          <ExperimentalNote />
+      <Part id="places" title="Places with the most signal" note="Ranked by z against each place's own baseline, last 24 hours.">
+        <div className="bg-sheet border border-rule-strong min-h-[120px] overflow-hidden sm:overflow-x-auto">
+          {detail.isPending && <LoadingRows rows={4} />}
+          {d && places.length === 0 && <EmptyState>No place has a relevant {label.toLowerCase()} post in the last 24 hours.</EmptyState>}
+          {places.length > 0 && (<>
+            <ol className="sm:hidden divide-y divide-rule" data-testid="list-hazard-places">
+              {places.map((p) => (
+                <li key={p.placeId} className="px-4 py-2.5 min-w-0">
+                  <div className="flex items-baseline justify-between gap-3 min-w-0">
+                    <Link href={`/places/${p.placeId}${scopeQuery(scope)}`} className="ink-link font-semibold min-w-0 break-words" data-testid={`link-place-narrow-${p.placeId}`}>{placeLabel(p.name, p.country)}</Link>
+                    <LevelBadge level={p.level} />
+                  </div>
+                  <p className="mono text-[12px] text-ink-muted mt-0.5">z {num(p.zScore, 1)} · {p.relevantPostsLast24h} relevant, 24 h</p>
+                </li>
+              ))}
+            </ol>
+            <table className="hidden sm:table w-full text-[14px] leading-5" data-testid="table-hazard-places">
+              <thead className="text-[12px] text-ink-muted text-left"><tr className="border-b border-rule-strong"><th className="font-normal px-4 h-8">Place</th><th className="font-normal px-3">Level</th><th className="font-normal px-3 text-right">z</th><th className="font-normal px-3 text-right hidden sm:table-cell">Relevant, 1 h</th><th className="font-normal px-3 text-right">Relevant, 24 h</th><th className="font-normal px-4 hidden md:table-cell">Trend</th></tr></thead>
+              <tbody className="divide-y divide-rule">
+                {places.map((p) => (
+                  <tr key={p.placeId}>
+                    <td className="px-4 py-2.5"><Link href={`/places/${p.placeId}${scopeQuery(scope)}`} className="ink-link font-semibold" data-testid={`link-place-${p.placeId}`}>{placeLabel(p.name, p.country)}</Link></td>
+                    <td className="px-3"><LevelBadge level={p.level} /></td>
+                    <td className="px-3 text-right mono text-[13px]">{num(p.zScore, 1)}</td>
+                    <td className="px-3 text-right mono text-[13px] hidden sm:table-cell">{p.relevantPostsLastHour}</td>
+                    <td className="px-3 text-right mono text-[13px]">{p.relevantPostsLast24h}</td>
+                    <td className="px-4 hidden md:table-cell"><TrendText trend={p.trend} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table></>
+          )}
         </div>
-      )}
+      </Part>
+
+      <Part id="alerts" title={`${label} alerts`}>
+        <div className="bg-sheet border border-rule-strong min-h-[120px]">
+          {alerts.isPending && <LoadingRows rows={3} />}
+          {alerts.isError && <ErrorState what="the alerts" onRetry={() => alerts.refetch()} />}
+          {alerts.data && alerts.data.length === 0 && <EmptyState>No {label.toLowerCase()} alert has opened in this record.{!scope && <> <Link href={`/alerts?hazard=${hazard}`} className="ink-link text-ink">Read the ledger</Link> to switch to a replay.</>}</EmptyState>}
+          {alerts.data && alerts.data.length > 0 && <AlertLedger alerts={alerts.data} levelLabel={levelLabel} scope={scope} testId="ledger-hazard-alerts" />}
+        </div>
+      </Part>
+
+      <Part id="official" title="Official records" note="Last 7 days of the record, newest first.">
+        <div className="bg-sheet border border-rule-strong min-h-[120px]">
+          {events.isPending && <LoadingRows rows={3} />}
+          {events.isError && <ErrorState what="official records" onRetry={() => events.refetch()} />}
+          {events.data && events.data.length === 0 && <EmptyState>No official {label.toLowerCase()} record in the last 7 days of this record.</EmptyState>}
+          {events.data && events.data.length > 0 && <OfficialLedger events={showAll ? events.data : events.data.slice(0, EVENT_LIST)} testId="ledger-hazard-official" />}
+          {events.data && events.data.length > EVENT_LIST && (
+            <div className="px-4 py-3 border-t border-rule">
+              <button type="button" className={btn} onClick={() => setShowAll((v) => !v)} data-testid="button-toggle-events">{showAll ? `Show the first ${EVENT_LIST}` : `Show all ${events.data.length} records`}</button>
+            </div>
+          )}
+        </div>
+      </Part>
+
+      <Part id="posts" title="Recent posts">
+        <div className="bg-sheet border border-rule-strong">
+          {d && d.recentPosts.length === 0 && <EmptyState>No recent {label.toLowerCase()} posts.</EmptyState>}
+          {d && d.recentPosts.length > 0 && <ol className="divide-y divide-rule" data-testid="ledger-hazard-posts">{d.recentPosts.slice(0, 20).map((p) => <PostRow key={p.id} post={p} full scope={scope} />)}</ol>}
+          {detail.isPending && <LoadingRows rows={3} />}
+        </div>
+      </Part>
+      <ExperimentalNote className="mt-10" />
     </Page>
   );
 }

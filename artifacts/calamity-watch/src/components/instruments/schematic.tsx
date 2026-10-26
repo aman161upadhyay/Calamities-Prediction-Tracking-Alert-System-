@@ -24,7 +24,7 @@ export function PipelineSchematic({ stages, asOf }: { stages: PipelineStage[]; a
         <div aria-hidden className="hidden lg:block absolute left-0 right-0 top-[22px] h-px bg-ink" />
         <div aria-hidden className="hidden lg:block absolute left-0 right-0 top-[18px] h-[9px] overflow-hidden">
           <div key={run} className={run > 0 ? "pipeline-pulse w-full h-full relative" : "w-full h-full relative"}>
-            <span className="absolute right-0 top-0 size-[9px] rounded-full bg-pen" />
+            <span className="absolute right-0 top-0 size-[9px] rounded-full bg-ink" />
           </div>
         </div>
         <ol className="relative grid gap-6 lg:gap-4" style={{ gridTemplateColumns: undefined }} data-testid="list-pipeline">

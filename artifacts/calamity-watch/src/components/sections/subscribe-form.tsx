@@ -124,7 +124,7 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
             {create.isPending ? "Recording request" : placeName ? `Get alerts for ${placeName}` : "Get alerts by email"}
           </button>
         </div>
-        {create.isError && <p role="alert" className="text-[14px]" style={{ color: "#C8102E" }}>Couldn't record the request: {errorMessage(create.error)}. Check the email and try again.</p>}
+        {create.isError && <p role="alert" className="text-[14px] font-semibold">Couldn't record the request: {errorMessage(create.error)}. Check the email and try again.</p>}
         {result && <SubscribeResultNote r={result} />}
         <p className="text-[12px] leading-4 text-muted-foreground max-w-[65ch]">These emails come from an experimental research system and are not official warnings. Every email has an unsubscribe link.</p>
       </form>
