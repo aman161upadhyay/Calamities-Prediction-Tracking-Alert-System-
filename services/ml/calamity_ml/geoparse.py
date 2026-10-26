@@ -4,7 +4,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from .gazetteer import Gazetteer, GazetteerPlace, build_gazetteer, haversine_km
+from .gazetteer import Gazetteer, GazetteerPlace, build_gazetteer, haversine_km, normalise
 from .preprocess import clean_for_ner
 
 NER_LABELS = {"GPE", "LOC"}
@@ -19,6 +19,16 @@ US_STATE_CODES = {
 }
 _STATE_SUFFIX = re.compile(r"^(.{3,}?)[,\s]+([A-Z]{2})$")
 # Words NER tags as places but which are not places or are too generic to resolve.
+# Place names that are also ordinary English words. They resolve only when something else in the text supports
+# the place (same country or state), otherwise "Man found dead" would point at Man, Ivory Coast.
+COMMON_WORD_NAMES = {
+    "man", "nice", "mobile", "reading", "bath", "orange", "independence", "liberty", "normal", "surprise", "hope",
+    "union", "buffalo", "flint", "eagle", "deal", "sale", "march", "most", "split", "bar", "van", "mission", "media",
+    "industry", "enterprise", "commerce", "friendship", "harmony", "success", "progress", "climax", "truth", "why",
+    "home", "house", "church", "temple", "college", "university", "hospital", "airport", "station", "central",
+    "little", "big", "new", "old", "north", "south", "east", "west", "summit", "valley", "river", "lake", "beach",
+    "island", "mount", "hill", "bay", "point", "park", "garden", "forest", "field", "bridge", "ford", "mill", "wells",
+}
 STOPLIST = {
     "earth", "world", "europe", "asia", "africa", "north america", "south america", "america", "the world", "mother earth",
     "heaven", "hell", "paradise lost", "twitter", "facebook", "instagram", "youtube", "google", "amazon", "google maps",
@@ -177,6 +187,11 @@ class Geoparser:
                 if c.minor and not supported:
                     s -= 1.0
                 scored.append((s, supported, c))
+            # An informal short form ("Cali") yields to a place whose proper name is the mention when the text
+            # supports that place ("Cali, Colombia"); on its own it keeps the usual population order.
+            norm_m = normalise(m)
+            if any(sup and (norm_m, c.key) not in self.gazetteer.informal for _s, sup, c in scored):
+                scored = [(s - 1.0, sup, c) if (norm_m, c.key) in self.gazetteer.informal else (s, sup, c) for s, sup, c in scored]
             scored.sort(key=lambda t: t[0], reverse=True)
             best_s, best_supported, best = scored[0]
             if len(scored) == 1:
@@ -188,6 +203,9 @@ class Geoparser:
             # A small town is only a resolution when something in the text or the stream points at it.
             if best.minor and not best_supported:
                 conf = min(conf, 0.4)
+            # An ordinary English word is not a place mention unless the text also points at that country or state.
+            if m.lower() in COMMON_WORD_NAMES and not best_supported and best.kind != "country":
+                continue
             # Three-letter or very short mentions are weak evidence, as are names lifted from organisation spans.
             if len(m) <= 3:
                 conf = min(conf, 0.5)

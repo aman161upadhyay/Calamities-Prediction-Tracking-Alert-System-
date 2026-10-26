@@ -228,7 +228,11 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               {first ? (
                 <>
                   . The first, {first.placeName} {HAZARD_LABEL[first.hazard].toLowerCase()}, opened <span className="num">{utcDateTime(first.openedAt)}</span>
-                  {first.corroboration.state === "corroborated" ? <>, {leadText(first.corroboration, first.openedAt)}</> : <>; no official record matched it</>}
+                  {first.corroboration.state === "corroborated" ? (
+                    <>, {leadText(first.corroboration, first.openedAt)}{first.corroboration.title && <> ({first.corroboration.title})</>}</>
+                  ) : (
+                    <>; no official record matched it</>
+                  )}
                   {". "}
                   <Link href={`/alerts/${first.id}${scopeQuery({ scenario: s.id, asOf: s.endsAt })}`} className="underline underline-offset-2 hover:text-foreground" data-testid="link-first-alert">
                     Read its evidence

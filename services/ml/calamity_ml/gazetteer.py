@@ -49,6 +49,9 @@ class Gazetteer:
     country_names: dict[str, str] = field(default_factory=dict)
     # (normalised alias, place key) pairs that exist only because "X City" was also registered as "X".
     alias_only: set[tuple[str, str]] = field(default_factory=set)
+    # (normalised alias, place key) pairs for informal short forms ("Cali", "LA"); they rank below a place whose
+    # proper name is the mention, so "Cali, Colombia" still finds the Colombian city.
+    informal: set[tuple[str, str]] = field(default_factory=set)
 
     def add(self, place: GazetteerPlace, *names: str) -> None:
         self.by_key[place.key] = place
@@ -249,11 +252,13 @@ def build_gazetteer(min_population: int = 50_000, alt_min_population: int = 200_
         "cochin": "geonames:1273874", "trivandrum": "geonames:1254163", "bengaluru": "geonames:1277333", "bangalore": "geonames:1277333",
         "nyc": "geonames:5128581", "la": "geonames:5368361", "sf": "geonames:5391959", "philly": "geonames:4560349",
         "cdmx": "geonames:3530597", "mexico df": "geonames:3530597",
+        "cali": "region:us-ca", "norcal": "region:us-ca-norcal", "socal": "region:us-ca-socal",
     }
     for alias, key in extras.items():
         place = gz.by_key.get(key)
         if place:
             gz.add(place, alias)
+            gz.informal.add((normalise(alias), place.key))
     gz.prune_city_aliases()
     return gz
 

@@ -62,12 +62,25 @@ def _split_hashtag(m: re.Match[str]) -> str:
     return _CAMEL.sub(" ", word)
 
 
+# Pictographs, symbols and variation selectors; a leading emoji makes spaCy read the next word as a name ("📰 Man").
+_EMOJI = re.compile(
+    "[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U00002B00-\U00002BFF\U0001F900-\U0001F9FF\uFE0F\u200D\u2190-\u21FF\u2300-\u23FF\u25A0-\u25FF]+"
+)
+
+
+# Words run together where a line break was lost ("Northern CaliforniaThe death toll"): split a lowercase run of
+# three or more letters from a following capitalised word. "McDonald" and "DeSantis" keep their two-letter prefixes.
+_RUN_TOGETHER = re.compile(r"(?<=[a-z]{3})(?=[A-Z][a-z]{2})")
+
+
 def clean_for_ner(text: str) -> str:
-    """Keep casing, drop links and handles, split camel-case hashtags (#KeralaFloods -> Kerala Floods)."""
+    """Keep casing, drop links, handles and emoji, split camel-case hashtags (#KeralaFloods -> Kerala Floods)."""
     text = _RT.sub("", text or "")
     text = _URL.sub(" ", text)
     text = _HANDLE.sub(" ", text)
+    text = _EMOJI.sub(" ", text)
     text = _HASHTAG.sub(_split_hashtag, text)
+    text = _RUN_TOGETHER.sub(" ", text)
     return _WS.sub(" ", text).strip()
 
 

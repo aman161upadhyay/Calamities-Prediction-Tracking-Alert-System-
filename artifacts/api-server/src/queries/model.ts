@@ -17,6 +17,8 @@ export const LIMITATIONS = [
   "Replay scenarios use HumAID tweet ids, labels and timestamps. The text is scored locally and withheld from the interface under the dataset's terms; collections start hours to days after each event began.",
   "Corroboration is a spatial and temporal match against official feeds: within 250 km (or the extent of the region or country when the alert is at that level), and the official event is active between 24 h before and 48 h after the alert opened (an event with no recorded end counts as active for 72 h). It shows that an official event existed near the alert, not that the alert caused or predicted it.",
   "Counts are posts, not independent witnesses. Posts are deduplicated only by platform id, so one prolific author or copied text under different ids can satisfy the minimum of five relevant posts and inflate a signal.",
+  "Hazard typing follows the training events, which were mostly hurricanes. Automated weather-bulletin reposts on Bluesky (\"continues Flood Warning for ...\") are often typed as cyclone rather than flood; the relevance score is usually right, the hazard label less so.",
+  "Named-entity recognition is the small English spaCy model. It misses some town names outside Europe and North America and sometimes reads a person or product as a place; a place name that is also an ordinary English word is only used when the text also names its country or state.",
 ];
 
 export async function modelInfo() {

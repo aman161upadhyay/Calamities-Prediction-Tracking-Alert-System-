@@ -29,6 +29,10 @@ Hazard warnings read from what people post, before the sirens. Public posts abou
 - Stage one masks place names to one token before training; without this the model memorised locations from the HumAID events. Candidates are chosen by macro-F1 on events never seen in training, and this is disclosed on the model page.
 - HumAID terms: tweet text is never served by the API for replay posts (a placeholder plus the `x.com/i/web/status/<id>` link is returned) and raw/processed data and model binaries stay out of the GitHub mirror.
 - Generated Zod query-param schemas type `asOf` as a Date, which a query string can never satisfy; routes call `parseQuery` (strips `asOf`/`scenario`) and `parseScope` separately.
+- Official events carry `time_precision` (minute, hour, day). Day-dated records never produce a lead time in minutes; the UI compares dates only. Alert summaries take the post count and z from the same peak hour (`peak_n`) and name the hour by its start.
+- Replay alert links carry `?scenario=&asOf=`; `GET /api/alerts/{id}?asOf=` reads the alert as of the playhead and the page links back to `/replay?s=&t=`. Force re-preparation renumbers alerts, so links by id go stale after a force.
+- Geoparser: context is kept per mention so a mention never supports itself; informal aliases (Cali, NorCal, LA) yield to a proper-name place only when the text supports it; place names that are ordinary English words need country or state support; emoji and run-together words are cleaned before NER. Live posts are not re-geoparsed automatically after gazetteer changes (see `.agents/memory/replay-prepare.md`).
+- Subscriptions without an email provider are stored as `pending`, never auto-verified; the duplicate response is the same wording for pending and verified rows.
 
 ## Product
 
