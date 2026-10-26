@@ -1,5 +1,6 @@
 import { db, alertEventsTable, alertsTable, officialEventsTable, placesTable, postPlacesTable, postScoresTable, postsTable } from "@workspace/db";
 import { and, desc, eq, gt, gte, inArray, isNull, lte, or, sql, asc } from "drizzle-orm";
+import { DETECTOR } from "../lib/config";
 import { levelRank } from "../lib/hazards";
 import { HOUR_MS } from "../lib/time";
 import { ApiError, asOfAdjustments, mapAlert, type Scope } from "./common";
@@ -60,8 +61,18 @@ export async function alertDetail(alertId: number, asOfParam: Date | null) {
     .select({ post: postsTable, score: postScoresTable })
     .from(postsTable)
     .innerJoin(postScoresTable, eq(postScoresTable.postId, postsTable.id))
-    .innerJoin(postPlacesTable, and(eq(postPlacesTable.postId, postsTable.id), eq(postPlacesTable.placeId, row.placeId)))
-    .where(and(eq(postsTable.scenario, row.scenario), eq(postScoresTable.hazard, row.hazard), gte(postsTable.createdAt, new Date(row.openedAt.getTime() - 3 * HOUR_MS)), lte(postsTable.createdAt, evidenceEnd)))
+    // The same eligibility as the hourly aggregation: a place resolution at or above the confidence floor and a
+    // relevant score. Anything weaker never counted toward the series, so it is not evidence.
+    .innerJoin(postPlacesTable, and(eq(postPlacesTable.postId, postsTable.id), eq(postPlacesTable.placeId, row.placeId), gte(postPlacesTable.confidence, DETECTOR.placeConfidenceMin)))
+    .where(
+      and(
+        eq(postsTable.scenario, row.scenario),
+        eq(postScoresTable.hazard, row.hazard),
+        gte(postScoresTable.pRelevant, DETECTOR.relevanceThreshold),
+        gte(postsTable.createdAt, new Date(row.openedAt.getTime() - 3 * HOUR_MS)),
+        lte(postsTable.createdAt, evidenceEnd),
+      ),
+    )
     .orderBy(desc(sql`${postScoresTable.pRelevant} * ${postScoresTable.pFear}`))
     .limit(20);
   const evidencePosts = await postsWithPlaces(evidenceRows);

@@ -3,7 +3,7 @@ import { useGetAlert, getGetAlertQueryKey } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
 import { EmptyState, ErrorState, HazardTag, LevelBadge, LoadingRows, PageTitle, Panel } from "@/components/kit";
 import { FearTimeline } from "@/components/charts/charts";
-import { PostRow } from "@/components/board/rows";
+import { PostRow, scopeQuery } from "@/components/board/rows";
 import { HAZARD_FALLBACK_COLOR, HAZARD_LABEL, isNotFound, leadText, num, utcDate, utcDateTime } from "@/lib/format";
 import { useTitle } from "./home";
 import NotFound from "./not-found";
@@ -38,7 +38,7 @@ export default function AlertPage() {
         return (
           <>
             <PageTitle>
-              {HAZARD_LABEL[a.hazard]} alert, <Link href={`/places/${a.placeId}`} className="hover:underline" data-testid="link-alert-place">{a.placeName}</Link>
+              {HAZARD_LABEL[a.hazard]} alert, <Link href={`/places/${a.placeId}${scopeQuery(scenario ? { scenario, asOf } : null)}`} className="hover:underline" data-testid="link-alert-place">{a.placeName}</Link>
             </PageTitle>
             <div className="border-l-2 pl-3 mb-6 text-[14px] leading-5" style={{ borderColor: "#E8B04B" }} data-testid="text-alert-disclaimer">
               Experimental research signal from public posts. Not an official warning: follow your local authorities.
@@ -60,7 +60,10 @@ export default function AlertPage() {
               <div className="px-4 pb-4 text-[14px] leading-5">
                 {c.state === "corroborated" ? (
                   <>
-                    <p className="text-official font-bold">Corroborated by {c.feed ?? "an official feed"}</p>
+                    <p className="text-official font-bold">
+                      Corroborated by {c.feed ?? "an official feed"}
+                      {c.hazardRelation === "related" && c.officialHazard && <> (a {c.officialHazard} record, not a {HAZARD_LABEL[a.hazard].toLowerCase()} one)</>}
+                    </p>
                     <p className="mt-1">
                       {c.title}
                       {c.officialAt && c.officialTimePrecision === "day" && <>, dated <span className="num">{utcDate(c.officialAt)}</span> (the source gives the day only)</>}
@@ -69,10 +72,13 @@ export default function AlertPage() {
                       {c.officialUrl && <> · <a href={c.officialUrl} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-foreground" data-testid="link-official-source">source</a></>}
                     </p>
                     <p className="mt-1" data-testid="text-lead-time">{c.officialTimePrecision === "day" ? "Timing" : "Lead time"}: <span className="num">{leadText(c, a.openedAt)}</span></p>
-                    <p className="mt-1 text-[12px] text-muted-foreground">A match means an official record of the same hazard existed near this place in the window; it does not show that the posts predicted it.</p>
+                    <p className="mt-1 text-[12px] text-muted-foreground">
+                      A match means an official record of the same or a related hazard existed near this place in the window; it does not show that the posts predicted it.
+                      {c.hazardRelation === "related" && <> Related here means the feeds reported a {c.officialHazard} where the posts read as {HAZARD_LABEL[a.hazard].toLowerCase()}; cyclone, storm and flood count for each other because one brings the others, and the classifier's hazard label can be wrong even when its relevance is right.</>}
+                    </p>
                   </>
                 ) : c.state === "pending" ? (
-                  <p>Pending. The system checks GDACS, USGS, NWS and NASA FIRMS for an event of the same hazard within 250 km (or the region's own extent) that is active between 24 hours before the alert opened and 48 hours after.</p>
+                  <p>Pending. The system checks GDACS, USGS, NWS and NASA FIRMS for an event of the same or a related hazard (cyclone, storm and flood count for each other) within 250 km (or the region's own extent) that is active between 24 hours before the alert opened and 48 hours after.</p>
                 ) : (
                   <p>Uncorroborated. No matching official event was found in the corroboration window. This may be a false alarm or an event the official feeds do not cover.</p>
                 )}
@@ -84,8 +90,8 @@ export default function AlertPage() {
             </Panel>
 
             <div className="mt-3 grid gap-3 lg:grid-cols-[3fr_2fr]">
-              <Panel title="Evidence posts" meta="the posts that counted toward this alert">
-                {d.evidencePosts.length === 0 ? <EmptyState>No evidence posts are stored for this alert.</EmptyState> : <ul>{d.evidencePosts.map((p) => <PostRow key={p.id} post={p} full />)}</ul>}
+              <Panel title="Evidence posts" meta={d.evidencePosts.length < a.postCount ? `${d.evidencePosts.length} of the ${a.postCount} that counted, ranked by relevance × fear` : "the posts that counted toward this alert"}>
+                {d.evidencePosts.length === 0 ? <EmptyState>No evidence posts are stored for this alert.</EmptyState> : <ul>{d.evidencePosts.map((p) => <PostRow key={p.id} post={p} full scope={scenario ? { scenario, asOf } : null} />)}</ul>}
               </Panel>
               <Panel title="Event log">
                 {d.events.length === 0 ? <EmptyState>No events recorded.</EmptyState> : (

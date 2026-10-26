@@ -1,13 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateSubscription, useListPlaces, type SubscriptionResult } from "@workspace/api-client-react";
+import { useCreateSubscription, useGetPlace, useListPlaces, getGetPlaceQueryKey, type SubscriptionResult } from "@workspace/api-client-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HAZARDS, HAZARD_LABEL, LEVEL_LABEL, errorMessage } from "@/lib/format";
 import { btnPrimary } from "@/components/kit";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const schema = z.object({
   email: z.string().email("Enter an email address like name@example.org"),
@@ -34,10 +34,19 @@ const trig = "bg-surface-2 border-line rounded-[4px] h-10";
 
 export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
   const places = useListPlaces({ featured: true });
+  // A link from a place page can name a place outside the featured list; fetch it so the selector shows its name.
+  const initialId = initialPlaceId && /^\d+$/.test(initialPlaceId) ? Number(initialPlaceId) : Number.NaN;
+  const initial = useGetPlace(initialId, undefined, { query: { queryKey: getGetPlaceQueryKey(initialId), enabled: Number.isFinite(initialId), staleTime: 10 * 60_000 } });
+  const options = useMemo(() => {
+    const list = (places.data ?? []).map((p) => ({ id: p.place.id, name: p.place.name, countryCode: p.place.countryCode }));
+    const extra = initial.data?.place;
+    if (extra && !list.some((p) => p.id === extra.id)) list.unshift({ id: extra.id, name: extra.name, countryCode: extra.countryCode });
+    return list;
+  }, [places.data, initial.data]);
   const create = useCreateSubscription();
   const [result, setResult] = useState<SubscriptionResult | null>(null);
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", placeId: initialPlaceId ?? "any", hazard: "any", minLevel: "high" } });
-  const placeName = places.data?.find((p) => String(p.place.id) === form.watch("placeId"))?.place.name;
+  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", placeId: Number.isFinite(initialId) ? String(initialId) : "any", hazard: "any", minLevel: "high" } });
+  const placeName = options.find((p) => String(p.id) === form.watch("placeId"))?.name;
 
   const submit = (v: Values) => {
     setResult(null);
@@ -66,10 +75,11 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
                 <FormControl><SelectTrigger className={trig} data-testid="select-place"><SelectValue /></SelectTrigger></FormControl>
                 <SelectContent>
                   <SelectItem value="any">Any tracked place</SelectItem>
-                  {places.data?.map((p) => <SelectItem key={p.place.id} value={String(p.place.id)}>{p.place.name}, {p.place.countryCode}</SelectItem>)}
+                  {options.map((p) => <SelectItem key={p.id} value={String(p.id)}>{p.name}, {p.countryCode}</SelectItem>)}
                 </SelectContent>
               </Select>
               {places.isError && <FormDescription>Place list unavailable; you can still subscribe to any place.</FormDescription>}
+              {Number.isFinite(initialId) && initial.isError && <FormDescription>The linked place could not be loaded; pick one from the list.</FormDescription>}
             </FormItem>
           )} />
           <FormField control={form.control} name="hazard" render={({ field }) => (

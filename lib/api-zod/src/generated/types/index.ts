@@ -22,6 +22,7 @@ export * from './classifyInput';
 export * from './classMetric';
 export * from './confusionMatrix';
 export * from './corroboration';
+export * from './corroborationHazardRelation';
 export * from './corroborationOfficialTimePrecision';
 export * from './corroborationState';
 export * from './crossDatasetMetric';

@@ -1,4 +1,4 @@
-import { useParams, Link } from "wouter";
+import { useParams, useSearch, Link } from "wouter";
 import { useGetPlace, getGetPlaceQueryKey } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
 import { EmptyState, ErrorState, ExperimentalNote, HazardTag, LevelBadge, LoadingRows, PageTitle, Panel, TrendText } from "@/components/kit";
@@ -11,7 +11,13 @@ import NotFound from "./not-found";
 export default function PlacePage() {
   const { placeId } = useParams<{ placeId: string }>();
   const id = Number(placeId);
-  const q = useGetPlace(id, undefined, { query: { queryKey: getGetPlaceQueryKey(id), enabled: Number.isFinite(id), refetchInterval: 60_000 } });
+  const search = new URLSearchParams(useSearch());
+  // From a replay, the page reads the place as of the playhead; live otherwise.
+  const scenario = search.get("scenario");
+  const asOf = search.get("asOf");
+  const scope = scenario ? { scenario, asOf: asOf ?? undefined } : null;
+  const params = scope ? { scenario: scope.scenario, ...(scope.asOf ? { asOf: scope.asOf } : {}) } : undefined;
+  const q = useGetPlace(id, params, { query: { queryKey: [...getGetPlaceQueryKey(id), params ?? {}], enabled: Number.isFinite(id), refetchInterval: scope ? false : 60_000 } });
   const d = q.data;
   useTitle(d ? placeLabel(d.place.name, d.place.country) : "Place");
   if (!Number.isFinite(id) || (q.isError && isNotFound(q.error))) return <NotFound />;
@@ -22,6 +28,12 @@ export default function PlacePage() {
       {q.isError && !d && <ErrorState what="this place" onRetry={() => q.refetch()} />}
       {d && (
         <>
+          {scope && (
+            <p className="mb-3 text-[14px]" data-testid="text-place-scope">
+              <Link href={`/replay?s=${encodeURIComponent(scope.scenario)}${scope.asOf ? `&t=${encodeURIComponent(scope.asOf)}` : ""}`} className="text-muted-foreground hover:text-foreground underline underline-offset-2" data-testid="link-back-replay">Back to the replay</Link>
+              <span className="text-muted-foreground"> · read as of <span className="num">{scope.asOf ? utcDateTime(scope.asOf) : "the end of the replay"}</span>; the signals, alerts and posts below are from that replay, not live.</span>
+            </p>
+          )}
           <PageTitle sub={<span className="num text-[13px]">{[d.place.admin1, d.place.country].filter(Boolean).join(", ")} · {d.place.lat.toFixed(3)}, {d.place.lon.toFixed(3)}{d.place.population ? ` · pop. ${num(d.place.population)}` : ""}</span>}>
             {d.place.name}
           </PageTitle>
@@ -51,11 +63,11 @@ export default function PlacePage() {
                 )}
               </Panel>
               <Panel title="Alerts for this place">
-                {d.alerts.length === 0 ? <EmptyState>No alerts have been raised for {d.place.name}.</EmptyState> : <ul>{d.alerts.map((a) => <AlertRow key={a.id} alert={a} />)}</ul>}
+                {d.alerts.length === 0 ? <EmptyState>No alerts have been raised for {d.place.name}.</EmptyState> : <ul>{d.alerts.map((a) => <AlertRow key={a.id} alert={a} scope={scope} />)}</ul>}
                 <ExperimentalNote className="px-4 pb-3" />
               </Panel>
               <Panel title="Recent posts">
-                {d.recentPosts.length === 0 ? <EmptyState>No recent posts mention {d.place.name}.</EmptyState> : <ul>{d.recentPosts.map((p) => <PostRow key={p.id} post={p} full />)}</ul>}
+                {d.recentPosts.length === 0 ? <EmptyState>No recent posts mention {d.place.name}.</EmptyState> : <ul>{d.recentPosts.map((p) => <PostRow key={p.id} post={p} full scope={scope} />)}</ul>}
               </Panel>
             </div>
             <div className="grid gap-3 content-start">

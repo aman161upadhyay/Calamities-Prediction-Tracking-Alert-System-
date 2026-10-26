@@ -9,7 +9,7 @@ const ROWS: [string, string, string][] = [
   ["Understanding", "Azure key phrases and generic sentiment", "Trained hazard classifier plus a multilabel emotion model for fear"],
   ["Place", "The city a stream was filtered on", "Named-entity recognition against a gazetteer; the text has to name the place"],
   ["Alert rule", "Fixed threshold on negative tweets", "Robust z-score against each place's own 7-day baseline"],
-  ["Checking", "None", "Every alert matched against GDACS, USGS, NWS and NASA FIRMS, lead time recorded"],
+  ["Checking", "None", "Every alert matched against GDACS, USGS, NWS and NASA FIRMS, timing against the record kept"],
   ["Storage and UI", "CSV and a Flask page", "Postgres, a typed API and this board, with replay of past events"],
 ];
 
@@ -19,10 +19,10 @@ export default function AboutPage() {
   const status = useGetSystemStatus();
   return (
     <Page>
-      <PageTitle sub="Hazard warnings read from what people post, before the sirens.">About Calamity Watch</PageTitle>
+      <PageTitle sub="Hazard warnings read from what people post, before the sirens. That line is the aim; the replays measure how far the system gets.">About Calamity Watch</PageTitle>
       <div className="max-w-[70ch] space-y-4 text-[16px] leading-6">
-        <p>Calamity Watch is Aman's 2026 rebuild of a project first written in 2018 for Microsoft's CodeFunDo++ hackathon. The idea has not changed: when a flood, fire or storm hits, people post about it before official bulletins catch up, and that chatter can be measured.</p>
-        <p>What changed is that every part is now measured. The original guessed; this version has held-out test scores, a baseline for each place, and a record of whether each alert was later confirmed by an official feed and how far ahead it was.</p>
+        <p>Calamity Watch is Aman's 2026 rebuild of a project first written in 2018 for Microsoft's CodeFunDo++ hackathon. The hypothesis has not changed: when a flood, fire or storm hits, people post about it, sometimes before official bulletins catch up, and that chatter can be measured.</p>
+        <p>What changed is that every part is now measured instead of assumed. The original guessed; this version has held-out test scores, a baseline for each place, and a record of whether each alert matched an official record and how long before or after that record it opened. In the five replays the first alert usually opens hours to days after the first official record, because the HumAID collections themselves start late; the replay page says so for each event rather than claiming a lead that was not there.</p>
       </div>
 
       <h2 className="text-[20px] leading-7 mt-10 mb-3">2018 and 2026, part by part</h2>
@@ -37,7 +37,7 @@ export default function AboutPage() {
       <ul className="list-disc pl-5 space-y-1 max-w-[70ch]">
         <li>It is not an official warning source and has no link to any emergency agency. Follow your local authorities.</li>
         <li>It cannot see places where people are not posting, or posting in languages the models were not trained on.</li>
-        <li>A quiet board does not mean a place is safe. It means the posts it can read did not break from the baseline.</li>
+        <li>A quiet board does not mean a place is safe. It means the posts it can read did not stay above their baseline long enough to open an alert.</li>
         <li>Lead times are measured against the official feeds it checks, not against every warning that was issued.</li>
       </ul>
       <p className="mt-3"><TextLink href="/model" testId="link-about-model">Model metrics, datasets and limitations</TextLink></p>

@@ -19,8 +19,11 @@ import { HAZARD_FALLBACK_COLOR, HAZARD_LABEL, LEVEL_RANK, num, placeLabel, signe
 import { EmptyState, ErrorState, ExperimentalNote, HazardDot, LevelBadge, LevelGlyph, LoadingRows, Panel, Skel, btn } from "@/components/kit";
 import { HazardMap, type MapSelection } from "@/components/map/hazard-map";
 import { FearTimeline, Sparkline } from "@/components/charts/charts";
-import { AlertRow, PostRow } from "./rows";
+import { AlertRow, PostRow, scopeQuery } from "./rows";
 import { cn } from "@/lib/utils";
+
+type BoardTab = "alerts" | "feed" | "places" | "hazards";
+const TABS: readonly BoardTab[] = ["alerts", "feed", "places", "hazards"];
 
 type Mode = { scenario?: string; asOf?: string };
 
@@ -48,7 +51,22 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
 
   const [picked, setPicked] = useState<Hazard | null>(null);
   const [sel, setSel] = useState<MapSelection | null>(null);
-  const [tab, setTab] = useState<"alerts" | "feed" | "places" | "hazards">("alerts");
+  const [tab, setTab] = useState<BoardTab>("alerts");
+  // Arrow keys move between tabs and focus the new one; Home and End jump. Tabs hidden at the current width are
+  // skipped so focus never lands on an invisible control.
+  const onTabKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const visible = TABS.filter((t) => !(t === "hazards" || t === "places") || window.innerWidth < 1024);
+    const i = visible.indexOf(tab);
+    let next: BoardTab | null = null;
+    if (e.key === "ArrowRight") next = visible[(i + 1) % visible.length] ?? null;
+    else if (e.key === "ArrowLeft") next = visible[(i - 1 + visible.length) % visible.length] ?? null;
+    else if (e.key === "Home") next = visible[0] ?? null;
+    else if (e.key === "End") next = visible[visible.length - 1] ?? null;
+    if (!next) return;
+    e.preventDefault();
+    setTab(next);
+    document.getElementById(`board-tab-${next}`)?.focus();
+  };
 
   const data = board.data;
   const colors = useMemo(() => {
@@ -87,7 +105,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       {alerts.isLoading && !data && <LoadingRows rows={2} label="Loading alerts" />}
       {alerts.isError && !alerts.data && <ErrorState what="alerts" onRetry={() => alerts.refetch()} />}
       {!alerts.isLoading && openAlerts.length === 0 && (
-        <EmptyState>{replay ? "No alert is open at this moment of the replay." : "No open alerts. No place has broken from its own 7-day baseline."}</EmptyState>
+        <EmptyState>{replay ? "No alert is open at this moment of the replay." : "No open alerts. An alert opens only after two consecutive hours at elevated or above; a single hour's spike shows on the map and in the hazards rail, not here."}</EmptyState>
       )}
       {openAlerts.length > 0 && (
         <ul>
@@ -128,7 +146,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       )}
       {posts.data && posts.data.length > 0 && (
         <ul className="stagger">
-          {posts.data.map((p) => <PostRow key={p.id} post={p} color={colors[p.hazard]} />)}
+          {posts.data.map((p) => <PostRow key={p.id} post={p} color={colors[p.hazard]} scope={params} />)}
         </ul>
       )}
     </div>
@@ -163,16 +181,19 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
             )}
             {board.isLoading && <Skel className="absolute top-3 left-3 h-6 w-40" />}
             <MapLegend />
-            {sel && <Readout sel={sel} onClose={() => setSel(null)} color={sel.kind === "place" ? colors[sel.signal.hazard] : "#5EEAD4"} />}
+            {sel && <Readout sel={sel} onClose={() => setSel(null)} color={sel.kind === "place" ? colors[sel.signal.hazard] : "#5EEAD4"} scope={params} />}
           </div>
           <div className="xl:hidden">
-            <div role="tablist" aria-label="Board panels" className="flex gap-1 border-b border-line">
-              {(["alerts", "feed", "places", "hazards"] as const).map((t) => (
+            <div role="tablist" aria-label="Board panels" className="flex gap-1 border-b border-line" onKeyDown={onTabKey}>
+              {TABS.map((t) => (
                 <button
                   key={t}
+                  id={`board-tab-${t}`}
                   role="tab"
                   type="button"
                   aria-selected={tab === t}
+                  aria-controls="board-tabpanel"
+                  tabIndex={tab === t ? 0 : -1}
                   onClick={() => setTab(t)}
                   data-testid={`tab-${t}`}
                   className={cn("px-3 py-2 text-[14px] -mb-px border-b-2", tab === t ? "border-[#3D9BFF] text-foreground" : "border-transparent text-muted-foreground", (t === "hazards" || t === "places") && "lg:hidden")}
@@ -181,7 +202,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
                 </button>
               ))}
             </div>
-            <div className="bg-surface border border-t-0 border-line rounded-b-lg" role="tabpanel">
+            <div id="board-tabpanel" className="bg-surface border border-t-0 border-line rounded-b-lg" role="tabpanel" aria-labelledby={`board-tab-${tab}`} tabIndex={0}>
               {tab === "alerts" && alertList}
               {tab === "feed" && <div className="max-h-[480px] overflow-auto">{feed}</div>}
               {tab === "places" && <div className="pt-2">{placeList}</div>}
@@ -262,7 +283,7 @@ function MapLegend() {
   );
 }
 
-function Readout({ sel, onClose, color }: { sel: MapSelection; onClose: () => void; color: string }) {
+function Readout({ sel, onClose, color, scope }: { sel: MapSelection; onClose: () => void; color: string; scope?: { scenario?: string | null; asOf?: string | null } | null }) {
   return (
     <div role="dialog" aria-label="Map readout" className="absolute left-2 bottom-8 w-[min(320px,calc(100%-16px))] bg-surface-2 border border-line rounded-lg p-3 text-[13px] leading-5 shadow-[0_8px_24px_rgba(4,8,16,.5)] fade-in" data-testid="panel-map-readout">
       <button type="button" onClick={onClose} aria-label="Close readout" className="absolute right-1.5 top-1.5 p-1.5 text-muted-foreground hover:text-foreground" data-testid="button-close-readout">
@@ -281,7 +302,7 @@ function Readout({ sel, onClose, color }: { sel: MapSelection; onClose: () => vo
           </dl>
           <p className="mt-1 text-[11px] text-muted-foreground">updated <span className="num">{utcDateTime(sel.signal.updatedAt)}</span></p>
           <div className="mt-2 flex gap-2">
-            <Link href={`/places/${sel.signal.placeId}`} className={btn} data-testid="link-readout-place">Open {sel.signal.name}</Link>
+            <Link href={`/places/${sel.signal.placeId}${scopeQuery(scope)}`} className={btn} data-testid="link-readout-place">Open {sel.signal.name}</Link>
             <Link href={`/hazards/${sel.signal.hazard}`} className={btn} data-testid="link-readout-hazard">{HAZARD_LABEL[sel.signal.hazard]} detail</Link>
           </div>
         </>

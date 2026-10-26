@@ -161,9 +161,11 @@ export function mapAlert(a: AlertRow, place: Place, official: OfficialEventRow |
     officialAt: string | null;
     officialTimePrecision: "minute" | "hour" | "day" | null;
     officialUrl: string | null;
+    officialHazard: string | null;
+    hazardRelation: "same" | "related" | null;
     leadMinutes: number | null;
   };
-  const none: Corroboration = { state: "pending", officialEventId: null, feed: null, title: null, officialAt: null, officialTimePrecision: null, officialUrl: null, leadMinutes: null };
+  const none: Corroboration = { state: "pending", officialEventId: null, feed: null, title: null, officialAt: null, officialTimePrecision: null, officialUrl: null, officialHazard: null, hazardRelation: null, leadMinutes: null };
   let corroboration: Corroboration;
   if (a.corroborationState === "corroborated" && official && official.startsAt.getTime() <= asOf) {
     const precision = (official.timePrecision === "hour" || official.timePrecision === "day" ? official.timePrecision : "minute") as "minute" | "hour" | "day";
@@ -175,6 +177,8 @@ export function mapAlert(a: AlertRow, place: Place, official: OfficialEventRow |
       officialAt: official.startsAt.toISOString(),
       officialTimePrecision: precision,
       officialUrl: official.url,
+      officialHazard: official.hazard,
+      hazardRelation: official.hazard === a.hazard ? "same" : "related",
       // A day-level record cannot support a lead time in minutes; the interface compares dates instead.
       leadMinutes: precision === "day" ? null : a.leadMinutes,
     };

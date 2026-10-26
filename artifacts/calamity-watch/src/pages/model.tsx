@@ -1,4 +1,4 @@
-import { useGetModelInfo, useGetSystemStatus } from "@workspace/api-client-react";
+import { useGetModelInfo, useGetSystemStatus, type StageOneInfo } from "@workspace/api-client-react";
 import { Page } from "@/components/layout/shell";
 import { ErrorState, LoadingRows, PageTitle, Panel } from "@/components/kit";
 import { PipelineList } from "@/components/sections/model-blocks";
@@ -13,6 +13,9 @@ export default function ModelPage() {
   const q = useGetModelInfo();
   const status = useGetSystemStatus();
   const m = q.data;
+  // The test split mixes relevant HumAID posts with generic no-hazard tweets; the caption under the headline numbers
+  // names both populations, and the relevant-only accuracy comes from the confusion matrix without the "none" row.
+  const population = m ? testPopulation(m.stageOne) : null;
   return (
     <Page>
       <PageTitle sub="What scores each post, what it was trained on, how well it does on data it has not seen, and where it fails.">Model</PageTitle>
@@ -35,7 +38,12 @@ export default function ModelPage() {
               <div><dt className="text-[12px] text-muted-foreground">Relevance accuracy</dt><dd className="num text-[20px]">{pct(m.stageOne.relevanceAccuracy)}</dd></div>
               <div><dt className="text-[12px] text-muted-foreground">Relevance F1</dt><dd className="num text-[20px]">{num(m.stageOne.relevanceF1, 3)}</dd></div>
             </dl>
-            <p className="text-[12px] text-muted-foreground mt-1">All on the held-out test split of the 14 training events (a random fifth of their posts). Hazard-type figures are computed on the relevant posts of that split, relevance figures on all of it.</p>
+            <p className="text-[12px] text-muted-foreground mt-1" data-testid="text-metrics-population">
+              All on the held-out test split: a random fifth of the posts from the 14 training events plus a fifth of the generic no-hazard tweets. Hazard-type figures cover the{" "}
+              <span className="num">{num(population!.hazardRows)}</span> relevant posts of that split and the <span className="num">{num(population!.noneRows)}</span> generic tweets the model must label "none" (<span className="num">{num(population!.hazardRows + population!.noneRows)}</span> rows);
+              {population!.hazardOnlyAccuracy !== null && <> on the relevant posts alone, hazard-type accuracy is <span className="num">{pct(population!.hazardOnlyAccuracy)}</span>.</>}
+              {population!.relevanceRows !== null && <> Relevance figures cover all <span className="num">{num(population!.relevanceRows)}</span> rows of the split.</>}
+            </p>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-2">
@@ -140,4 +148,21 @@ export default function ModelPage() {
       )}
     </Page>
   );
+}
+
+function testPopulation(stage: StageOneInfo) {
+  const noneRows = stage.perClass.filter((c) => c.label === "none").reduce((acc, c) => acc + c.support, 0);
+  const hazardRows = stage.perClass.filter((c) => c.label !== "none").reduce((acc, c) => acc + c.support, 0);
+  const labels = stage.confusion.labels;
+  let diag = 0;
+  let total = 0;
+  stage.confusion.matrix.forEach((row, i) => {
+    if (labels[i] === "none") return;
+    row.forEach((v, j) => {
+      total += v;
+      if (i === j) diag += v;
+    });
+  });
+  const test = stage.datasets.find((d) => d.role === "test");
+  return { noneRows, hazardRows, hazardOnlyAccuracy: total > 0 ? diag / total : null, relevanceRows: test ? test.rows : null };
 }

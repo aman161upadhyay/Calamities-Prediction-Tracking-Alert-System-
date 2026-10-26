@@ -241,6 +241,18 @@ export const CorroborationOfficialTimePrecision = {
   day: 'day',
 } as const;
 
+/**
+ * same when the official record is of the alert's own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)
+ * @nullable
+ */
+export type CorroborationHazardRelation = typeof CorroborationHazardRelation[keyof typeof CorroborationHazardRelation] | null;
+
+
+export const CorroborationHazardRelation = {
+  same: 'same',
+  related: 'related',
+} as const;
+
 export interface Corroboration {
   /** pending while the alert is open and younger than 48 hours */
   state: CorroborationState;
@@ -262,6 +274,16 @@ export interface Corroboration {
      * @nullable
      */
   officialUrl?: string | null;
+  /**
+     * The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert's hazard.
+     * @nullable
+     */
+  officialHazard?: string | null;
+  /**
+     * same when the official record is of the alert's own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)
+     * @nullable
+     */
+  hazardRelation?: CorroborationHazardRelation;
   /**
      * Positive when the social alert opened before the official event; null when the official time is only known to the day
      * @nullable

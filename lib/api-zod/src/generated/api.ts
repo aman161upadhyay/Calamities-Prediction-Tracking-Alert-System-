@@ -138,6 +138,8 @@ export const GetBoardResponse = zod.object({
   "officialAt": zod.coerce.date().nullish(),
   "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
   "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "officialHazard": zod.string().nullish().describe('The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert\'s hazard.'),
+  "hazardRelation": zod.union([zod.literal('same'),zod.literal('related'),zod.literal(null)]).nullish().describe('same when the official record is of the alert\'s own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)'),
   "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
   "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
@@ -435,6 +437,8 @@ export const GetPlaceResponse = zod.object({
   "officialAt": zod.coerce.date().nullish(),
   "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
   "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "officialHazard": zod.string().nullish().describe('The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert\'s hazard.'),
+  "hazardRelation": zod.union([zod.literal('same'),zod.literal('related'),zod.literal(null)]).nullish().describe('same when the official record is of the alert\'s own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)'),
   "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
   "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
@@ -581,6 +585,8 @@ export const ListAlertsResponseItem = zod.object({
   "officialAt": zod.coerce.date().nullish(),
   "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
   "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "officialHazard": zod.string().nullish().describe('The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert\'s hazard.'),
+  "hazardRelation": zod.union([zod.literal('same'),zod.literal('related'),zod.literal(null)]).nullish().describe('same when the official record is of the alert\'s own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)'),
   "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
   "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),
@@ -626,6 +632,8 @@ export const GetAlertResponse = zod.object({
   "officialAt": zod.coerce.date().nullish(),
   "officialTimePrecision": zod.union([zod.literal('minute'),zod.literal('hour'),zod.literal('day'),zod.literal(null)]).nullish().describe('How precisely the source records officialAt. Day-level records carry no lead time in minutes; compare dates instead.'),
   "officialUrl": zod.string().nullish().describe('The cited source for the official record'),
+  "officialHazard": zod.string().nullish().describe('The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert\'s hazard.'),
+  "hazardRelation": zod.union([zod.literal('same'),zod.literal('related'),zod.literal(null)]).nullish().describe('same when the official record is of the alert\'s own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)'),
   "leadMinutes": zod.number().int().nullish().describe('Positive when the social alert opened before the official event; null when the official time is only known to the day')
 }),
   "summary": zod.string().describe('One plain sentence generated from the peak hour, for example "Flood posts about Kerala reached 112 relevant posts in the hour starting 15 Aug 2018 10:00 UTC, 24.5 robust standard deviations above the 7-day baseline." Count and z-score describe the same hour.'),

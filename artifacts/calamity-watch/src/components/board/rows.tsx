@@ -3,7 +3,7 @@ import type { Alert, ScoredPost } from "@workspace/api-client-react";
 import { HAZARD_LABEL, SOURCE_LABEL, isWithheldText, leadText, num, placeLabel, prob, utcDateTime, utcTime } from "@/lib/format";
 import { HazardDot, LevelBadge } from "@/components/kit";
 
-export function PostRow({ post, color, full }: { post: ScoredPost; color?: string; full?: boolean }) {
+export function PostRow({ post, color, full, scope }: { post: ScoredPost; color?: string; full?: boolean; scope?: { scenario?: string | null; asOf?: string | null } | null }) {
   const place = post.places[0];
   return (
     <li data-testid={`row-post-${post.id}`} className="px-4 py-3 border-t border-line first:border-t-0">
@@ -42,7 +42,7 @@ export function PostRow({ post, color, full }: { post: ScoredPost; color?: strin
           </span>
         )}
         {place ? (
-          <Link href={`/places/${place.placeId}`} className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline" data-testid={`link-post-place-${post.id}`}>
+          <Link href={`/places/${place.placeId}${scopeQuery(scope)}`} className="text-muted-foreground hover:text-foreground underline-offset-2 hover:underline" data-testid={`link-post-place-${post.id}`}>
             {placeLabel(place.name, place.country)}
           </Link>
         ) : (
@@ -77,7 +77,9 @@ export function AlertRow({ alert, compact, scope }: { alert: Alert; compact?: bo
         </p>
         <p className="mt-0.5 text-[12px] leading-4">
           {c.state === "corroborated" ? (
-            <span className="text-official">Corroborated by {c.feed ?? "an official feed"}, {leadText(c, alert.openedAt)}</span>
+            <span className="text-official">
+              Corroborated by {c.feed ?? "an official feed"}{c.hazardRelation === "related" && c.officialHazard && <> (a {c.officialHazard} record)</>}, {leadText(c, alert.openedAt)}
+            </span>
           ) : c.state === "pending" ? (
             <span className="text-muted-foreground">Awaiting official corroboration</span>
           ) : (

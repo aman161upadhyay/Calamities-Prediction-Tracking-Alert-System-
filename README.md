@@ -9,7 +9,7 @@ This is the 2026 rebuild of [sacredgamers_codefundoMS](https://github.com/aman16
 ## What it does
 
 - **Board** — eight hazards ranked by fear mass in the last hour, a map of places with hourly signals, open alerts, the signal feed, and a seven-day fear timeline with official events marked on it.
-- **Alerts** — each alert records the place, hazard, peak z-score, the posts behind it, whether an official feed later confirmed it, and how far ahead (or behind) the social signal was.
+- **Alerts** — each alert records the place, hazard, peak z-score, the posts behind it, whether an official feed recorded a matching event, and how long before or after that record the alert opened (in the replays, usually after: the collections start late).
 - **Replay** — five past events from the HumAID collection (Puebla earthquake 2017, Hurricane Harvey 2017, Kerala floods 2018, California wildfires 2018, Cyclone Idai 2019) played back hour by hour through the same detector that runs live.
 - **Model** — held-out metrics, confusion matrix, results on events never seen in training, the two candidates compared, datasets and licences, detector settings, limitations, and a classifier you can type into.
 - **Subscribe** — email when an alert opens for a place or hazard, at a minimum level you choose.

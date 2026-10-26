@@ -5,6 +5,7 @@
  * Calamity Watch API. Social-sensing hazard signals, alerts, official corroboration, model metrics and replay.
  * OpenAPI spec version: 0.1.0
  */
+import type { CorroborationHazardRelation } from './corroborationHazardRelation';
 import type { CorroborationOfficialTimePrecision } from './corroborationOfficialTimePrecision';
 import type { CorroborationState } from './corroborationState';
 
@@ -29,6 +30,16 @@ export interface Corroboration {
      * @nullable
      */
   officialUrl?: string | null;
+  /**
+     * The hazard the official record describes. Matching accepts related hazards (a cyclone alert can be corroborated by a flood record), so this can differ from the alert's hazard.
+     * @nullable
+     */
+  officialHazard?: string | null;
+  /**
+     * same when the official record is of the alert's own hazard, related when it is of a compatible one (cyclone, storm and flood count for each other; earthquake and tsunami; landslide with flood, storm and earthquake; heat with wildfire)
+     * @nullable
+     */
+  hazardRelation?: CorroborationHazardRelation;
   /**
      * Positive when the social alert opened before the official event; null when the official time is only known to the day
      * @nullable

@@ -29,6 +29,23 @@ COMMON_WORD_NAMES = {
     "little", "big", "new", "old", "north", "south", "east", "west", "summit", "valley", "river", "lake", "beach",
     "island", "mount", "hill", "bay", "point", "park", "garden", "forest", "field", "bridge", "ford", "mill", "wells",
 }
+# Hazard words that are also town names ("Hurricane, Utah", "Flood, Virginia", "Tornado, West Virginia"). In a post about a
+# disaster they are almost always the hazard, so they resolve only with state-level support, never on country alone.
+HAZARD_WORD_NAMES = {
+    "hurricane", "cyclone", "typhoon", "tornado", "storm", "flood", "floods", "fire", "wildfire", "earthquake", "quake",
+    "landslide", "tsunami", "heat", "drought", "blizzard", "avalanche", "volcano", "eruption", "surge", "rain",
+}
+# Names given to tropical storms in recent years that are also towns (Harvey, Louisiana; Florence, South Carolina).
+# In a post they are the storm unless the text places them with a locality cue ("in Harvey", "suburb of Harvey").
+STORM_NAMES = {
+    "harvey", "irma", "maria", "nate", "florence", "michael", "dorian", "idai", "kenneth", "fani", "ockhi", "gaja", "titli",
+    "vardah", "matthew", "patricia", "sandy", "katrina", "rita", "ike", "haiyan", "yolanda", "mangkhut", "jebi", "hagibis",
+    "barry", "imelda", "laura", "sally", "delta", "zeta", "eta", "iota", "ida", "ian", "fiona", "nicole", "otis", "hilary",
+    "lee", "idalia", "amphan", "nisarga", "tauktae", "yaas", "biparjoy", "mocha", "freddy", "ophelia", "ciara", "dennis",
+    "eunice", "gloria", "filomena", "debbie", "winston", "pam", "gita", "harold", "hidaya", "remal", "milton", "helene", "beryl",
+}
+_LOCALITY_CUE = r"(?:\b(?:in|at|near|to|from|into|around|outside|downtown)|\b(?:suburb|town|city|village|county|parish|port)\s+of)\s+"
+_STORM_PREFIX = r"\b(?:hurricane|tropical\s+storm|storm|cyclone|typhoon|super\s+typhoon|remnants\s+of|wake\s+of|aftermath\s+of|path\s+of|eye\s+of)\s+"
 STOPLIST = {
     "earth", "world", "europe", "asia", "africa", "north america", "south america", "america", "the world", "mother earth",
     "heaven", "hell", "paradise lost", "twitter", "facebook", "instagram", "youtube", "google", "amazon", "google maps",
@@ -112,6 +129,30 @@ class Geoparser:
         strength = dict(self.mentions_with_strength(text))
         if not strength:
             return []
+        cleaned = clean_for_ner(text)
+        # NER sometimes spans "Florence, South Carolina" as one mention; each part becomes its own mention and the
+        # second supports the first through the usual context rules.
+        for m in list(strength):
+            if "," in m and not self.gazetteer.lookup(m):
+                parts = [p.strip(" .") for p in m.split(",") if p.strip(" .")]
+                if len(parts) == 2 and all(self.gazetteer.lookup(p) for p in parts):
+                    weak = strength.pop(m)
+                    for p in parts:
+                        strength.setdefault(p, weak)
+        for m in list(strength):
+            esc = re.escape(m)
+            # "George R. Brown Convention Center": a first name followed by an initial is a person, not George, South Africa.
+            if re.search(rf"\b{esc}\s+[A-Z]\.", cleaned):
+                del strength[m]
+                continue
+            # A storm name is the storm unless the text places it ("Chicago suburb of Harvey"), and never when the
+            # storm words precede it ("Hurricane Harvey", "remnants of Harvey").
+            if m.lower() in STORM_NAMES:
+                placed = re.search(_LOCALITY_CUE + esc + r"\b", cleaned, re.I) and not re.search(_STORM_PREFIX + esc + r"\b", cleaned, re.I)
+                if not placed:
+                    del strength[m]
+        if not strength:
+            return []
         # "Paradise CA" / "Chico, CA": split a trailing US state code off a mention the gazetteer does not know.
         state_hint: dict[str, str] = {}
         candidates: dict[str, list[GazetteerPlace]] = {}
@@ -155,9 +196,13 @@ class Geoparser:
                 ctx_cc.add("US")
                 ctx_admin.add(("US", state_hint[m]))
             scored: list[tuple[float, bool, GazetteerPlace]] = []
+            # Support at state level (or the replay anchor) is strong; a shared country alone is weak evidence, since
+            # any US mention would otherwise vouch for any US hamlet.
+            strong_by_key: dict[str, bool] = {}
             for c in cands:
                 s = math.log10((c.population or 1) + 1)
                 supported = False
+                strong = False
                 if c.kind == "country":
                     s += 2.0 if m.lower() == c.name.lower() or m.lower() in ("usa", "us", "uk", "u.s.", "u.k.") else 0.0
                 if c.kind == "region":
@@ -169,6 +214,7 @@ class Geoparser:
                 if c.admin1 and (c.country_code, c.admin1) in ctx_admin:
                     s += 2.0
                     supported = True
+                    strong = True
                 if context is not None and c.key != context.key:
                     same_country = c.country_code == context.country_code
                     if context.admin1 and same_country and c.admin1:
@@ -177,15 +223,18 @@ class Geoparser:
                         if c.admin1 == context.admin1:
                             s += 2.0
                             supported = True
+                            strong = True
                         else:
                             s += 0.5
                     elif haversine_km(c.lat, c.lon, context.lat, context.lon) <= (context.radius_km or 300.0):
                         s += 2.0
                         supported = True
+                        strong = True
                     elif same_country:
                         s += 0.5
-                if c.minor and not supported:
+                if c.minor and not strong:
                     s -= 1.0
+                strong_by_key[c.key] = strong
                 scored.append((s, supported, c))
             # An informal short form ("Cali") yields to a place whose proper name is the mention when the text
             # supports that place ("Cali, Colombia"); on its own it keeps the usual population order.
@@ -200,11 +249,15 @@ class Geoparser:
                 second_s = scored[1][0]
                 margin = max(0.0, best_s - second_s)
                 conf = min(0.9, 0.45 + 0.15 * margin)
-            # A small town is only a resolution when something in the text or the stream points at it.
-            if best.minor and not best_supported:
+            best_strong = strong_by_key.get(best.key, False)
+            # A small town is only a resolution when its state, or the replay's region, is in evidence.
+            if best.minor and not best_strong:
                 conf = min(conf, 0.4)
             # An ordinary English word is not a place mention unless the text also points at that country or state.
             if m.lower() in COMMON_WORD_NAMES and not best_supported and best.kind != "country":
+                continue
+            # A hazard word is the hazard unless the state itself is named ("Hurricane, Utah").
+            if m.lower() in HAZARD_WORD_NAMES and not best_strong:
                 continue
             # Three-letter or very short mentions are weak evidence, as are names lifted from organisation spans.
             if len(m) <= 3:

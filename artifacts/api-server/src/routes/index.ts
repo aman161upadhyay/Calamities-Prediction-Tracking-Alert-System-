@@ -12,7 +12,7 @@ import {
 } from "@workspace/api-zod";
 import healthRouter from "./health";
 import { handle, intParam, parseQuery, parseWith } from "./helpers";
-import { parseHazard, parseScope } from "../queries/common";
+import { ApiError, parseHazard, parseScope } from "../queries/common";
 import { boardSnapshot, hazardSummaries } from "../queries/board";
 import { hazardDetail } from "../queries/hazards";
 import { buildTimeline, officialEventsInScope } from "../queries/series";
@@ -23,6 +23,7 @@ import { systemStatus } from "../queries/status";
 import { MODEL_EXAMPLES, classifyText, modelInfo } from "../queries/model";
 import { getScenario, listScenarios, startScenario } from "../queries/replay";
 import { createSubscription, unsubscribe, verifySubscription } from "../queries/subscriptions";
+import { rateLimit } from "../lib/rate-limit";
 
 const router: IRouter = Router();
 
@@ -77,8 +78,12 @@ router.get(
 router.get(
   "/alerts/:alertId",
   handle(async (req) => {
-    const asOf = typeof req.query.asOf === "string" && req.query.asOf ? new Date(req.query.asOf) : null;
-    return alertDetail(intParam(String(req.params.alertId), "alertId"), asOf && !Number.isNaN(asOf.getTime()) ? asOf : null);
+    let asOf: Date | null = null;
+    if (typeof req.query.asOf === "string" && req.query.asOf !== "") {
+      asOf = new Date(req.query.asOf);
+      if (Number.isNaN(asOf.getTime())) throw new ApiError(400, "asOf must be an ISO 8601 timestamp");
+    }
+    return alertDetail(intParam(String(req.params.alertId), "alertId"), asOf);
   }),
 );
 
@@ -95,6 +100,7 @@ router.get("/model", handle(async () => modelInfo()));
 
 router.post(
   "/model/classify",
+  rateLimit({ windowMs: 60_000, max: 30, what: "classification requests" }),
   handle(async (req) => {
     const body = parseWith(ClassifyTextBody, req.body);
     return classifyText(body.text.trim());
@@ -118,6 +124,7 @@ router.post(
 
 router.post(
   "/subscriptions",
+  rateLimit({ windowMs: 15 * 60_000, max: 10, what: "subscription requests" }),
   handle(async (req, res) => {
     const body = parseWith(CreateSubscriptionBody, req.body);
     const data = await createSubscription(body);
