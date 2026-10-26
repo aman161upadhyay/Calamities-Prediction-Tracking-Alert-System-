@@ -13,16 +13,16 @@ export const HAZARD_LABEL: Record<Hazard, string> = {
   tsunami: "Tsunami",
 };
 
-/** Fallback hues from the design brief, used only when the API has not supplied a hazard colour. */
+/** Hazard hues from the chart-room brief. The UI always uses these (the API colours belong to the retired dark theme). */
 export const HAZARD_FALLBACK_COLOR: Record<Hazard, string> = {
-  flood: "#3D9BFF",
-  tsunami: "#3D9BFF",
-  storm: "#A78BFA",
-  cyclone: "#A78BFA",
-  wildfire: "#FF8A3D",
-  earthquake: "#D4A24C",
-  landslide: "#D4A24C",
-  heat: "#F5C542",
+  flood: "#1D5FBF",
+  tsunami: "#1D5FBF",
+  storm: "#6D4CC4",
+  cyclone: "#6D4CC4",
+  wildfire: "#E25822",
+  earthquake: "#7C4A1E",
+  landslide: "#7C4A1E",
+  heat: "#B45309",
 };
 
 export function isHazard(v: string | undefined | null): v is Hazard {
@@ -38,11 +38,11 @@ export const LEVEL_LABEL: Record<RiskLevel, string> = {
 };
 
 export const LEVEL_COLOR: Record<RiskLevel, string> = {
-  insufficient: "#6B778A",
-  low: "#8A97AB",
-  elevated: "#E8B04B",
-  high: "#FF6B3D",
-  severe: "#FF2E55",
+  insufficient: "#5B5A54",
+  low: "#5B5A54",
+  elevated: "#9A6700",
+  high: "#C8102E",
+  severe: "#7A0C1E",
 };
 
 export const LEVEL_RANK: Record<RiskLevel, number> = { insufficient: 0, low: 1, elevated: 2, high: 3, severe: 4 };
@@ -182,4 +182,16 @@ export function errorMessage(e: unknown): string {
 
 export function isNotFound(e: unknown): boolean {
   return (e as { status?: number })?.status === 404;
+}
+
+/** Lead or lag for the stamp, never claiming a lead the data does not show. */
+export function stampLead(c: { leadMinutes?: number | null; officialTimePrecision?: string | null; officialAt?: string | null; feed?: string | null }, openedAt: string): string {
+  if (c.officialTimePrecision === "day") return leadText(c, openedAt);
+  const m = c.leadMinutes;
+  if (m === null || m === undefined) return "no lead time recorded";
+  const a = Math.abs(m);
+  const t = a >= 120 ? `${(a / 60).toFixed(1)} h` : `${Math.round(a)} min`;
+  if (m > 0) return `lead ${t}`;
+  if (m === 0) return "same minute as official";
+  return `after official by ${t}`;
 }

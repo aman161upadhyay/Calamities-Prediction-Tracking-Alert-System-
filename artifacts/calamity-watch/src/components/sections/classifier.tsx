@@ -3,6 +3,7 @@ import { useClassifyText, useListModelExamples, type Classification } from "@wor
 import { errorMessage, HAZARD_LABEL, isHazard, placeLabel, prob } from "@/lib/format";
 import { HazardDot, btnPrimary } from "@/components/kit";
 import { Textarea } from "@/components/ui/textarea";
+import { Dial } from "@/components/instruments/dial";
 
 export function ClassifierDemo() {
   const [text, setText] = useState("");
@@ -19,7 +20,7 @@ export function ClassifierDemo() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div>
-        <label htmlFor="classify-text" className="block text-[14px] font-bold">Text to classify</label>
+        <label htmlFor="classify-text" className="block text-[14px] font-semibold">Text to classify</label>
         <p className="text-[12px] leading-4 text-muted-foreground">3 to 1000 characters. Nothing you type is stored.</p>
         <Textarea
           id="classify-text"
@@ -27,7 +28,7 @@ export function ClassifierDemo() {
           onChange={(e) => setText(e.target.value)}
           maxLength={1000}
           rows={5}
-          className="mt-2 bg-surface-2 border-line rounded-[4px] text-[16px]"
+          className="mt-2 bg-sheet border-rule-strong rounded-[3px] text-[16px]"
           data-testid="input-classify-text"
         />
         <div className="mt-2 flex items-center gap-3">
@@ -53,8 +54,12 @@ export function ClassifierDemo() {
         {examples.isError && <p className="mt-3 text-[12px] text-muted-foreground">Examples could not load.</p>}
       </div>
       <div aria-live="polite" data-testid="panel-classify-result">
+        <div className="flex flex-wrap gap-6 mb-5 bg-sheet border border-rule-strong p-4" data-testid="panel-dials">
+          <Dial label="Relevance" value={result?.pRelevant ?? null} testId="dial-relevance" />
+          <Dial label="Fear" value={result?.pFear ?? null} pen testId="dial-fear" />
+        </div>
         {classify.isError && (
-          <p role="alert" className="text-[14px]" style={{ color: "#FF6B3D" }}>
+          <p role="alert" className="text-[14px]" style={{ color: "#C8102E" }}>
             Couldn't classify: {errorMessage(classify.error)}. If the model is still loading, try again in a minute.
           </p>
         )}
@@ -81,17 +86,17 @@ function ClassificationTable({ r }: { r: Classification }) {
       <p className="max-w-[60ch]" data-testid="text-classify-explanation">{r.explanation}</p>
       <table className="mt-3 w-full">
         <tbody>
-          <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Hazard-relevant</th><td className="text-right num" data-testid="text-p-relevant">{prob(r.pRelevant)}</td><td className="pl-3 w-28"><Bar v={r.pRelevant} color="#E6EBF2" /></td></tr>
+          <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Hazard-relevant</th><td className="text-right num" data-testid="text-p-relevant">{prob(r.pRelevant)}</td><td className="pl-3 w-28"><Bar v={r.pRelevant} color="#15140F" /></td></tr>
           {hazards.map(([k, v]) => (
             <tr key={k} className="border-t border-line">
               <th scope="row" className="text-left font-normal py-1.5"><span className="inline-flex items-center gap-1.5">{isHazard(k) && <HazardDot hazard={k} />}{isHazard(k) ? HAZARD_LABEL[k] : k}</span></th>
-              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color="#3D9BFF" /></td>
+              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color="#5B5A54" /></td>
             </tr>
           ))}
           {emotions.map(([k, v]) => (
             <tr key={k} className="border-t border-line">
               <th scope="row" className="text-left font-normal py-1.5 capitalize">{k}</th>
-              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color={k === "fear" ? "#FF5C7A" : "#9DA9BC"} /></td>
+              <td className="text-right num">{prob(v)}</td><td className="pl-3"><Bar v={v} color={k === "fear" ? "#C8102E" : "#5B5A54"} /></td>
             </tr>
           ))}
           <tr className="border-t border-line"><th scope="row" className="text-left font-normal text-muted-foreground py-1.5">Sentiment</th><td className="text-right num" colSpan={2}>{r.sentiment} ({r.sentimentScore.toFixed(2)})</td></tr>

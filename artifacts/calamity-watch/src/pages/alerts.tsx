@@ -37,15 +37,15 @@ export default function AlertsPage() {
       <div className="flex flex-col gap-3 mb-4">
         <div role="group" aria-label="Filter by status" className="flex flex-wrap gap-1.5">
           {([undefined, "open", "closed"] as const).map((s) => (
-            <button key={s ?? "all"} type="button" aria-pressed={status === s} onClick={() => set("status", s)} data-testid={`button-filter-status-${s ?? "all"}`} className={cn(chip, status === s ? "border-[#3a4a66] bg-surface-2" : "border-line text-muted-foreground")}>
+            <button key={s ?? "all"} type="button" aria-pressed={status === s} onClick={() => set("status", s)} data-testid={`button-filter-status-${s ?? "all"}`} className={cn(chip, status === s ? "border-[#B9B5A9] bg-surface-2" : "border-line text-muted-foreground")}>
               {s === undefined ? "All statuses" : s === "open" ? "Open" : "Closed"}
             </button>
           ))}
         </div>
         <div role="group" aria-label="Filter by hazard" className="flex flex-wrap gap-1.5">
-          <button type="button" aria-pressed={!hazard} onClick={() => set("hazard")} data-testid="button-filter-hazard-all" className={cn(chip, !hazard ? "border-[#3a4a66] bg-surface-2" : "border-line text-muted-foreground")}>All hazards</button>
+          <button type="button" aria-pressed={!hazard} onClick={() => set("hazard")} data-testid="button-filter-hazard-all" className={cn(chip, !hazard ? "border-[#B9B5A9] bg-surface-2" : "border-line text-muted-foreground")}>All hazards</button>
           {HAZARDS.map((h) => (
-            <button key={h} type="button" aria-pressed={hazard === h} onClick={() => set("hazard", h)} data-testid={`button-filter-hazard-${h}`} className={cn(chip, hazard === h ? "border-[#3a4a66] bg-surface-2" : "border-line text-muted-foreground")}>
+            <button key={h} type="button" aria-pressed={hazard === h} onClick={() => set("hazard", h)} data-testid={`button-filter-hazard-${h}`} className={cn(chip, hazard === h ? "border-[#B9B5A9] bg-surface-2" : "border-line text-muted-foreground")}>
               {HAZARD_LABEL[h]}{counts[h] ? <span className="num ml-1 text-muted-foreground">{counts[h]} open</span> : null}
             </button>
           ))}
@@ -61,7 +61,7 @@ export default function AlertsPage() {
             ) : (
               <>
                 No alert has opened since live ingestion began; the detector needs a place to stay above its own baseline for two hours.{" "}
-                <Link href="/replay" className="text-[#7FB8FF] underline underline-offset-2" data-testid="link-alerts-replay">Replay a past event</Link> to watch alerts open and close.
+                <Link href="/replay" className="text-[#15140F] underline underline-offset-2" data-testid="link-alerts-replay">Replay a past event</Link> to watch alerts open and close.
               </>
             )}
           </EmptyState>

@@ -98,7 +98,7 @@ export default function PlacePage() {
                   </ul>
                 )}
               </Panel>
-              <p className="text-[14px]"><Link href={`/subscribe?place=${d.place.id}`} className="text-[#7FB8FF] underline underline-offset-2" data-testid="link-subscribe-place">Get alerts for {d.place.name}</Link></p>
+              <p className="text-[14px]"><Link href={`/subscribe?place=${d.place.id}`} className="text-[#15140F] underline underline-offset-2" data-testid="link-subscribe-place">Get alerts for {d.place.name}</Link></p>
             </div>
           </div>
         </>

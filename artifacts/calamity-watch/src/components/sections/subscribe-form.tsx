@@ -24,9 +24,9 @@ type Values = z.infer<typeof schema>;
 export function SubscribeResultNote({ r }: { r: SubscriptionResult }) {
   return (
     <div role="status" className="text-[14px] leading-5 max-w-[65ch]" data-testid="status-subscription">
-      <p className="font-bold">{r.message}</p>
+      <p className="font-semibold">{r.message}</p>
       {r.emailDeliveryConfigured === false && (
-        <p className="mt-1" style={{ color: "#E8B04B" }} data-testid="text-email-not-configured">
+        <p className="mt-1" style={{ color: "#9A6700" }} data-testid="text-email-not-configured">
           The confirmation email could not be sent on this deployment because no email provider is configured. Your request is recorded as pending and will not send alerts until it is confirmed.
         </p>
       )}
@@ -34,7 +34,7 @@ export function SubscribeResultNote({ r }: { r: SubscriptionResult }) {
   );
 }
 
-const trig = "bg-surface-2 border-line rounded-[4px] h-10";
+const trig = "bg-sheet border-rule-strong rounded-[3px] h-10";
 
 export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
   const places = useListPlaces({ featured: true });
@@ -69,10 +69,10 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
         <FormField control={form.control} name="email" render={({ field }) => (
           <FormItem>
             <FormLabel>Email</FormLabel>
-            <FormControl><Input type="email" autoComplete="email" maxLength={254} className="bg-surface-2 border-line rounded-[4px] h-10" data-testid="input-email" {...field} /></FormControl>
+            <FormControl><Input type="email" autoComplete="email" maxLength={254} className="bg-sheet border-rule-strong rounded-[3px] h-10" data-testid="input-email" {...field} /></FormControl>
             <FormDescription>
               {emailOff ? (
-                <span style={{ color: "#E8B04B" }} data-testid="text-email-provider-missing">No email provider is configured on this deployment, so no confirmation link can be sent yet. A request is recorded as pending and sends nothing until a provider is added and the address is confirmed.</span>
+                <span style={{ color: "#9A6700" }} data-testid="text-email-provider-missing">No email provider is configured on this deployment, so no confirmation link can be sent yet. A request is recorded as pending and sends nothing until a provider is added and the address is confirmed.</span>
               ) : (
                 "We send one confirmation link first. Nothing is sent until you open it."
               )}
@@ -124,7 +124,7 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
             {create.isPending ? "Recording request" : placeName ? `Get alerts for ${placeName}` : "Get alerts by email"}
           </button>
         </div>
-        {create.isError && <p role="alert" className="text-[14px]" style={{ color: "#FF6B3D" }}>Couldn't record the request: {errorMessage(create.error)}. Check the email and try again.</p>}
+        {create.isError && <p role="alert" className="text-[14px]" style={{ color: "#C8102E" }}>Couldn't record the request: {errorMessage(create.error)}. Check the email and try again.</p>}
         {result && <SubscribeResultNote r={result} />}
         <p className="text-[12px] leading-4 text-muted-foreground max-w-[65ch]">These emails come from an experimental research system and are not official warnings. Every email has an unsubscribe link.</p>
       </form>

@@ -40,7 +40,7 @@ export default function AlertPage() {
             <PageTitle>
               {HAZARD_LABEL[a.hazard]} alert, <Link href={`/places/${a.placeId}${scopeQuery(scenario ? { scenario, asOf } : null)}`} className="hover:underline" data-testid="link-alert-place">{a.placeName}</Link>
             </PageTitle>
-            <div className="border-l-2 pl-3 mb-6 text-[14px] leading-5" style={{ borderColor: "#E8B04B" }} data-testid="text-alert-disclaimer">
+            <div className="border-l-2 pl-3 mb-6 text-[14px] leading-5" style={{ borderColor: "#9A6700" }} data-testid="text-alert-disclaimer">
               Experimental research signal from public posts. Not an official warning: follow your local authorities.
               {a.scenario && <> This alert comes from the replay scenario <span className="num">{a.scenario}</span>, not live data.</>}
             </div>

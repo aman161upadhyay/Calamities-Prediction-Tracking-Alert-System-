@@ -108,13 +108,13 @@ function ScenarioRunner({ id, startAt, onBack }: { id: string; startAt: string |
           <div className="px-4 pb-4">
             {s.state === "failed" || prepare.isError ? (
               <>
-                <p style={{ color: "#FF6B3D" }}>{prepare.isError ? errorMessage(prepare.error) : "The scenario could not be prepared."}</p>
+                <p style={{ color: "#C8102E" }}>{prepare.isError ? errorMessage(prepare.error) : "The scenario could not be prepared."}</p>
                 <button type="button" className={cn(btnPrimary, "mt-3")} onClick={() => prepare.mutate({ scenarioId: s.id }, { onSuccess: () => sc.refetch() })} data-testid="button-retry-prepare">Try preparing again</button>
               </>
             ) : (
               <>
                 <div className="h-2 bg-surface-2 overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p * 100)} aria-label="Preparation progress">
-                  <div className="h-full bg-[#A78BFA] origin-left transition-transform duration-500" style={{ transform: `scaleX(${p})` }} />
+                  <div className="h-full bg-[#15140F] origin-left transition-transform duration-500" style={{ transform: `scaleX(${p})` }} />
                 </div>
                 <p className="mt-2 text-[14px] text-muted-foreground" data-testid="text-prepare-progress">
                   {s.state === "not_prepared" ? "Requesting preparation" : `Scoring posts: ${Math.round(p * 100)}% of ${num(s.postCount)}`}. {prepEstimate(s.postCount)} in all; this page updates every 2 seconds.
@@ -185,7 +185,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
             </button>
             <div role="group" aria-label="Playback speed" className="flex gap-1">
               {SPEEDS.map((sp) => (
-                <button key={sp.id} type="button" aria-pressed={speed.id === sp.id} onClick={() => setSpeed(sp)} data-testid={`button-speed-${sp.id}`} className={cn("rounded-[4px] border px-2 py-1 text-[13px]", speed.id === sp.id ? "border-[#3a4a66] bg-surface-2" : "border-line text-muted-foreground")}>
+                <button key={sp.id} type="button" aria-pressed={speed.id === sp.id} onClick={() => setSpeed(sp)} data-testid={`button-speed-${sp.id}`} className={cn("rounded-[4px] border px-2 py-1 text-[13px]", speed.id === sp.id ? "border-[#B9B5A9] bg-surface-2" : "border-line text-muted-foreground")}>
                   {sp.label}
                 </button>
               ))}
@@ -203,7 +203,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               value={clock}
               onChange={(e) => setClock(Number(e.target.value))}
               aria-valuetext={utcDateTime(asOf)}
-              className="w-full accent-[#A78BFA]"
+              className="w-full accent-[#15140F]"
               data-testid="input-scrub"
             />
             <div className="flex justify-between text-[12px] text-muted-foreground num"><span>{utcDateTime(s.startsAt)}</span><span>{utcDateTime(s.endsAt)}</span></div>
@@ -214,7 +214,7 @@ function Player({ s, startAt, onBack }: { s: ReplayScenario; startAt: string | n
               <ul className="flex flex-wrap gap-1.5">
                 {s.keyMoments.map((k, i) => (
                   <li key={i}>
-                    <button type="button" onClick={() => { setPlaying(false); setClock(new Date(k.at).getTime()); }} data-testid={`button-moment-${i}`} className="press rounded-[4px] border border-line px-2 py-1 text-[13px] text-left hover:border-[#3a4a66]">
+                    <button type="button" onClick={() => { setPlaying(false); setClock(new Date(k.at).getTime()); }} data-testid={`button-moment-${i}`} className="press rounded-[4px] border border-line px-2 py-1 text-[13px] text-left hover:border-[#B9B5A9]">
                       <span className="num text-muted-foreground">{utcDateTime(k.at)}</span> {k.label}
                     </button>
                   </li>

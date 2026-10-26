@@ -1,118 +1,154 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { OfficialEvent, PlaceSignal } from "@workspace/api-client-react";
+import { HAZARD_LABEL, LEVEL_LABEL, num } from "@/lib/format";
+import { StationGlyph, hasNearbyOfficial } from "@/components/instruments/station-marker";
 import type { MapSelection } from "./hazard-map";
 
+const W = 1000;
+
 /**
- * Fallback for browsers without WebGL: the same points on a plain equirectangular grid.
- * No tiles, no labels beyond the points themselves; the readout beside the map carries the names.
+ * The plotting sheet for browsers without WebGL: the same station glyphs on an equirectangular graticule.
+ * It is the instrument, drawn by hand rather than on tiles.
  */
-export function StaticMap({
-  places,
-  events,
-  colors,
-  onSelect,
-}: {
-  places: PlaceSignal[];
-  events: OfficialEvent[];
-  colors: Record<string, string>;
-  onSelect: (s: MapSelection | null) => void;
-}) {
-  const W = 1000;
-  const H = 560;
+export function StaticMap({ places, events, onSelect, selected }: { places: PlaceSignal[]; events: OfficialEvent[]; colors?: Record<string, string>; onSelect: (s: MapSelection | null) => void; selected?: string | null }) {
+  const [land, setLand] = useState<number[][] | null>(null);
+  // The viewBox takes the container's real aspect, so nothing is cropped and labels can flip at the true edge.
+  const box = useRef<HTMLDivElement>(null);
+  const [H, setH] = useState(560);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const set = (w: number, h: number) => w > 0 && h > 0 && setH(Math.round((W * h) / w));
+    set(el.clientWidth, el.clientHeight);
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([e]) => set(e.contentRect.width, e.contentRect.height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  useEffect(() => {
+    let live = true;
+    import("./land-110m").then((m) => live && setLand(m.LAND_RINGS)).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   const view = useMemo(() => {
-    const pts: [number, number][] = [
-      ...places.map((p) => [p.lon, p.lat] as [number, number]),
-      ...events.filter((e) => e.lat != null && e.lon != null).map((e) => [e.lon as number, e.lat as number] as [number, number]),
-    ];
+    const pts: [number, number][] = [...places.map((p) => [p.lon, p.lat] as [number, number]), ...events.filter((e) => e.lat != null && e.lon != null).map((e) => [e.lon as number, e.lat as number] as [number, number])];
     if (pts.length === 0) return { lon0: -180, lon1: 180, lat0: -60, lat1: 80 };
     let lon0 = Math.min(...pts.map((p) => p[0]));
     let lon1 = Math.max(...pts.map((p) => p[0]));
     let lat0 = Math.min(...pts.map((p) => p[1]));
     let lat1 = Math.max(...pts.map((p) => p[1]));
-    const padLon = Math.max(8, (lon1 - lon0) * 0.25);
-    const padLat = Math.max(5, (lat1 - lat0) * 0.25);
-    lon0 -= padLon;
-    lon1 += padLon;
-    lat0 -= padLat;
-    lat1 += padLat;
-    // keep the frame's aspect ratio so degrees are not stretched more than needed
+    const padLon = Math.max(8, (lon1 - lon0) * 0.08);
+    const padLat = Math.max(6, (lat1 - lat0) * 0.12);
+    lon0 -= padLon; lon1 += padLon; lat0 -= padLat; lat1 += padLat;
     const want = (W / H) * ((lat1 - lat0) / (lon1 - lon0));
-    if (want > 1) {
-      const c = (lon0 + lon1) / 2;
-      const half = ((lon1 - lon0) * want) / 2;
-      lon0 = c - half;
-      lon1 = c + half;
-    } else {
-      const c = (lat0 + lat1) / 2;
-      const half = (lat1 - lat0) / want / 2;
-      lat0 = c - half;
-      lat1 = c + half;
-    }
+    if (want > 1) { const c = (lon0 + lon1) / 2; const h = ((lon1 - lon0) * want) / 2; lon0 = c - h; lon1 = c + h; }
+    else { const c = (lat0 + lat1) / 2; const h = (lat1 - lat0) / want / 2; lat0 = c - h; lat1 = c + h; }
     return { lon0: Math.max(-180, lon0), lon1: Math.min(180, lon1), lat0: Math.max(-85, lat0), lat1: Math.min(85, lat1) };
-  }, [places, events]);
+  }, [places, events, H]);
 
   const x = (lon: number) => ((lon - view.lon0) / (view.lon1 - view.lon0)) * W;
   const y = (lat: number) => ((view.lat1 - lat) / (view.lat1 - view.lat0)) * H;
-  const step = view.lon1 - view.lon0 > 90 ? 30 : view.lon1 - view.lon0 > 30 ? 10 : 5;
+  const span = view.lon1 - view.lon0;
+  const step = span > 90 ? 30 : span > 30 ? 10 : 5;
   const lons: number[] = [];
   for (let l = Math.ceil(view.lon0 / step) * step; l <= view.lon1; l += step) lons.push(l);
   const lats: number[] = [];
   for (let l = Math.ceil(view.lat0 / step) * step; l <= view.lat1; l += step) lats.push(l);
+  const deg = (v: number, pos: string, neg: string) => (v === 0 ? "0°" : `${Math.abs(v)}°${v > 0 ? pos : neg}`);
+
+  // Label the strongest places (10, plus the selected one), flipping left at the frame and skipping collisions
+  // with other labels and with markers; text width estimated at 7 px per character at 12 px.
+  const labelled = useMemo(() => {
+    const out = new Map<string, "r" | "l">();
+    const boxes: [number, number, number, number][] = [];
+    const markerBoxes = places.map((p) => { const r = 6 + Math.sqrt(p.relevantPostsLastHour) * 2.6; const px = x(p.lon), py = y(p.lat); return [px - r, py - r, px + r, py + r] as [number, number, number, number]; });
+    const hit = (b: [number, number, number, number], own: number) =>
+      boxes.some((o) => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]) ||
+      markerBoxes.some((o, i) => i !== own && b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]);
+    const seen = new Set<number>();
+    const order = [...places.keys()].sort((i, j) => {
+      const a = places[i], b = places[j];
+      const sa = `${a.placeId}:${a.hazard}` === selected ? 1 : 0, sb = `${b.placeId}:${b.hazard}` === selected ? 1 : 0;
+      return sb - sa || b.zScore - a.zScore || b.relevantPostsLast24h - a.relevantPostsLast24h;
+    });
+    let count = 0;
+    for (const i of order) {
+      const p = places[i];
+      const key = `${p.placeId}:${p.hazard}`;
+      const isSel = key === selected;
+      if (!isSel && (count >= 10 || seen.has(p.placeId))) continue;
+      const px = x(p.lon), py = y(p.lat);
+      if (px < 0 || px > W || py < 0 || py > H) continue;
+      const tw = p.name.length * 7;
+      const off = 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6;
+      const right: [number, number, number, number] = [px + off, py - 9, px + off + tw, py + 6];
+      const left: [number, number, number, number] = [px - off - tw, py - 9, px - off, py + 6];
+      const fitsR = right[2] <= W - 4, fitsL = left[0] >= 4;
+      let side: "r" | "l" | null = null;
+      if (fitsR && (isSel || !hit(right, i))) side = "r";
+      else if (fitsL && (isSel || !hit(left, i))) side = "l";
+      if (!side) continue;
+      boxes.push(side === "r" ? right : left);
+      out.set(key, side);
+      seen.add(p.placeId);
+      if (!isSel) count++;
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [places, view, selected, H]);
+
+  const landPath = useMemo(() => {
+    if (!land) return "";
+    return land.map((r) => {
+      let d = "";
+      for (let k = 0; k < r.length; k += 2) d += `${k ? "L" : "M"}${x(r[k]).toFixed(1)},${y(r[k + 1]).toFixed(1)}`;
+      return d + "Z";
+    }).join("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [land, view]);
+
+  const ordered = [...places].sort((a, b) => a.zScore - b.zScore);
 
   return (
-    <div className="absolute inset-0 bg-[#0C1424]" data-testid="map-static">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full" role="img" aria-label="Static map of place signals and official events">
+    <div ref={box} className="absolute inset-0 map-paper" data-testid="map-static">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-full" role="img" aria-label="Plotting sheet of place signals and official events, drawn without a basemap">
+        <defs><clipPath id="sheet-clip"><rect x={0} y={0} width={W} height={H} /></clipPath></defs>
+        {landPath && <path d={landPath} clipPath="url(#sheet-clip)" fill="rgba(21,20,15,0.035)" stroke="var(--cr-rule-strong)" strokeWidth={0.8} strokeLinejoin="round" data-testid="map-static-land" />}
         {lons.map((l) => (
           <g key={`lon${l}`}>
-            <line x1={x(l)} x2={x(l)} y1={0} y2={H} stroke="rgba(148,163,184,0.12)" strokeWidth={1} />
-            <text x={x(l) + 4} y={H - 6} fontSize={11} fill="rgba(148,163,184,0.5)" fontFamily="ui-monospace, monospace">
-              {l}°
-            </text>
+            <line x1={x(l)} x2={x(l)} y1={0} y2={H} stroke={l === 0 ? "#B9B5A9" : "#DAD7CE"} strokeWidth={1} />
+            <text x={x(l) + 4} y={H - 8} fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">{deg(l, "E", "W")}</text>
           </g>
         ))}
         {lats.map((l) => (
           <g key={`lat${l}`}>
-            <line x1={0} x2={W} y1={y(l)} y2={y(l)} stroke="rgba(148,163,184,0.12)" strokeWidth={1} />
-            <text x={6} y={y(l) - 4} fontSize={11} fill="rgba(148,163,184,0.5)" fontFamily="ui-monospace, monospace">
-              {l}°
-            </text>
+            <line x1={0} x2={W} y1={y(l)} y2={y(l)} stroke={l === 0 ? "#B9B5A9" : "#DAD7CE"} strokeWidth={1} strokeDasharray={l === 0 ? undefined : "0"} />
+            <text x={W - 6} y={y(l) - 4} textAnchor="end" fontSize={10} fill="#5B5A54" fontFamily="Martian Mono, monospace">{deg(l, "N", "S")}</text>
           </g>
         ))}
-        {events
-          .filter((e) => e.lat != null && e.lon != null)
-          .map((e) => (
-            <circle
-              key={`e${e.id}`}
-              cx={x(e.lon as number)}
-              cy={y(e.lat as number)}
-              r={5}
-              fill="none"
-              stroke="#5EEAD4"
-              strokeWidth={1.6}
-              style={{ cursor: "pointer" }}
-              onClick={() => onSelect({ kind: "official", event: e })}
-            >
-              <title>{e.title}</title>
-            </circle>
-          ))}
-        {places.map((p, i) => {
-          const r = Math.max(5, Math.min(26, 4 + Math.sqrt(p.relevantPostsLastHour) * 3.2));
-          const labelled = places.findIndex((q) => q.placeId === p.placeId) === i;
+        {events.filter((e) => e.lat != null && e.lon != null).map((e) => (
+          <g key={`e${e.id}`} transform={`translate(${x(e.lon as number)} ${y(e.lat as number)}) rotate(-6)`} style={{ cursor: "pointer" }} onClick={() => onSelect({ kind: "official", event: e })} data-testid={`marker-official-${e.id}`}>
+            <rect x={-4} y={-4} width={8} height={8} fill="#FCFBF8" stroke="#1E7A4A" strokeWidth={1.5} />
+            <title>{`${e.feedLabel}: ${e.title} (${e.severity})`}</title>
+          </g>
+        ))}
+        {ordered.map((p) => {
+          const key = `${p.placeId}:${p.hazard}`;
+          const px = x(p.lon), py = y(p.lat);
           return (
-            <g key={`p${p.placeId}:${p.hazard}`} style={{ cursor: "pointer" }} onClick={() => onSelect({ kind: "place", signal: p })}>
-              <circle cx={x(p.lon)} cy={y(p.lat)} r={r + 6} fill="none" stroke="#FF5C7A" strokeWidth={2} strokeOpacity={Math.max(0.08, Math.min(1, p.zScore / 6))} />
-              <circle cx={x(p.lon)} cy={y(p.lat)} r={r} fill={colors[p.hazard] ?? "#94A3B8"} fillOpacity={0.85} stroke="#0C1424" strokeWidth={1} />
-              {labelled && (
-                <text x={x(p.lon) + r + 6} y={y(p.lat) + 4} fontSize={12} fill="#E2E8F0" fontFamily="ui-sans-serif, system-ui">
+            <g key={key} transform={`translate(${px} ${py})`} style={{ cursor: "pointer" }} onClick={() => onSelect({ kind: "place", signal: p })} data-testid={`marker-place-${p.placeId}-${p.hazard}`}>
+              <StationGlyph p={p} stamp={hasNearbyOfficial(p, events)} />
+              {labelled.has(key) && (
+                <text x={labelled.get(key) === "l" ? -(8 + Math.sqrt(p.relevantPostsLastHour) * 2.6) : 8 + Math.sqrt(p.relevantPostsLastHour) * 2.6} y={4} textAnchor={labelled.get(key) === "l" ? "end" : "start"} fontSize={12} fontWeight={600} fill="#15140F" fontFamily="Archivo, sans-serif" paintOrder="stroke" stroke="#FCFBF8" strokeWidth={3.5}>
                   {p.name}
                 </text>
               )}
-              <title>{`${p.name}: ${p.relevantPostsLastHour} relevant posts in the last hour`}</title>
+              <title>{`${p.name}, ${HAZARD_LABEL[p.hazard]}: ${LEVEL_LABEL[p.level]}, z ${num(p.zScore, 1)}, ${p.relevantPostsLastHour} relevant posts in the last hour`}</title>
             </g>
           );
         })}
       </svg>
-      <div className="absolute left-3 bottom-3 text-[11px] text-muted-foreground font-mono">static view: no WebGL in this browser, so no basemap</div>
+      <p className="absolute right-3 bottom-2 mono text-[10px] text-ink-muted bg-sheet/90 px-1.5">Plotting sheet, equirectangular, no basemap in this browser</p>
     </div>
   );
 }

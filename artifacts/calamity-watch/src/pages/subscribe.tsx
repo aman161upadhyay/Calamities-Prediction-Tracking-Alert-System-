@@ -58,7 +58,7 @@ export function UnsubscribePage() {
       {m.isPending && <LoadingRows rows={1} label="Removing subscription" />}
       {m.isError && (
         <div role="alert">
-          <p style={{ color: "#FF6B3D" }}>Couldn't remove the subscription: {errorMessage(m.error)}.</p>
+          <p style={{ color: "#C8102E" }}>Couldn't remove the subscription: {errorMessage(m.error)}.</p>
           <button type="button" className={`${btnPrimary} mt-2`} onClick={() => m.mutate({ data: { token } })} data-testid="button-retry-unsubscribe">Try removing it again</button>
         </div>
       )}

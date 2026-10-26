@@ -1,25 +1,9 @@
 import type { ModelInfo, PipelineStage } from "@workspace/api-client-react";
 import { num, pct, utcDate } from "@/lib/format";
+import { PipelineSchematic } from "@/components/instruments/schematic";
 
 export function PipelineList({ stages, asOf }: { stages: PipelineStage[]; asOf?: string }) {
-  if (!stages.length) return <p className="text-muted-foreground text-[14px]">The pipeline has not reported any stages yet.</p>;
-  return (
-    <div>
-      <ol className="grid gap-px bg-line border border-line md:grid-cols-2 xl:grid-cols-3" data-testid="list-pipeline">
-        {stages.map((s, i) => (
-          <li key={s.key} className="bg-surface p-4">
-            <p className="text-[12px] leading-4 text-muted-foreground">Stage {i + 1}</p>
-            <p className="font-bold">{s.label}</p>
-            <p className="mt-1 text-[14px] leading-5 text-muted-foreground max-w-[48ch]">{s.description}</p>
-            <p className="mt-2 text-[14px]" data-testid={`text-pipeline-${s.key}`}>
-              <span className="num text-[20px] leading-7">{num(s.countLast24h)}</span> <span className="text-muted-foreground">{s.unit} in the last 24 h</span>
-            </p>
-          </li>
-        ))}
-      </ol>
-      {asOf && <p className="mt-2 text-[12px] text-muted-foreground">Counts as of <span className="num">{asOf}</span>.</p>}
-    </div>
-  );
+  return <PipelineSchematic stages={stages} asOf={asOf} />;
 }
 
 export function ModelSummary({ m }: { m: ModelInfo }) {

@@ -33,7 +33,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
   const [showAllEvents, setShowAllEvents] = useState(false);
   const events = useListOfficialEvents(evP, { query: { queryKey: getListOfficialEventsQueryKey(evP) } });
   const d = detail.data;
-  const color = d?.summary.color ?? "#3D9BFF";
+  const color = d?.summary.color ?? "#15140F";
 
   if (detail.isError && isNotFound(detail.error)) return <NotFound />;
 
@@ -72,7 +72,7 @@ function HazardInner({ hazard }: { hazard: Hazard }) {
             <Panel title="Emotion mix, last 72 hours"><EmotionMix points={d.emotionMix} /></Panel>
             <Panel title="Places" meta="one row per place with a relevant post in the last 24 hours">
               {d.places.length === 0 ? (
-                <EmptyState>No place has a relevant {hazard} post in the last 24 hours. <Link href="/replay" className="text-[#7FB8FF] underline">Replay a past event</Link>.</EmptyState>
+                <EmptyState>No place has a relevant {hazard} post in the last 24 hours. <Link href="/replay" className="text-[#15140F] underline">Replay a past event</Link>.</EmptyState>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-[14px] leading-5" data-testid="table-hazard-places">

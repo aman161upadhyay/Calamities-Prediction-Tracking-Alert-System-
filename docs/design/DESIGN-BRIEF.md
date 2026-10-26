@@ -145,3 +145,4 @@ Checked against an unrelated product (a fintech ledger app): the paper base and 
 3. "Teal is official" becomes "the green stamp is official"; the semantic separation of official evidence from everything else is kept.
 4. Basemap changes from OpenFreeMap `dark` to OpenFreeMap `positron`.
 5. Still open from before: the product name, whether to name the 2018 team on the About page, and an X bearer token.
+6. Phase A implementation notes: `sheet` is `#FCFBF8`, not `#FFFFFF` (pure white glared against paper and broke the warm-paper read; contrast figures are unchanged within 0.1). API-supplied hazard colours are ignored; the UI always uses the `hz-*` tokens so hazard hues stay in their fill-only channel.

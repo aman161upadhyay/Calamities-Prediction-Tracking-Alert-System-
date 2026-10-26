@@ -10,19 +10,19 @@ export function Sparkline({ values, color, label, width = 96, height = 24 }: { v
   const d = values.map((v, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)},${(height - 2 - (v / max) * (height - 4)).toFixed(1)}`).join(" ");
   return (
     <svg width={width} height={height} role="img" aria-label={`${label}: hourly fear mass over the last ${values.length} hours, peak ${num(max, 2)}, latest ${num(values[values.length - 1], 2)}`}>
-      <line x1="0" x2={width} y1={height - 1} y2={height - 1} stroke="#263247" />
+      <line x1="0" x2={width} y1={height - 1} y2={height - 1} stroke="#DAD7CE" />
       <path d={d} fill="none" stroke={color} strokeWidth="1.5" />
     </svg>
   );
 }
 
-const axis = { fill: "#9DA9BC", fontSize: 11, fontFamily: "Atkinson Hyperlegible Mono, monospace" };
+const axis = { fill: "#5B5A54", fontSize: 11, fontFamily: "Martian Mono, monospace" };
 
 function TipBox({ active, payload, label, rows }: { active?: boolean; payload?: { payload: Record<string, unknown> }[]; label?: string; rows: (p: Record<string, unknown>) => [string, string][] }) {
   if (!active || !payload?.length) return null;
   const p = payload[0].payload;
   return (
-    <div className="rounded-[4px] border border-line bg-surface-2 px-3 py-2 text-[12px] leading-4">
+    <div className="rounded-[3px] border border-line bg-surface-2 px-3 py-2 text-[12px] leading-4">
       <p className="num text-muted-foreground mb-1">{utcDateTime(String(label))}</p>
       {rows(p).map(([k, v]) => (
         <p key={k}>
@@ -102,18 +102,18 @@ export function FearTimeline({ timeline, color, height = 180, compact }: { timel
         <div id={id} style={{ height }} className="mt-1" aria-hidden>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, left: compact ? -24 : -8, bottom: 0 }}>
-              <CartesianGrid stroke="#263247" vertical={false} />
-              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#263247" />
-              <YAxis tick={axis} stroke="#263247" width={44} allowDecimals />
+              <CartesianGrid stroke="#DAD7CE" vertical={false} />
+              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#DAD7CE" />
+              <YAxis tick={axis} stroke="#DAD7CE" width={44} allowDecimals />
               <Tooltip
-                cursor={{ stroke: "#9DA9BC", strokeDasharray: "2 2" }}
+                cursor={{ stroke: "#5B5A54", strokeDasharray: "2 2" }}
                 content={<TipBox rows={(p) => [["fear mass", num(p.fearMass as number, 2)], ["relevant posts", String(p.nRelevant)], ["baseline", p.baselineMedian == null ? "n/a" : num(p.baselineMedian as number, 2)], ["z", p.zScore == null ? "n/a" : num(p.zScore as number, 1)]]} />}
               />
               {markerHours.map((h) => (
-                <ReferenceLine key={h} x={h} stroke="#5EEAD4" strokeDasharray="3 3" strokeOpacity={0.7} />
+                <ReferenceLine key={h} x={h} stroke="#1E7A4A" strokeDasharray="3 3" strokeOpacity={0.7} />
               ))}
               <Area type="monotone" dataKey="fearMass" stroke={color} fill={color} fillOpacity={0.15} strokeWidth={1.6} isAnimationActive={false} />
-              <Area type="monotone" dataKey="baselineMedian" stroke="#9DA9BC" strokeDasharray="4 3" fill="none" strokeWidth={1} isAnimationActive={false} />
+              <Area type="monotone" dataKey="baselineMedian" stroke="#5B5A54" strokeDasharray="4 3" fill="none" strokeWidth={1} isAnimationActive={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -139,11 +139,11 @@ export function FearTimeline({ timeline, color, height = 180, compact }: { timel
 }
 
 const EMO: { key: keyof EmotionPoint; label: string; color: string }[] = [
-  { key: "fear", label: "Fear", color: "#FF5C7A" },
-  { key: "anger", label: "Anger", color: "#FF8A3D" },
-  { key: "sadness", label: "Sadness", color: "#7FB8FF" },
-  { key: "optimism", label: "Optimism", color: "#9AD86B" },
-  { key: "other", label: "Other", color: "#8A97AB" },
+  { key: "fear", label: "Fear", color: "#C8102E" },
+  { key: "anger", label: "Anger", color: "#9A6700" },
+  { key: "sadness", label: "Sadness", color: "#1D5FBF" },
+  { key: "optimism", label: "Optimism", color: "#15140F" },
+  { key: "other", label: "Other", color: "#B9B5A9" },
 ];
 
 export function EmotionMix({ points }: { points: EmotionPoint[] }) {
@@ -176,9 +176,9 @@ export function EmotionMix({ points }: { points: EmotionPoint[] }) {
         <div className="h-[180px] mt-2" aria-hidden>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={withData} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
-              <CartesianGrid stroke="#263247" vertical={false} />
-              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#263247" padding={{ left: 24, right: 8 }} />
-              <YAxis tick={axis} domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} tickFormatter={(v: number) => v.toFixed(2)} stroke="#263247" width={44} />
+              <CartesianGrid stroke="#DAD7CE" vertical={false} />
+              <XAxis dataKey="hour" tick={axis} tickFormatter={shortHour} minTickGap={48} stroke="#DAD7CE" padding={{ left: 24, right: 8 }} />
+              <YAxis tick={axis} domain={[0, 1]} ticks={[0, 0.25, 0.5, 0.75, 1]} tickFormatter={(v: number) => v.toFixed(2)} stroke="#DAD7CE" width={44} />
               <Tooltip content={<TipBox rows={(p) => EMO.map((e) => [e.label, (p[e.key] as number).toFixed(2)] as [string, string])} />} />
               {EMO.map((e) => <Line key={e.key} dataKey={e.key} stroke={e.color} dot={false} strokeWidth={1.4} isAnimationActive={false} />)}
             </LineChart>

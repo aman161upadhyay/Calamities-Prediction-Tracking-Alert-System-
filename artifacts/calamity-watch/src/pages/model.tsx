@@ -23,7 +23,7 @@ export default function ModelPage() {
       {q.isError && <ErrorState what="model information" onRetry={() => q.refetch()} />}
       {m && (
         <div className="grid gap-8">
-          {!m.modelReady && <p style={{ color: "#E8B04B" }}>The model service is still loading. Metrics below are from the last training run.</p>}
+          {!m.modelReady && <p style={{ color: "#9A6700" }}>The model service is still loading. Metrics below are from the last training run.</p>}
           <section>
             <h2 className="text-[20px] leading-7 mb-3">Pipeline</h2>
             {status.data ? <PipelineList stages={status.data.pipeline} asOf={utcDateTime(status.data.now)} /> : status.isError ? <ErrorState what="pipeline counts" onRetry={() => status.refetch()} /> : <LoadingRows rows={2} />}
