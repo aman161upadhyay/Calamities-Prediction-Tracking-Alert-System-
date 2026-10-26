@@ -6,7 +6,7 @@ export function PlateLabel({ parts, right, className, id }: { parts: string[]; r
   return (
     // Below sm the row may wrap so a long scope and its counts both stay readable; from sm up it is one 32 px line and the label truncates.
     <div className={cn("flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-4 px-3 min-h-8 sm:h-8 border-b border-rule-strong", className)}>
-      <p id={id} className="plate-label text-ink truncate grow basis-44 py-1.5 sm:grow-0 sm:basis-auto sm:py-0">
+      <p id={id} className="plate-label text-ink truncate max-w-full shrink-0 py-1.5 sm:shrink sm:py-0">
         {parts.map((p, i) => (
           <span key={i}>
             {i > 0 && <span className="text-rule-strong px-1.5">/</span>}

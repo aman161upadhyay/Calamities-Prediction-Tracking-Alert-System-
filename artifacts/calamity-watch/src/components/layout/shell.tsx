@@ -29,8 +29,8 @@ function Mark() {
 function stateMark(s: SourceHealth["state"]) {
   if (s === "ok") return { glyph: "●", color: "#15140F" };
   if (s === "idle") return { glyph: "○", color: "#5B5A54" };
-  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#875A00" };
-  // Failure states are ink (the brief keeps red for fear and alert readings); the triangle and the state word carry the message.
+  // Operational states are ink (the brief keeps red for fear and alert readings and ochre for the elevated level); the glyph and the state word carry the message.
+  if (s === "not_configured" || s === "budget_reached") return { glyph: "◆", color: "#15140F" };
   return { glyph: "▲", color: "#15140F" };
 }
 
@@ -97,8 +97,8 @@ function StatusPlate({ status, isLoading, isError, onRetry }: { status?: SystemS
         {status && (
           <>
             <span className="inline-flex items-center gap-1.5 font-semibold" data-testid="status-live">
-              {status.isStale ? <span aria-hidden className="text-ochre">◆</span> : <span aria-hidden className="text-ink">●</span>}
-              <span className={status.isStale && !replay ? "text-ochre" : "text-ink"}>{replay ? "Replay" : status.isStale ? "Stale" : "Live"}</span>
+              {status.isStale ? <span aria-hidden className="text-ink">◆</span> : <span aria-hidden className="text-ink">●</span>}
+              <span className="text-ink">{replay ? "Replay" : status.isStale ? "Stale" : "Live"}</span>
             </span>
             {/* Under a replay the clock belongs to the transport or the page's scope note; the live time would disagree with it. */}
             {!replay && <span className="mono text-ink-muted hidden sm:inline" data-testid="text-status-asof">as of {utcTime(status.now)}</span>}

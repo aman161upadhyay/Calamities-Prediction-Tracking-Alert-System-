@@ -227,7 +227,8 @@ export function Recorder({
       <FrameMarks />
       <div className="bg-sheet border border-rule-strong">
         <PlateLabel
-          parts={compact && label.length > 3 && /^utc$/i.test(label[label.length - 1]) ? label.slice(0, -1) : label}
+          // On a phone the label keeps instrument, quantity and scope; the range and time basis are on the toggles and the axis.
+          parts={compact && label.length > 3 ? label.slice(0, 3) : label}
           right={
             <span className="inline-flex items-center gap-4">
               <span className="hidden xl:inline-flex items-center gap-4">
@@ -359,9 +360,9 @@ export function Recorder({
                       <g key={l.hazard}>
                         {band && <path d={band} fill="rgba(21,20,15,0.06)" />}
                         {baseLine && <path d={baseLine} fill="none" stroke="#5B5A54" strokeWidth={1} strokeDasharray="4 3" />}
-                        {alertRuns(pts).map((r) => {
-                          const xa = px(pts[r.start]);
-                          const xb = px(pts[r.end]);
+                        {alertRuns(drawn).map((r) => {
+                          const xa = px(drawn[r.start]);
+                          const xb = px(drawn[r.end]);
                           const c = LEVEL_COLOR[r.level];
                           return (
                             <g key={r.start}>

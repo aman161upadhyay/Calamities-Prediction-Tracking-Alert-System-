@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { keepPreviousData } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -85,6 +85,35 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
   const fitKey = `${mode.scenario ?? "live"}-${places.length > 0 || events.length > 0}-${picked ?? "all"}`;
   const openAlerts = alerts.data ?? data?.openAlerts ?? [];
   const placesSorted = useMemo(() => [...places].sort((a, b) => b.zScore - a.zScore), [places]);
+  const tabLabel = (t: BoardTab) => (t === "alerts" ? `Alerts${alerts.data ? ` ${openAlerts.length}` : ""}` : t === "feed" ? "Feed" : t === "places" ? `Places${places.length ? ` ${placesSorted.length}` : ""}` : "Hazards");
+  // Measured extent of the selected tab, for the clipped ink copy below; remeasured when the row resizes or a label changes.
+  const tabListRef = useRef<HTMLDivElement>(null);
+  // Until the first measurement the copy is clipped away entirely, so a missed measurement never shows every tab in ink.
+  const [tabClip, setTabClip] = useState<{ left: number; right: number } | null>(null);
+  const labelKey = TABS.map(tabLabel).join("|");
+  useLayoutEffect(() => {
+    const list = tabListRef.current;
+    if (!list) return;
+    const measure = () => {
+      const el = list.querySelector<HTMLElement>(`[data-tab="${tab}"]`);
+      if (!el || !list.clientWidth) return;
+      // Fractional rects, not offsetLeft/offsetWidth: on a phone the tabs sit at half-pixel positions and integer insets spill half a pixel into the neighbour.
+      const lr = list.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      setTabClip({ left: Math.max(0, er.left - lr.left), right: Math.max(0, lr.right - er.right) });
+    };
+    measure();
+    // The row and every tab are observed (a label or the loaded webfont changes a tab's width without changing the row's), and fonts.ready re-measures once the webfont is in.
+    const ro = new ResizeObserver(measure);
+    ro.observe(list);
+    list.querySelectorAll<HTMLElement>("[data-tab]").forEach((b) => ro.observe(b));
+    let alive = true;
+    document.fonts?.ready.then(() => alive && measure());
+    return () => {
+      alive = false;
+      ro.disconnect();
+    };
+  }, [tab, labelKey]);
   const newAlerts = useNewIds(openAlerts.map((a) => a.id));
   const newPosts = useNewIds((posts.data ?? []).map((p) => p.id));
 
@@ -152,7 +181,7 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
   return (
     <div className="mx-auto max-w-[1440px] px-4 md:px-8" data-testid="board">
       {data?.isStale && !replay && (
-        <p className="mb-3 text-[13px] leading-5 text-ochre" data-testid="text-stale">◆ Ingest is behind. Showing the board as of {utcTime(data.lastIngestAt)}.</p>
+        <p className="mb-3 text-[13px] leading-5 text-ink" data-testid="text-stale">◆ Ingest is behind. Showing the board as of {utcTime(data.lastIngestAt)}.</p>
       )}
       {board.isError && data && (
         <p role="alert" className="mb-3 text-[13px] leading-5 text-ink font-semibold">
@@ -193,7 +222,8 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
             Fill is the hazard, size is relevant posts per hour, the <span className="text-pen font-semibold">red ring</span> fills at fear z 3, a <span aria-hidden className="inline-block size-2.5 border-[1.5px] border-stamp rotate-[-6deg] align-middle" /> stamp square marks an official event within 300 km in 72 h.
           </p>
           <div className="xl:hidden">
-            <div role="tablist" aria-label="Board panels" className="flex border-b border-ink" onKeyDown={onTabKey}>
+            {/* The tab indicator is an ink copy of the row clipped to the selected tab; the clip slides in 200 ms (none under reduced motion). */}
+            <div role="tablist" aria-label="Board panels" className="relative flex border-b border-ink" onKeyDown={onTabKey} ref={tabListRef}>
               {TABS.map((t) => (
                 <button
                   key={t}
@@ -205,11 +235,19 @@ export function Board({ mode, poll, recorder = true }: { mode: Mode; status?: Sy
                   tabIndex={tab === t ? 0 : -1}
                   onClick={() => setTab(t)}
                   data-testid={`tab-${t}`}
-                  className={cn("px-3 py-2 text-[14px] -mb-px border-b-[3px]", tab === t ? "border-ink font-semibold" : "border-transparent text-ink-muted", (t === "hazards" || t === "places") && "lg:hidden")}
+                  data-tab={t}
+                  className={cn("px-3 py-2 text-[14px] font-medium text-ink-muted -mb-px border-b-[3px] border-transparent whitespace-nowrap", (t === "hazards" || t === "places") && "lg:hidden")}
                 >
-                  {t === "alerts" ? `Alerts${alerts.data ? ` ${openAlerts.length}` : ""}` : t === "feed" ? "Feed" : t === "places" ? `Places${places.length ? ` ${placesSorted.length}` : ""}` : "Hazards"}
+                  {tabLabel(t)}
                 </button>
               ))}
+              <div aria-hidden className="tab-ink absolute inset-x-0 top-0 bottom-0 flex pointer-events-none" style={{ clipPath: tabClip ? `inset(0 ${tabClip.right}px -3px ${tabClip.left}px)` : "inset(0 100% -3px 0)" }}>
+                {TABS.map((t) => (
+                  <span key={t} className={cn("px-3 py-2 text-[14px] font-medium text-ink -mb-px border-b-[3px] border-ink whitespace-nowrap", (t === "hazards" || t === "places") && "lg:hidden")}>
+                    {tabLabel(t)}
+                  </span>
+                ))}
+              </div>
             </div>
             <div id="board-tabpanel" className="bg-sheet border border-t-0 border-rule-strong" role="tabpanel" aria-labelledby={`board-tab-${tab}`} tabIndex={0}>
               {tab === "alerts" && alertList}
