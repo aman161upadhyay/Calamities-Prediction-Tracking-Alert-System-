@@ -91,10 +91,20 @@ class Gazetteer:
         return len(self.by_key)
 
 
+# Compass and extent words that name no place on their own: "Southern Province" must not be findable as "Southern".
+DIRECTION_WORDS = {
+    "north", "south", "east", "west", "northern", "southern", "eastern", "western", "central", "northeast", "northwest",
+    "southeast", "southwest", "northeastern", "northwestern", "southeastern", "southwestern", "upper", "lower", "coastal",
+    "greater", "inland", "rural", "metro", "downtown", "north-east", "north-west", "south-east", "south-west",
+}
+
+
 def normalise(s: str) -> str:
     s = s.strip().lower().replace("’", "'")
     s = re.sub(r"^(the|city of)\s+", "", s)
-    s = re.sub(r"\s+(county|state|province|region|district)$", "", s)
+    stripped = re.sub(r"\s+(county|state|province|region|district)$", "", s)
+    if stripped not in DIRECTION_WORDS:
+        s = stripped
     s = re.sub(r"[^a-z0-9' .\-]", "", s)
     return re.sub(r"\s+", " ", s).strip()
 

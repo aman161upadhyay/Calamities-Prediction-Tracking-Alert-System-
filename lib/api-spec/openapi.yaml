@@ -648,11 +648,14 @@ components:
 
     SystemStatus:
       type: object
-      required: [now, modelVersion, experimental, isStale, sources, officialFeeds, pipeline, counts, xBudget, activeScenario]
+      required: [now, modelVersion, experimental, isStale, sources, officialFeeds, pipeline, counts, xBudget, activeScenario, emailDeliveryConfigured]
       properties:
         now:
           type: string
           format: date-time
+        emailDeliveryConfigured:
+          type: boolean
+          description: False when no email provider key is set; the subscribe form must say so before the user submits.
         lastIngestAt:
           type: ["string", "null"]
           format: date-time

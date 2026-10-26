@@ -131,6 +131,8 @@ export type SystemStatusCounts = {
 
 export interface SystemStatus {
   now: string;
+  /** False when no email provider key is set; the subscribe form must say so before the user submits. */
+  emailDeliveryConfigured: boolean;
   /** @nullable */
   lastIngestAt?: string | null;
   modelVersion: string;

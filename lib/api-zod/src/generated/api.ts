@@ -21,6 +21,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const GetSystemStatusResponse = zod.object({
   "now": zod.coerce.date(),
+  "emailDeliveryConfigured": zod.boolean().describe('False when no email provider key is set; the subscribe form must say so before the user submits.'),
   "lastIngestAt": zod.coerce.date().nullish(),
   "modelVersion": zod.string(),
   "modelReady": zod.boolean().optional(),

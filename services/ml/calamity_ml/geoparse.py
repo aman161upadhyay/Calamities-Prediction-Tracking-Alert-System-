@@ -4,7 +4,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from .gazetteer import Gazetteer, GazetteerPlace, build_gazetteer, haversine_km, normalise
+from .gazetteer import DIRECTION_WORDS, Gazetteer, GazetteerPlace, build_gazetteer, haversine_km, normalise
 from .preprocess import clean_for_ner
 
 NER_LABELS = {"GPE", "LOC"}
@@ -18,6 +18,17 @@ US_STATE_CODES = {
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC", "PR",
 }
 _STATE_SUFFIX = re.compile(r"^(.{3,}?)[,\s]+([A-Z]{2})$")
+US_STATE_NAMES = {
+    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut",
+    "DE": "Delaware", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+    "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan",
+    "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire",
+    "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+    "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee",
+    "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin",
+    "WY": "Wyoming", "DC": "District of Columbia", "PR": "Puerto Rico",
+}
+_DIRECTION_PREFIX = re.compile(r"^(?:" + "|".join(sorted(DIRECTION_WORDS, key=len, reverse=True)) + r")\s+(.{3,})$", re.I)
 # Words NER tags as places but which are not places or are too generic to resolve.
 # Place names that are also ordinary English words. They resolve only when something else in the text supports
 # the place (same country or state), otherwise "Man found dead" would point at Man, Ivory Coast.
@@ -162,10 +173,27 @@ class Geoparser:
                 sm = _STATE_SUFFIX.match(m)
                 if sm and sm.group(2) in US_STATE_CODES:
                     base = sm.group(1).strip(" ,")
+                    if base.lower() in DIRECTION_WORDS:
+                        # "Southern LA", "SouthernTX": the direction names a part of the state, so the state is the place.
+                        base = US_STATE_NAMES.get(sm.group(2), base)
+                        cands = self.gazetteer.lookup(base)
+                        if cands:
+                            strength[base] = strength.pop(m)
+                            m = base
+                    else:
+                        cands = self.gazetteer.lookup(base)
+                        if cands:
+                            strength[base] = strength.pop(m)
+                            state_hint[base] = sm.group(2)
+                            m = base
+            if not cands:
+                # "Southeastern Texas", "coastal Odisha", "northern Mozambique": the extent word is not part of the name.
+                dm = _DIRECTION_PREFIX.match(m)
+                if dm:
+                    base = dm.group(1)
                     cands = self.gazetteer.lookup(base)
                     if cands:
                         strength[base] = strength.pop(m)
-                        state_hint[base] = sm.group(2)
                         m = base
             candidates[m] = cands
         # Context: country codes and admin1 codes of unambiguous mentions (and of regions, which carry an admin1 code).

@@ -126,7 +126,9 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
           <li key={`${p.placeId}-${p.hazard}`}>
             <button type="button" onClick={() => setSel({ kind: "place", signal: p })} data-testid={`button-select-place-${p.placeId}-${p.hazard}`} className="w-full text-left px-4 py-1.5 text-[13px] leading-5 hover:bg-surface-2 flex items-center gap-2">
               <HazardDot hazard={p.hazard} color={colors[p.hazard]} />
-              <span className="truncate flex-1">{p.name}</span>
+              <span className="truncate flex-1">
+                {p.name} <span className="text-muted-foreground">{HAZARD_LABEL[p.hazard].toLowerCase()}</span>
+              </span>
               <LevelGlyph level={p.level} />
               <span className="num text-muted-foreground">z {num(p.zScore, 1)}</span>
             </button>
@@ -168,7 +170,7 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
       <div className="grid gap-3 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,1fr)_340px]">
         <div className="hidden lg:flex flex-col gap-3 min-w-0">
           <Panel title="Hazards" meta="fear mass in the last hour, change vs 24 h earlier">{hazardRail}</Panel>
-          <Panel title="Places on the map" meta="sorted by z-score, select to read">{placeList}</Panel>
+          <Panel title="Places on the map" meta="one row per place and hazard, sorted by z-score; select to read">{placeList}</Panel>
         </div>
 
         <div className="flex flex-col gap-3 min-w-0">

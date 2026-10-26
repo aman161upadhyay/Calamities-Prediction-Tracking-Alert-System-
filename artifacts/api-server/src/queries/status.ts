@@ -5,6 +5,7 @@ import { HOUR_MS } from "../lib/time";
 import { mlHealth } from "../ml/client";
 import { xBudgetStatus } from "../services/ingest/x";
 import { lastIngestAt, staleness } from "./board";
+import { emailConfigured } from "../services/notify";
 
 const SOURCE_LABELS: Record<string, string> = {
   x: "X (Twitter)",
@@ -65,6 +66,7 @@ export async function systemStatus() {
     modelVersion: health?.modelVersion ?? "unknown",
     modelReady: Boolean(health?.ready),
     experimental: true,
+    emailDeliveryConfigured: emailConfigured(),
     isStale: staleness(last, now),
     sources: [sourceHealth("x"), sourceHealth("bluesky"), modelHealth],
     officialFeeds: ["gdacs", "usgs", "nws", "firms", "openmeteo"].map(sourceHealth),

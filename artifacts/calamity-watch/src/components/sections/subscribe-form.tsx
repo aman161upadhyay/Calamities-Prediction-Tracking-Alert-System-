@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateSubscription, useGetPlace, useListPlaces, getGetPlaceQueryKey, type SubscriptionResult } from "@workspace/api-client-react";
+import { useCreateSubscription, useGetPlace, useGetSystemStatus, useListPlaces, getGetPlaceQueryKey, type SubscriptionResult } from "@workspace/api-client-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -44,6 +44,9 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
     return list;
   }, [places.data, initial.data]);
   const create = useCreateSubscription();
+  // Say before the user types that no confirmation email can go out on a deployment without a provider.
+  const status = useGetSystemStatus();
+  const emailOff = status.data?.emailDeliveryConfigured === false;
   const [result, setResult] = useState<SubscriptionResult | null>(null);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", placeId: Number.isFinite(initialId) ? String(initialId) : "any", hazard: "any", minLevel: "high" } });
   const placeName = options.find((p) => String(p.id) === form.watch("placeId"))?.name;
@@ -63,7 +66,13 @@ export function SubscribeForm({ initialPlaceId }: { initialPlaceId?: string }) {
           <FormItem>
             <FormLabel>Email</FormLabel>
             <FormControl><Input type="email" autoComplete="email" className="bg-surface-2 border-line rounded-[4px] h-10" data-testid="input-email" {...field} /></FormControl>
-            <FormDescription>We send one confirmation link first. Nothing is sent until you open it.</FormDescription>
+            <FormDescription>
+              {emailOff ? (
+                <span style={{ color: "#E8B04B" }} data-testid="text-email-provider-missing">No email provider is configured on this deployment, so no confirmation link can be sent yet. A request is recorded as pending and sends nothing until a provider is added and the address is confirmed.</span>
+              ) : (
+                "We send one confirmation link first. Nothing is sent until you open it."
+              )}
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )} />
