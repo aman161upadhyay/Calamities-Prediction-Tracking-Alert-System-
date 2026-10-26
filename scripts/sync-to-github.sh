@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Mirror this working tree into the GitHub repository as a commit by Aman.
 # Usage: scripts/sync-to-github.sh "Commit subject" ["Body paragraph"]
+#
+# The mirror clone lives outside the workspace so it is never picked up by the workspace's own git or checkpoints.
+# Data under HumAID / Kaggle terms, trained binaries and environment files are excluded; metrics.json is committed.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MIRROR="${MIRROR_DIR:-$ROOT/repos/target}"
+MIRROR="${MIRROR_DIR:-$HOME/.mirror/calamity-watch}"
 REMOTE_URL="${GITHUB_REMOTE_URL:-https://github.replit.internal/aman161upadhyay/Calamities-Prediction-Tracking-Alert-System-.git}"
 SUBJECT="${1:?commit subject required}"
 BODY="${2:-}"
@@ -19,7 +22,13 @@ git config commit.gpgsign false
 git fetch -q origin main && git reset -q --hard origin/main
 
 # copy the tree (rsync is not guaranteed on the host, so use tar with excludes)
-EXCLUDES=(.git repos node_modules .venv __pycache__ .pytest_cache .mypy_cache frontend/dist .cache .upm .config .local attached_assets .env '.env.*' ml/data/raw '*.parquet' '*.joblib' '*.safetensors' '*.bin' .replit replit.nix .breakpoints generated-icon.png .agents tmp '*.log')
+EXCLUDES=(
+  .git repos node_modules .venv .pythonlibs __pycache__ .pytest_cache .mypy_cache .ruff_cache
+  dist .cache .upm .config .local .agents attached_assets tmp
+  .env '.env.*' .replit replit.nix .breakpoints generated-icon.png '*.log' '*.tsbuildinfo'
+  services/ml/data/raw services/ml/data/processed services/ml/data/replay
+  '*.parquet' '*.joblib' '*.safetensors' '*.bin' '*.zip' '*.tar.gz'
+)
 TAR_EX=()
 for e in "${EXCLUDES[@]}"; do TAR_EX+=(--exclude="$e"); done
 find "$MIRROR" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +

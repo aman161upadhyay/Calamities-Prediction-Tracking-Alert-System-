@@ -1,0 +1,242 @@
+key,name,country,country_code,lat,lon,aliases
+region:in-kl,Kerala,India,IN,10.5,76.3,
+region:in-tn,Tamil Nadu,India,IN,11.1,78.7,tamilnadu
+region:in-ka,Karnataka,India,IN,15.3,75.7,
+region:in-ap,Andhra Pradesh,India,IN,15.9,79.7,andhra
+region:in-tg,Telangana,India,IN,18.1,79.0,
+region:in-mh,Maharashtra,India,IN,19.7,75.7,
+region:in-gj,Gujarat,India,IN,22.3,71.2,
+region:in-rj,Rajasthan,India,IN,27.0,74.2,
+region:in-pb,Punjab,India,IN,31.1,75.3,
+region:in-hr,Haryana,India,IN,29.1,76.1,
+region:in-up,Uttar Pradesh,India,IN,26.8,80.9,
+region:in-ut,Uttarakhand,India,IN,30.1,79.1,
+region:in-hp,Himachal Pradesh,India,IN,31.9,77.2,himachal
+region:in-br,Bihar,India,IN,25.1,85.3,
+region:in-jh,Jharkhand,India,IN,23.6,85.3,
+region:in-wb,West Bengal,India,IN,22.9,87.9,bengal
+region:in-or,Odisha,India,IN,20.9,84.8,orissa
+region:in-as,Assam,India,IN,26.2,92.9,
+region:in-ml,Meghalaya,India,IN,25.5,91.4,
+region:in-sk,Sikkim,India,IN,27.5,88.5,
+region:in-ga,Goa,India,IN,15.3,74.1,
+region:in-mp,Madhya Pradesh,India,IN,22.9,78.7,
+region:in-ct,Chhattisgarh,India,IN,21.3,81.9,
+region:in-jk,Jammu and Kashmir,India,IN,33.8,76.6,kashmir
+region:in-la,Ladakh,India,IN,34.2,77.6,
+region:in-ar,Arunachal Pradesh,India,IN,28.2,94.7,
+region:in-mn,Manipur,India,IN,24.7,93.9,
+region:in-tr,Tripura,India,IN,23.9,91.7,
+region:in-an,Andaman and Nicobar Islands,India,IN,11.7,92.7,andaman
+region:pk-sd,Sindh,Pakistan,PK,26.0,68.8,
+region:pk-pb,Punjab,Pakistan,PK,31.2,72.7,
+region:pk-ba,Balochistan,Pakistan,PK,28.5,65.1,baluchistan
+region:pk-kp,Khyber Pakhtunkhwa,Pakistan,PK,34.0,71.5,kpk
+region:pk-gb,Gilgit-Baltistan,Pakistan,PK,35.8,74.6,
+region:np-ga,Gandaki,Nepal,NP,28.4,84.1,
+region:bd-sy,Sylhet Division,Bangladesh,BD,24.9,91.9,
+region:lk-sp,Southern Province,Sri Lanka,LK,6.2,80.7,
+region:us-tx,Texas,United States,US,31.0,-100.0,
+region:us-fl,Florida,United States,US,28.1,-81.6,
+region:us-la,Louisiana,United States,US,31.0,-92.0,
+region:us-ca,California,United States,US,36.8,-119.4,
+region:us-or,Oregon,United States,US,43.8,-120.6,
+region:us-wa,Washington,United States,US,47.4,-120.5,washington state
+region:us-co,Colorado,United States,US,39.0,-105.5,
+region:us-az,Arizona,United States,US,34.0,-111.1,
+region:us-nm,New Mexico,United States,US,34.5,-106.0,
+region:us-ok,Oklahoma,United States,US,35.5,-97.5,
+region:us-ks,Kansas,United States,US,38.5,-98.0,
+region:us-ne,Nebraska,United States,US,41.5,-99.9,
+region:us-ia,Iowa,United States,US,42.0,-93.5,
+region:us-mo,Missouri,United States,US,38.5,-92.5,
+region:us-ms,Mississippi,United States,US,32.7,-89.7,
+region:us-al,Alabama,United States,US,32.8,-86.8,
+region:us-ga,Georgia,United States,US,32.7,-83.4,
+region:us-nc,North Carolina,United States,US,35.6,-79.4,
+region:us-sc,South Carolina,United States,US,33.9,-80.9,
+region:us-tn,Tennessee,United States,US,35.9,-86.4,
+region:us-ky,Kentucky,United States,US,37.5,-85.3,
+region:us-va,Virginia,United States,US,37.5,-78.9,
+region:us-wv,West Virginia,United States,US,38.6,-80.6,
+region:us-md,Maryland,United States,US,39.0,-76.8,
+region:us-pa,Pennsylvania,United States,US,40.9,-77.8,
+region:us-ny,New York,United States,US,42.9,-75.5,new york state
+region:us-nj,New Jersey,United States,US,40.1,-74.5,
+region:us-vt,Vermont,United States,US,44.0,-72.7,
+region:us-nh,New Hampshire,United States,US,43.7,-71.6,
+region:us-me,Maine,United States,US,45.4,-69.2,
+region:us-ma,Massachusetts,United States,US,42.4,-71.4,
+region:us-ct,Connecticut,United States,US,41.6,-72.7,
+region:us-hi,Hawaii,United States,US,20.8,-156.3,
+region:us-ak,Alaska,United States,US,64.0,-150.0,
+region:us-mt,Montana,United States,US,47.0,-109.6,
+region:us-id,Idaho,United States,US,44.1,-114.7,
+region:us-nv,Nevada,United States,US,39.3,-116.6,
+region:us-ut,Utah,United States,US,39.3,-111.1,
+region:us-wy,Wyoming,United States,US,43.0,-107.5,
+region:us-mn,Minnesota,United States,US,46.3,-94.3,
+region:us-wi,Wisconsin,United States,US,44.6,-89.9,
+region:us-mi,Michigan,United States,US,44.3,-85.4,
+region:us-il,Illinois,United States,US,40.0,-89.2,
+region:us-in,Indiana,United States,US,39.9,-86.3,
+region:us-oh,Ohio,United States,US,40.3,-82.8,
+region:us-ar,Arkansas,United States,US,34.9,-92.4,
+region:us-nd,North Dakota,United States,US,47.5,-100.5,
+region:us-sd,South Dakota,United States,US,44.4,-100.2,
+region:us-dc,Washington DC,United States,US,38.9,-77.0,d.c.|washington d.c.
+region:us-fl-keys,Florida Keys,United States,US,24.7,-81.3,the keys
+region:us-tx-coast,Texas Gulf Coast,United States,US,28.5,-96.5,texas coast|gulf coast
+region:us-ca-norcal,Northern California,United States,US,39.5,-121.5,norcal
+region:us-ca-socal,Southern California,United States,US,34.2,-118.0,socal
+region:us-ca-bayarea,Bay Area,United States,US,37.7,-122.2,san francisco bay area
+region:us-ca-la-county,Los Angeles County,United States,US,34.3,-118.2,la county
+region:us-ca-butte,Butte County,United States,US,39.7,-121.6,
+region:us-ca-ventura,Ventura County,United States,US,34.4,-119.1,
+region:us-ca-sonoma,Sonoma County,United States,US,38.5,-122.9,
+region:us-ca-napa,Napa County,United States,US,38.5,-122.3,
+region:us-tx-harris,Harris County,United States,US,29.9,-95.4,
+region:us-nc-outer-banks,Outer Banks,United States,US,35.5,-75.5,
+region:us-pr,Puerto Rico,Puerto Rico,PR,18.2,-66.5,
+region:us-vi,US Virgin Islands,U.S. Virgin Islands,VI,18.3,-64.9,virgin islands|st. thomas|st thomas|st. croix|st croix
+region:ag-barbuda,Barbuda,Antigua and Barbuda,AG,17.6,-61.8,
+region:bs-abaco,Abaco Islands,Bahamas,BS,26.4,-77.1,abaco|great abaco
+region:bs-grand-bahama,Grand Bahama,Bahamas,BS,26.6,-78.5,freeport
+region:ca-bc,British Columbia,Canada,CA,53.7,-127.6,bc
+region:ca-ab,Alberta,Canada,CA,53.9,-116.6,
+region:ca-on,Ontario,Canada,CA,50.0,-85.0,
+region:ca-qc,Quebec,Canada,CA,52.9,-73.5,québec
+region:ca-mb,Manitoba,Canada,CA,53.8,-98.8,
+region:ca-sk,Saskatchewan,Canada,CA,52.9,-106.5,
+region:ca-ns,Nova Scotia,Canada,CA,44.7,-63.7,
+region:ca-nl,Newfoundland and Labrador,Canada,CA,53.1,-57.7,newfoundland
+region:mx-pue,Puebla,Mexico,MX,19.0,-98.2,
+region:mx-mor,Morelos,Mexico,MX,18.7,-99.1,
+region:mx-oax,Oaxaca,Mexico,MX,17.1,-96.7,
+region:mx-chp,Chiapas,Mexico,MX,16.5,-92.5,
+region:mx-gro,Guerrero,Mexico,MX,17.6,-99.9,
+region:mx-bcs,Baja California Sur,Mexico,MX,25.0,-111.5,los cabos
+region:mx-yuc,Yucatan,Mexico,MX,20.7,-89.1,yucatán|yucatan peninsula
+region:au-qld,Queensland,Australia,AU,-22.6,144.0,qld
+region:au-nsw,New South Wales,Australia,AU,-32.0,147.0,nsw
+region:au-vic,Victoria,Australia,AU,-37.0,144.0,
+region:au-wa,Western Australia,Australia,AU,-25.0,122.0,
+region:au-sa,South Australia,Australia,AU,-30.0,135.0,
+region:au-tas,Tasmania,Australia,AU,-42.0,147.0,
+region:au-nt,Northern Territory,Australia,AU,-19.5,133.0,
+region:nz-cnt,Canterbury,New Zealand,NZ,-43.5,172.0,
+region:nz-kaikoura,Kaikoura,New Zealand,NZ,-42.4,173.7,kaikōura
+region:ph-luzon,Luzon,Philippines,PH,16.0,121.0,
+region:ph-mindanao,Mindanao,Philippines,PH,8.0,125.0,
+region:ph-visayas,Visayas,Philippines,PH,11.0,124.0,
+region:ph-bicol,Bicol,Philippines,PH,13.4,123.4,
+region:jp-hokkaido,Hokkaido,Japan,JP,43.2,142.8,
+region:jp-kyushu,Kyushu,Japan,JP,32.6,130.9,
+region:jp-honshu,Honshu,Japan,JP,36.0,138.0,
+region:jp-okinawa,Okinawa,Japan,JP,26.5,128.0,
+region:jp-noto,Noto Peninsula,Japan,JP,37.3,137.0,noto
+region:cn-sc,Sichuan,China,CN,30.3,102.7,
+region:cn-yn,Yunnan,China,CN,24.5,101.3,
+region:cn-gd,Guangdong,China,CN,23.4,113.4,
+region:cn-ha,Henan,China,CN,34.0,113.5,
+region:cn-hb,Hubei,China,CN,31.0,112.0,
+region:cn-fj,Fujian,China,CN,26.0,118.0,
+region:cn-zj,Zhejiang,China,CN,29.1,120.0,
+region:cn-hi,Hainan,China,CN,19.2,109.7,
+region:cn-gs,Gansu,China,CN,37.8,102.0,
+region:tw-hualien,Hualien,Taiwan,TW,23.9,121.6,
+region:id-sumatra,Sumatra,Indonesia,ID,-0.6,101.3,sumatera
+region:id-java,Java,Indonesia,ID,-7.5,110.0,jawa
+region:id-sulawesi,Sulawesi,Indonesia,ID,-2.0,121.0,
+region:id-bali,Bali,Indonesia,ID,-8.4,115.2,
+region:id-papua,Papua,Indonesia,ID,-4.3,138.1,
+region:id-kalimantan,Kalimantan,Indonesia,ID,0.0,114.0,borneo
+region:id-aceh,Aceh,Indonesia,ID,4.7,96.7,
+region:id-lombok,Lombok,Indonesia,ID,-8.6,116.3,
+region:my-sabah,Sabah,Malaysia,MY,5.4,116.8,
+region:vn-central,Central Vietnam,Vietnam,VN,16.0,108.0,
+region:tr-hatay,Hatay,Turkey,TR,36.4,36.3,
+region:tr-kahramanmaras,Kahramanmaras,Turkey,TR,37.6,36.9,kahramanmaraş
+region:ir-khuzestan,Khuzestan,Iran,IR,31.3,48.7,
+region:ir-kerman,Kerman,Iran,IR,30.3,57.1,
+region:de-by,Bavaria,Germany,DE,48.8,11.5,bayern
+region:de-nw,North Rhine-Westphalia,Germany,DE,51.4,7.7,nrw
+region:de-rp,Rhineland-Palatinate,Germany,DE,50.1,7.3,ahr valley|ahrweiler
+region:it-er,Emilia-Romagna,Italy,IT,44.5,11.0,emilia romagna
+region:it-si,Sicily,Italy,IT,37.6,14.0,sicilia
+region:it-sa,Sardinia,Italy,IT,40.1,9.0,sardegna
+region:it-um,Umbria,Italy,IT,42.9,12.6,
+region:it-la,Lazio,Italy,IT,41.9,12.8,
+region:it-ma,Marche,Italy,IT,43.3,13.2,
+region:it-amatrice,Amatrice,Italy,IT,42.6,13.3,
+region:es-an,Andalusia,Spain,ES,37.5,-4.7,andalucia|andalucía
+region:es-va,Valencia region,Spain,ES,39.5,-0.75,comunidad valenciana|valencian community
+region:es-ca,Catalonia,Spain,ES,41.8,1.5,catalunya|cataluña
+region:es-ib,Balearic Islands,Spain,ES,39.6,2.9,mallorca|majorca|ibiza
+region:es-cn,Canary Islands,Spain,ES,28.3,-16.5,tenerife|la palma
+region:pt-madeira,Madeira,Portugal,PT,32.7,-17.0,
+region:pt-algarve,Algarve,Portugal,PT,37.2,-8.0,
+region:fr-corsica,Corsica,France,FR,42.0,9.0,corse
+region:fr-paca,Provence-Alpes-Cote d'Azur,France,FR,43.9,6.1,provence|cote d'azur|côte d'azur|french riviera
+region:fr-brittany,Brittany,France,FR,48.2,-2.9,bretagne
+region:gr-attica,Attica,Greece,GR,38.0,23.7,attiki|mati
+region:gr-crete,Crete,Greece,GR,35.2,24.9,kriti
+region:gr-rhodes,Rhodes,Greece,GR,36.4,28.2,rodos
+region:gr-evia,Evia,Greece,GR,38.5,23.8,euboea
+region:gr-thessaly,Thessaly,Greece,GR,39.6,22.3,thessalia
+region:gb-sct,Scotland,United Kingdom,GB,56.5,-4.2,
+region:gb-wls,Wales,United Kingdom,GB,52.3,-3.6,
+region:gb-nir,Northern Ireland,United Kingdom,GB,54.6,-6.7,
+region:gb-eng,England,United Kingdom,GB,52.4,-1.5,
+region:gb-cornwall,Cornwall,United Kingdom,GB,50.4,-4.8,
+region:gb-yorkshire,Yorkshire,United Kingdom,GB,53.9,-1.3,
+region:gb-cumbria,Cumbria,United Kingdom,GB,54.6,-3.0,lake district
+region:gb-somerset,Somerset,United Kingdom,GB,51.1,-3.0,
+region:ie-munster,Munster,Ireland,IE,52.3,-8.6,
+region:za-zn,KwaZulu-Natal,South Africa,ZA,-28.5,30.9,kzn
+region:za-wc,Western Cape,South Africa,ZA,-33.2,21.9,
+region:za-ec,Eastern Cape,South Africa,ZA,-32.3,26.4,
+region:mz-sofala,Sofala,Mozambique,MZ,-19.2,34.8,
+region:mz-cabo,Cabo Delgado,Mozambique,MZ,-12.3,39.3,
+region:mw-south,Southern Malawi,Malawi,MW,-15.8,35.1,
+region:ke-rift,Rift Valley,Kenya,KE,0.5,36.0,
+region:ng-benue,Benue,Nigeria,NG,7.3,8.8,
+region:ng-kogi,Kogi,Nigeria,NG,7.7,6.7,
+region:ly-derna,Derna,Libya,LY,32.8,22.6,darnah
+region:br-rs,Rio Grande do Sul,Brazil,BR,-30.0,-53.0,
+region:br-mg,Minas Gerais,Brazil,BR,-18.5,-44.5,
+region:br-ba,Bahia,Brazil,BR,-12.5,-41.7,
+region:br-am,Amazonas,Brazil,BR,-3.4,-65.9,
+region:br-sp,Sao Paulo state,Brazil,BR,-22.0,-48.0,são paulo state
+region:br-rj,Rio de Janeiro state,Brazil,BR,-22.3,-42.7,
+region:br-pe,Pernambuco,Brazil,BR,-8.3,-37.9,
+region:br-sc,Santa Catarina,Brazil,BR,-27.2,-50.2,
+region:cl-valparaiso,Valparaiso region,Chile,CL,-33.0,-71.4,valparaíso region
+region:pe-lima,Lima region,Peru,PE,-11.5,-76.5,
+region:ec-manabi,Manabi,Ecuador,EC,-0.9,-80.2,manabí
+region:ec-esmeraldas,Esmeraldas,Ecuador,EC,0.9,-79.6,
+region:co-antioquia,Antioquia,Colombia,CO,7.0,-75.5,
+region:co-mocoa,Mocoa,Colombia,CO,1.15,-76.65,
+region:ar-ba,Buenos Aires province,Argentina,AR,-36.5,-60.0,
+region:ht-sud,Sud,Haiti,HT,18.3,-73.9,les cayes|south haiti
+region:ht-grandanse,Grand'Anse,Haiti,HT,18.6,-74.1,jeremie|jérémie
+region:do-samana,Samana,Dominican Republic,DO,19.2,-69.4,samaná
+region:cu-oriente,Eastern Cuba,Cuba,CU,20.3,-76.0,
+region:jm-stelizabeth,St Elizabeth,Jamaica,JM,18.1,-77.8,st. elizabeth
+region:ru-krasnodar,Krasnodar Krai,Russia,RU,45.0,39.0,krasnodar region
+region:ru-sakha,Sakha,Russia,RU,66.0,129.0,yakutia
+region:ru-irkutsk,Irkutsk Oblast,Russia,RU,57.0,106.0,irkutsk region
+region:ua-kherson,Kherson Oblast,Ukraine,UA,46.6,32.6,kherson region
+region:sa-jeddah,Jeddah region,Saudi Arabia,SA,21.5,39.2,
+region:ae-fujairah,Fujairah,United Arab Emirates,AE,25.1,56.3,
+region:om-dhofar,Dhofar,Oman,OM,17.1,54.1,salalah
+region:af-herat,Herat Province,Afghanistan,AF,34.3,62.2,herat
+region:af-nangarhar,Nangarhar,Afghanistan,AF,34.2,70.6,
+region:mm-rakhine,Rakhine,Myanmar,MM,19.5,94.0,arakan
+region:mm-ayeyarwady,Ayeyarwady,Myanmar,MM,16.9,95.2,irrawaddy delta
+region:bd-coxs,Cox's Bazar,Bangladesh,BD,21.4,92.0,coxs bazar
+region:bd-khulna,Khulna Division,Bangladesh,BD,22.5,89.5,sundarbans
+region:np-sindhupalchok,Sindhupalchok,Nepal,NP,27.9,85.7,sindhupalchowk
+region:fj-viti-levu,Viti Levu,Fiji,FJ,-17.8,178.0,
+region:vu-tanna,Tanna,Vanuatu,VU,-19.5,169.3,
+region:to-tongatapu,Tongatapu,Tonga,TO,-21.2,-175.2,

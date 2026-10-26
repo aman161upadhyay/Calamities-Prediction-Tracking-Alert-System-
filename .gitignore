@@ -1,28 +1,68 @@
-# python
-__pycache__/
-*.pyc
-.venv/
-.pytest_cache/
-.mypy_cache/
-*.egg-info/
-# node
-node_modules/
-frontend/dist/
-# env and secrets
-.env
-.env.*
-!.env.example
-# data and model artifacts
-ml/data/*.parquet
-ml/data/raw/
-models/*.bin
-models/*.safetensors
-*.joblib
-# os / editor
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+.next
+.turbo
+.svelte-kit
+.nuxt
+.output
+.vercel
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
 .DS_Store
-.idea/
-.vscode/
-# replit
+Thumbs.db
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Replit
+.cache/
+.local/
+
+# Calamity Watch: data and model binaries stay out of git (HumAID terms; size)
+services/ml/data/raw/
+services/ml/data/processed/
+services/ml/data/replay/
+services/ml/model/*.joblib
+*.parquet
+.pythonlibs/
 .cache/
 .upm/
-.config/
+__pycache__/
+*.pyc
+generated-artifacts/

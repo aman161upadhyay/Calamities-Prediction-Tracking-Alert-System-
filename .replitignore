@@ -1,0 +1,15 @@
+# The format of this file is identical to `.dockerignore`.
+# It is used to reduce the size of deployed images to make the process of publishing faster.
+
+# No need to store the pnpm store twice.
+.local
+# Calamity Watch: keep the published image small. The model service needs
+# .cache/huggingface, services/ml/model and services/ml/data/replay, so those stay.
+.cache/uv
+.cache/pnpm
+services/ml/data/raw/*
+!services/ml/data/raw/cities15000.txt
+!services/ml/data/raw/countryInfo.txt
+services/ml/data/processed/*.parquet
+.agents
+docs/council/transcripts

@@ -1,0 +1,1560 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Calamity Watch API. Social-sensing hazard signals, alerts, official corroboration, model metrics and replay.
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: status
+  - name: board
+  - name: hazards
+  - name: places
+  - name: posts
+  - name: alerts
+  - name: official
+  - name: model
+  - name: replay
+  - name: subscriptions
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /status:
+    get:
+      operationId: getSystemStatus
+      tags: [status]
+      summary: Live system status, source health, budget and pipeline counts
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStatus"
+
+  /board:
+    get:
+      operationId: getBoard
+      tags: [board]
+      summary: Situation board snapshot (hazard summaries, place signals, open alerts, official events)
+      parameters:
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Board snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoardSnapshot"
+
+  /hazards:
+    get:
+      operationId: listHazards
+      tags: [hazards]
+      summary: Hazard catalogue with current summaries
+      parameters:
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Hazards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HazardSummary"
+
+  /hazards/{hazard}:
+    get:
+      operationId: getHazard
+      tags: [hazards]
+      summary: Hazard detail with emotion mix, places and recent posts
+      parameters:
+        - $ref: "#/components/parameters/HazardPath"
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Hazard detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HazardDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /hazards/{hazard}/timeline:
+    get:
+      operationId: getHazardTimeline
+      tags: [hazards]
+      summary: Hourly fear-index timeline for a hazard (optionally one place) with official-event markers
+      parameters:
+        - $ref: "#/components/parameters/HazardPath"
+        - name: placeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: hours
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 6
+            maximum: 720
+            default: 72
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Timeline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Timeline"
+
+  /places:
+    get:
+      operationId: listPlaces
+      tags: [places]
+      summary: Tracked places with their current worst level
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: featured
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Places
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlaceListItem"
+
+  /places/{placeId}:
+    get:
+      operationId: getPlace
+      tags: [places]
+      summary: Place detail with per-hazard levels, alerts, nearby official events and weather context
+      parameters:
+        - $ref: "#/components/parameters/PlaceIdPath"
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Place detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlaceDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /posts:
+    get:
+      operationId: listPosts
+      tags: [posts]
+      summary: Scored posts feed, newest first
+      parameters:
+        - name: hazard
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Hazard"
+        - name: placeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: source
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Source"
+        - name: minRelevance
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.5
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ScoredPost"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: Alerts, open first then most recent
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/AlertStatus"
+        - name: hazard
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Hazard"
+        - name: placeId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/{alertId}:
+    get:
+      operationId: getAlert
+      tags: [alerts]
+      summary: Alert evidence (timeline, posts, event log, corroboration)
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /official-events:
+    get:
+      operationId: listOfficialEvents
+      tags: [official]
+      summary: Recent events from official feeds (GDACS, USGS, NWS, FIRMS)
+      parameters:
+        - name: hazard
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Hazard"
+        - name: hours
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 720
+            default: 72
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 200
+        - $ref: "#/components/parameters/Scenario"
+        - $ref: "#/components/parameters/AsOf"
+      responses:
+        "200":
+          description: Official events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfficialEvent"
+
+  /model:
+    get:
+      operationId: getModelInfo
+      tags: [model]
+      summary: Model card data (datasets, metrics, confusion matrix, detector settings, limitations)
+      responses:
+        "200":
+          description: Model info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelInfo"
+
+  /model/classify:
+    post:
+      operationId: classifyText
+      tags: [model]
+      summary: Run the live pipeline on one text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassifyInput"
+      responses:
+        "200":
+          description: Classification
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Classification"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+
+  /model/examples:
+    get:
+      operationId: listModelExamples
+      tags: [model]
+      summary: Example texts for the classifier demo
+      responses:
+        "200":
+          description: Examples
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModelExample"
+
+  /replay/scenarios:
+    get:
+      operationId: listReplayScenarios
+      tags: [replay]
+      summary: Historical disaster scenarios available for replay
+      responses:
+        "200":
+          description: Scenarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReplayScenario"
+
+  /replay/scenarios/{scenarioId}:
+    get:
+      operationId: getReplayScenario
+      tags: [replay]
+      summary: One scenario with its preparation state and key moments
+      parameters:
+        - $ref: "#/components/parameters/ScenarioIdPath"
+      responses:
+        "200":
+          description: Scenario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayScenario"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /replay/scenarios/{scenarioId}/prepare:
+    post:
+      operationId: prepareReplayScenario
+      tags: [replay]
+      summary: Score and aggregate a scenario so it can be played (idempotent)
+      parameters:
+        - $ref: "#/components/parameters/ScenarioIdPath"
+      responses:
+        "200":
+          description: Scenario state after the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplayScenario"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /subscriptions:
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Subscribe an email to alerts for a place and/or hazard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionInput"
+      responses:
+        "201":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /subscriptions/verify:
+    get:
+      operationId: verifySubscription
+      tags: [subscriptions]
+      summary: Confirm a subscription from the emailed link
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Verification outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResult"
+
+  /subscriptions/unsubscribe:
+    post:
+      operationId: unsubscribe
+      tags: [subscriptions]
+      summary: Remove a subscription using its token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnsubscribeInput"
+      responses:
+        "200":
+          description: Unsubscribe outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResult"
+
+components:
+  parameters:
+    Scenario:
+      name: scenario
+      in: query
+      required: false
+      description: Replay scenario id. When set, data comes from that scenario instead of live ingestion.
+      schema:
+        type: string
+    AsOf:
+      name: asOf
+      in: query
+      required: false
+      description: ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
+      schema:
+        type: string
+        format: date-time
+    HazardPath:
+      name: hazard
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Hazard"
+    PlaceIdPath:
+      name: placeId
+      in: path
+      required: true
+      schema:
+        type: integer
+    ScenarioIdPath:
+      name: scenarioId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unavailable:
+      description: Dependency unavailable (for example the model service is still loading)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Hazard:
+      type: string
+      description: Hazard family. storm covers heavy rain and thunderstorms; cyclone covers hurricanes and typhoons; heat covers heatwaves and drought.
+      enum: [flood, storm, cyclone, wildfire, earthquake, landslide, heat, tsunami]
+
+    RiskLevel:
+      type: string
+      description: insufficient means fewer relevant posts than the minimum needed to judge.
+      enum: [insufficient, low, elevated, high, severe]
+
+    Trend:
+      type: string
+      enum: [rising, falling, flat]
+
+    Source:
+      type: string
+      enum: [x, bluesky, replay]
+
+    Sentiment:
+      type: string
+      enum: [negative, neutral, positive]
+
+    AlertStatus:
+      type: string
+      enum: [open, closed]
+
+    SourceState:
+      type: string
+      enum: [ok, offline, not_configured, budget_reached, error, idle]
+
+    SourceHealth:
+      type: object
+      required: [name, label, state, detail]
+      properties:
+        name:
+          type: string
+          description: Machine name such as x, bluesky, gdacs, usgs, nws, firms, openmeteo, model
+        label:
+          type: string
+        state:
+          $ref: "#/components/schemas/SourceState"
+        lastSuccessAt:
+          type: ["string", "null"]
+          format: date-time
+        detail:
+          type: string
+          description: One short sentence shown to the user, for example "Daily budget of $0.50 reached at 14:05 UTC".
+        itemsLast24h:
+          type: ["integer", "null"]
+
+    PipelineStage:
+      type: object
+      required: [key, label, description, countLast24h, unit]
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        countLast24h:
+          type: integer
+        unit:
+          type: string
+          description: posts, places, series, alerts, events
+
+    BudgetStatus:
+      type: object
+      required: [configured, dailyUsd, spentTodayUsd, postsReadToday, requestsToday]
+      properties:
+        configured:
+          type: boolean
+        dailyUsd:
+          type: number
+        spentTodayUsd:
+          type: number
+        postsReadToday:
+          type: integer
+        requestsToday:
+          type: integer
+
+    SystemStatus:
+      type: object
+      required: [now, modelVersion, experimental, isStale, sources, officialFeeds, pipeline, counts, xBudget, activeScenario]
+      properties:
+        now:
+          type: string
+          format: date-time
+        lastIngestAt:
+          type: ["string", "null"]
+          format: date-time
+        modelVersion:
+          type: string
+        modelReady:
+          type: boolean
+        experimental:
+          type: boolean
+          description: Always true. The UI must show that this is not an official warning source.
+        isStale:
+          type: boolean
+          description: True when the last ingest is older than 45 minutes.
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceHealth"
+        officialFeeds:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceHealth"
+        pipeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/PipelineStage"
+        counts:
+          type: object
+          required: [postsLast24h, relevantLast24h, openAlerts, placesTracked, officialEventsLast72h]
+          properties:
+            postsLast24h:
+              type: integer
+            relevantLast24h:
+              type: integer
+            openAlerts:
+              type: integer
+            placesTracked:
+              type: integer
+            officialEventsLast72h:
+              type: integer
+        xBudget:
+          $ref: "#/components/schemas/BudgetStatus"
+        activeScenario:
+          type: ["string", "null"]
+          description: Reserved; playback is client-driven so this is normally null.
+
+    PlaceRef:
+      type: object
+      required: [placeId, name, country]
+      properties:
+        placeId:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        level:
+          $ref: "#/components/schemas/RiskLevel"
+
+    HazardSummary:
+      type: object
+      required: [hazard, label, description, color, postsLast24h, relevantLast24h, fearIndexNow, fearIndexDelta24h, maxLevel, openAlerts, topPlaces, sparkline]
+      properties:
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        label:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+          description: Hex colour token for the hazard family
+        postsLast24h:
+          type: integer
+        relevantLast24h:
+          type: integer
+        fearIndexNow:
+          type: number
+          description: Sum of p_relevant * p_fear over the last hour across all places
+        fearIndexDelta24h:
+          type: number
+          description: Change versus the same hour 24 hours earlier
+        maxLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        openAlerts:
+          type: integer
+        topPlaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaceRef"
+        sparkline:
+          type: array
+          description: Hourly fear index for the last 24 hours, oldest first
+          items:
+            type: number
+
+    PlaceSignal:
+      type: object
+      required: [placeId, name, country, lat, lon, hazard, level, zScore, relevantPostsLastHour, relevantPostsLast24h, fearMassLastHour, trend, updatedAt]
+      properties:
+        placeId:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        level:
+          $ref: "#/components/schemas/RiskLevel"
+        zScore:
+          type: number
+        relevantPostsLastHour:
+          type: integer
+        relevantPostsLast24h:
+          type: integer
+        fearMassLastHour:
+          type: number
+        trend:
+          $ref: "#/components/schemas/Trend"
+        updatedAt:
+          type: string
+          format: date-time
+
+    OfficialEvent:
+      type: object
+      required: [id, feed, feedLabel, hazard, title, severity, startsAt]
+      properties:
+        id:
+          type: integer
+        feed:
+          type: string
+          description: gdacs, usgs, nws, firms
+        feedLabel:
+          type: string
+        externalId:
+          type: string
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        title:
+          type: string
+        severity:
+          type: string
+          description: Feed-native severity text, for example "Orange", "M 5.4", "Severe"
+        lat:
+          type: ["number", "null"]
+        lon:
+          type: ["number", "null"]
+        country:
+          type: ["string", "null"]
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+        url:
+          type: ["string", "null"]
+
+    Alert:
+      type: object
+      required: [id, placeId, placeName, country, lat, lon, hazard, status, peakLevel, currentLevel, openedAt, peakZ, peakAt, corroboration, summary, postCount, scenario]
+      properties:
+        id:
+          type: integer
+        placeId:
+          type: integer
+        placeName:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        status:
+          $ref: "#/components/schemas/AlertStatus"
+        peakLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        currentLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        openedAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: ["string", "null"]
+          format: date-time
+        peakZ:
+          type: number
+        peakAt:
+          type: string
+          format: date-time
+        corroboration:
+          $ref: "#/components/schemas/Corroboration"
+        summary:
+          type: string
+          description: One or two plain sentences generated from the numbers, for example "Flood posts from Kochi rose to 38 relevant posts in an hour, 6.1 robust standard deviations above the 7-day baseline."
+        postCount:
+          type: integer
+        scenario:
+          type: ["string", "null"]
+
+    Corroboration:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [corroborated, uncorroborated, pending]
+          description: pending while the alert is open and younger than 48 hours
+        officialEventId:
+          type: ["integer", "null"]
+        feed:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        officialAt:
+          type: ["string", "null"]
+          format: date-time
+        leadMinutes:
+          type: ["integer", "null"]
+          description: Positive when the social alert opened before the official event
+
+    AlertEvent:
+      type: object
+      required: [at, type, detail]
+      properties:
+        at:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [opened, level_changed, corroborated, closed, notified]
+        detail:
+          type: string
+
+    AlertDetail:
+      type: object
+      required: [alert, timeline, evidencePosts, events]
+      properties:
+        alert:
+          $ref: "#/components/schemas/Alert"
+        timeline:
+          $ref: "#/components/schemas/Timeline"
+        evidencePosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoredPost"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertEvent"
+
+    BoardSnapshot:
+      type: object
+      required: [generatedAt, asOf, scenario, lastIngestAt, isStale, hazards, places, openAlerts, officialEvents]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        asOf:
+          type: string
+          format: date-time
+        scenario:
+          type: ["string", "null"]
+        lastIngestAt:
+          type: ["string", "null"]
+          format: date-time
+        isStale:
+          type: boolean
+        hazards:
+          type: array
+          items:
+            $ref: "#/components/schemas/HazardSummary"
+        places:
+          type: array
+          description: One entry per place and hazard with at least one relevant post in the last 24 hours
+          items:
+            $ref: "#/components/schemas/PlaceSignal"
+        openAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+        officialEvents:
+          type: array
+          description: Official events from the last 72 hours with coordinates
+          items:
+            $ref: "#/components/schemas/OfficialEvent"
+
+    TimelinePoint:
+      type: object
+      required: [hour, nPosts, nRelevant, fearMass, angerMass, meanSentiment, baselineMedian, zScore, level]
+      properties:
+        hour:
+          type: string
+          format: date-time
+        nPosts:
+          type: integer
+        nRelevant:
+          type: integer
+        fearMass:
+          type: number
+        angerMass:
+          type: number
+        meanSentiment:
+          type: ["number", "null"]
+          description: Mean sentiment from -1 to 1 over relevant posts, null when none
+        baselineMedian:
+          type: ["number", "null"]
+        zScore:
+          type: ["number", "null"]
+        level:
+          $ref: "#/components/schemas/RiskLevel"
+
+    OfficialMarker:
+      type: object
+      required: [at, feed, feedLabel, title, severity, eventId]
+      properties:
+        at:
+          type: string
+          format: date-time
+        feed:
+          type: string
+        feedLabel:
+          type: string
+        title:
+          type: string
+        severity:
+          type: string
+        eventId:
+          type: integer
+
+    Timeline:
+      type: object
+      required: [hazard, placeId, placeName, hours, points, officialMarkers, unit]
+      properties:
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        placeId:
+          type: ["integer", "null"]
+        placeName:
+          type: ["string", "null"]
+        hours:
+          type: integer
+        unit:
+          type: string
+          description: Always "fear mass per hour (sum of p_relevant x p_fear)"
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimelinePoint"
+        officialMarkers:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfficialMarker"
+
+    EmotionPoint:
+      type: object
+      required: [hour, fear, anger, sadness, optimism, other, nRelevant]
+      properties:
+        hour:
+          type: string
+          format: date-time
+        fear:
+          type: number
+        anger:
+          type: number
+        sadness:
+          type: number
+        optimism:
+          type: number
+        other:
+          type: number
+        nRelevant:
+          type: integer
+
+    HazardDetail:
+      type: object
+      required: [summary, keywords, emotionMix, places, recentPosts, timeline]
+      properties:
+        summary:
+          $ref: "#/components/schemas/HazardSummary"
+        keywords:
+          type: array
+          description: Search terms used for this hazard
+          items:
+            type: string
+        emotionMix:
+          type: array
+          description: Mean emotion probabilities per hour over relevant posts, last 72 hours
+          items:
+            $ref: "#/components/schemas/EmotionPoint"
+        places:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaceSignal"
+        recentPosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoredPost"
+        timeline:
+          $ref: "#/components/schemas/Timeline"
+
+    Place:
+      type: object
+      required: [id, name, country, countryCode, lat, lon, featured]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        admin1:
+          type: ["string", "null"]
+        country:
+          type: string
+        countryCode:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        population:
+          type: ["integer", "null"]
+        featured:
+          type: boolean
+
+    PlaceListItem:
+      type: object
+      required: [place, worstLevel, relevantLast24h, openAlerts]
+      properties:
+        place:
+          $ref: "#/components/schemas/Place"
+        worstLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        worstHazard:
+          $ref: "#/components/schemas/Hazard"
+        relevantLast24h:
+          type: integer
+        openAlerts:
+          type: integer
+
+    PlaceHazardState:
+      type: object
+      required: [hazard, level, zScore, relevantLast24h, trend, sparkline]
+      properties:
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        level:
+          $ref: "#/components/schemas/RiskLevel"
+        zScore:
+          type: ["number", "null"]
+        relevantLast24h:
+          type: integer
+        trend:
+          $ref: "#/components/schemas/Trend"
+        sparkline:
+          type: array
+          description: Hourly fear mass for the last 24 hours, oldest first
+          items:
+            type: number
+
+    WeatherContext:
+      type: object
+      required: [fetchedAt, provider]
+      properties:
+        fetchedAt:
+          type: string
+          format: date-time
+        provider:
+          type: string
+          description: Open-Meteo
+        riverDischargeM3s:
+          type: ["number", "null"]
+          description: Today's forecast river discharge near the place, cubic metres per second
+        riverDischargeMax7dM3s:
+          type: ["number", "null"]
+        precipitationNext72hMm:
+          type: ["number", "null"]
+        tempMaxNext72hC:
+          type: ["number", "null"]
+        windGustMaxNext72hKmh:
+          type: ["number", "null"]
+
+    PlaceDetail:
+      type: object
+      required: [place, hazards, alerts, nearbyOfficialEvents, weather, recentPosts]
+      properties:
+        place:
+          $ref: "#/components/schemas/Place"
+        hazards:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlaceHazardState"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Alert"
+        nearbyOfficialEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/OfficialEvent"
+        weather:
+          oneOf:
+            - $ref: "#/components/schemas/WeatherContext"
+            - type: "null"
+        recentPosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoredPost"
+
+    PostPlace:
+      type: object
+      required: [placeId, name, country, confidence, method]
+      properties:
+        placeId:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        confidence:
+          type: number
+        method:
+          type: string
+          description: ner_gazetteer, platform_geo, query_context, scenario
+
+    ScoredPost:
+      type: object
+      required: [id, source, text, createdAt, pRelevant, hazard, hazardProbs, pFear, pAnger, pSadness, sentiment, sentimentScore, places]
+      properties:
+        id:
+          type: integer
+        source:
+          $ref: "#/components/schemas/Source"
+        externalId:
+          type: ["string", "null"]
+        url:
+          type: ["string", "null"]
+        text:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lang:
+          type: ["string", "null"]
+        pRelevant:
+          type: number
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        hazardProbs:
+          type: object
+          additionalProperties:
+            type: number
+        pFear:
+          type: number
+        pAnger:
+          type: number
+        pSadness:
+          type: number
+        sentiment:
+          $ref: "#/components/schemas/Sentiment"
+        sentimentScore:
+          type: number
+          description: From -1 (negative) to 1 (positive)
+        places:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostPlace"
+
+    ClassifyInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 3
+          maxLength: 1000
+
+    Classification:
+      type: object
+      required: [text, pRelevant, hazard, hazardProbs, pFear, pAnger, pSadness, sentiment, sentimentScore, places, latencyMs, modelVersion, explanation]
+      properties:
+        text:
+          type: string
+        pRelevant:
+          type: number
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        hazardProbs:
+          type: object
+          additionalProperties:
+            type: number
+        pFear:
+          type: number
+        pAnger:
+          type: number
+        pSadness:
+          type: number
+        emotions:
+          type: object
+          description: All emotion probabilities from the multilabel model
+          additionalProperties:
+            type: number
+        sentiment:
+          $ref: "#/components/schemas/Sentiment"
+        sentimentScore:
+          type: number
+        places:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostPlace"
+        latencyMs:
+          type: integer
+        modelVersion:
+          type: string
+        explanation:
+          type: string
+          description: Plain-language sentence about how this text would count toward a place's signal
+
+    ModelExample:
+      type: object
+      required: [text, note]
+      properties:
+        text:
+          type: string
+        note:
+          type: string
+
+    DatasetInfo:
+      type: object
+      required: [name, url, license, rows, role]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        license:
+          type: string
+        rows:
+          type: integer
+        role:
+          type: string
+          description: train, test, cross-dataset test
+
+    ClassMetric:
+      type: object
+      required: [label, precision, recall, f1, support]
+      properties:
+        label:
+          type: string
+        precision:
+          type: number
+        recall:
+          type: number
+        f1:
+          type: number
+        support:
+          type: integer
+
+    ConfusionMatrix:
+      type: object
+      required: [labels, matrix]
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+        matrix:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+
+    CrossDatasetMetric:
+      type: object
+      required: [dataset, accuracy, f1, rows]
+      properties:
+        dataset:
+          type: string
+        accuracy:
+          type: number
+        f1:
+          type: number
+        rows:
+          type: integer
+
+    StageOneInfo:
+      type: object
+      required: [name, algorithm, trainedAt, datasets, accuracy, macroF1, perClass, confusion, crossDataset, relevanceAccuracy, relevanceF1]
+      properties:
+        name:
+          type: string
+        algorithm:
+          type: string
+        trainedAt:
+          type: string
+          format: date-time
+        datasets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatasetInfo"
+        accuracy:
+          type: number
+          description: Hazard-type accuracy on the held-out test split
+        macroF1:
+          type: number
+        perClass:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassMetric"
+        confusion:
+          $ref: "#/components/schemas/ConfusionMatrix"
+        crossDataset:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossDatasetMetric"
+        relevanceAccuracy:
+          type: number
+        relevanceF1:
+          type: number
+        candidates:
+          type: array
+          description: Alternatives that were trained and compared on the same split
+          items:
+            type: object
+            required: [name, macroF1, accuracy, shipped]
+            properties:
+              name:
+                type: string
+              macroF1:
+                type: number
+              accuracy:
+                type: number
+              shipped:
+                type: boolean
+              note:
+                type: string
+
+    PretrainedModelInfo:
+      type: object
+      required: [name, url, task, reportedMetric, labels]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        task:
+          type: string
+        reportedMetric:
+          type: string
+          description: Metric as reported by the model card, with its source
+        labels:
+          type: array
+          items:
+            type: string
+
+    DetectorSettings:
+      type: object
+      required: [baselineDays, minRelevantPerHour, thresholds, openAfterHours, closeAfterHours, corroborationRadiusKm, corroborationWindowHours]
+      properties:
+        baselineDays:
+          type: integer
+        minRelevantPerHour:
+          type: integer
+        thresholds:
+          type: object
+          required: [elevated, high, severe]
+          properties:
+            elevated:
+              type: number
+            high:
+              type: number
+            severe:
+              type: number
+        openAfterHours:
+          type: integer
+        closeAfterHours:
+          type: integer
+        corroborationRadiusKm:
+          type: integer
+        corroborationWindowHours:
+          type: integer
+
+    ModelInfo:
+      type: object
+      required: [version, stageOne, emotionModel, sentimentModel, geoparser, detector, limitations, modelReady]
+      properties:
+        version:
+          type: string
+        modelReady:
+          type: boolean
+        stageOne:
+          $ref: "#/components/schemas/StageOneInfo"
+        emotionModel:
+          $ref: "#/components/schemas/PretrainedModelInfo"
+        sentimentModel:
+          $ref: "#/components/schemas/PretrainedModelInfo"
+        geoparser:
+          type: object
+          required: [method, gazetteer, placesInGazetteer]
+          properties:
+            method:
+              type: string
+            gazetteer:
+              type: string
+            placesInGazetteer:
+              type: integer
+        detector:
+          $ref: "#/components/schemas/DetectorSettings"
+        limitations:
+          type: array
+          items:
+            type: string
+
+    ReplayMoment:
+      type: object
+      required: [at, label]
+      properties:
+        at:
+          type: string
+          format: date-time
+        label:
+          type: string
+
+    ReplayScenario:
+      type: object
+      required: [id, name, hazard, region, country, lat, lon, startsAt, endsAt, postCount, state, description, datasetSource, keyMoments]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        hazard:
+          $ref: "#/components/schemas/Hazard"
+        region:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        postCount:
+          type: integer
+        state:
+          type: string
+          enum: [not_prepared, preparing, ready, failed]
+        progress:
+          type: ["number", "null"]
+          description: 0 to 1 while preparing
+        description:
+          type: string
+        datasetSource:
+          type: string
+        keyMoments:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReplayMoment"
+        alertsOpened:
+          type: ["integer", "null"]
+        firstAlertAt:
+          type: ["string", "null"]
+          format: date-time
+
+    SubscriptionInput:
+      type: object
+      required: [email, minLevel]
+      properties:
+        email:
+          type: string
+          format: email
+        placeId:
+          type: ["integer", "null"]
+        hazard:
+          oneOf:
+            - $ref: "#/components/schemas/Hazard"
+            - type: "null"
+        minLevel:
+          $ref: "#/components/schemas/RiskLevel"
+
+    UnsubscribeInput:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    SubscriptionResult:
+      type: object
+      required: [status, message, emailDeliveryConfigured]
+      properties:
+        id:
+          type: ["integer", "null"]
+        status:
+          type: string
+          enum: [pending_verification, verified, removed, invalid]
+        message:
+          type: string
+        emailDeliveryConfigured:
+          type: boolean
+          description: False when no email provider key is set; the UI must say the confirmation email could not be sent.

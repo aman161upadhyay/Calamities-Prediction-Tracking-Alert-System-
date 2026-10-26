@@ -1,0 +1,219 @@
+{
+  "_note": "Hazard families, their search terms and labels. Read by the model service (keyword routing), the API server (search queries, labels, colours) and the training scripts. storm covers heavy rain, thunderstorms, tornadoes and winter storms; cyclone covers hurricanes and typhoons; heat covers heatwaves and drought.",
+  "hazards": [
+    {
+      "id": "flood",
+      "label": "Flood",
+      "family": "water",
+      "color": "#3D9BFF",
+      "trained": true,
+      "description": "River and flash flooding, urban waterlogging, dam releases.",
+      "search": [
+        "flood",
+        "flooding",
+        "flash flood"
+      ],
+      "terms": [
+        "flood",
+        "floods",
+        "flooding",
+        "flooded",
+        "flash flood",
+        "flashflood",
+        "inundated",
+        "inundation",
+        "waterlogging",
+        "waterlogged",
+        "deluge",
+        "cloudburst",
+        "dam breach",
+        "levee"
+      ]
+    },
+    {
+      "id": "storm",
+      "label": "Storm",
+      "family": "wind",
+      "color": "#A78BFA",
+      "trained": false,
+      "description": "Heavy rain, thunderstorms, hail, tornadoes and winter storms.",
+      "search": [
+        "thunderstorm",
+        "tornado",
+        "heavy rain"
+      ],
+      "terms": [
+        "thunderstorm",
+        "thunderstorms",
+        "hailstorm",
+        "hail",
+        "heavy rain",
+        "torrential rain",
+        "downpour",
+        "tornado",
+        "tornadoes",
+        "derecho",
+        "blizzard",
+        "winter storm",
+        "ice storm",
+        "gale force",
+        "squall"
+      ]
+    },
+    {
+      "id": "cyclone",
+      "label": "Cyclone",
+      "family": "wind",
+      "color": "#A78BFA",
+      "trained": true,
+      "description": "Tropical cyclones, hurricanes and typhoons, including landfall and storm surge.",
+      "search": [
+        "hurricane",
+        "cyclone",
+        "typhoon"
+      ],
+      "terms": [
+        "hurricane",
+        "hurricanes",
+        "cyclone",
+        "cyclones",
+        "typhoon",
+        "typhoons",
+        "tropical storm",
+        "tropical depression",
+        "storm surge",
+        "landfall",
+        "category 4",
+        "category 5"
+      ]
+    },
+    {
+      "id": "wildfire",
+      "label": "Wildfire",
+      "family": "fire",
+      "color": "#FF8A3D",
+      "trained": true,
+      "description": "Wildland, bush and forest fires, including evacuations and smoke.",
+      "search": [
+        "wildfire",
+        "bushfire",
+        "forest fire"
+      ],
+      "terms": [
+        "wildfire",
+        "wildfires",
+        "bushfire",
+        "bushfires",
+        "forest fire",
+        "forest fires",
+        "brush fire",
+        "brushfire",
+        "red flag warning",
+        "fire evacuation",
+        "firefighters",
+        "acres burned",
+        "containment"
+      ]
+    },
+    {
+      "id": "earthquake",
+      "label": "Earthquake",
+      "family": "ground",
+      "color": "#D4A24C",
+      "trained": true,
+      "description": "Earthquakes, tremors and aftershocks.",
+      "search": [
+        "earthquake",
+        "quake"
+      ],
+      "terms": [
+        "earthquake",
+        "earthquakes",
+        "quake",
+        "quakes",
+        "tremor",
+        "tremors",
+        "aftershock",
+        "aftershocks",
+        "seismic",
+        "magnitude",
+        "richter",
+        "epicenter",
+        "epicentre"
+      ]
+    },
+    {
+      "id": "landslide",
+      "label": "Landslide",
+      "family": "ground",
+      "color": "#D4A24C",
+      "trained": false,
+      "description": "Landslides, mudslides and debris flows.",
+      "search": [
+        "landslide",
+        "mudslide"
+      ],
+      "terms": [
+        "landslide",
+        "landslides",
+        "mudslide",
+        "mudslides",
+        "landslip",
+        "rockfall",
+        "rockslide",
+        "debris flow",
+        "mudflow"
+      ]
+    },
+    {
+      "id": "heat",
+      "label": "Heat",
+      "family": "heat",
+      "color": "#F5C542",
+      "trained": false,
+      "description": "Heatwaves, extreme heat and drought.",
+      "search": [
+        "heatwave",
+        "heat wave",
+        "extreme heat"
+      ],
+      "terms": [
+        "heatwave",
+        "heatwaves",
+        "heat wave",
+        "extreme heat",
+        "heat advisory",
+        "excessive heat",
+        "heatstroke",
+        "heat stroke",
+        "drought",
+        "record temperature",
+        "heat dome"
+      ]
+    },
+    {
+      "id": "tsunami",
+      "label": "Tsunami",
+      "family": "water",
+      "color": "#3D9BFF",
+      "trained": false,
+      "description": "Tsunamis and tsunami warnings.",
+      "search": [
+        "tsunami"
+      ],
+      "terms": [
+        "tsunami",
+        "tsunamis",
+        "tidal wave",
+        "tsunami warning",
+        "tsunami advisory"
+      ]
+    }
+  ],
+  "trainedClasses": [
+    "flood",
+    "cyclone",
+    "wildfire",
+    "earthquake"
+  ]
+}
