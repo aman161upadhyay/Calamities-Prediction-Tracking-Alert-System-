@@ -677,6 +677,7 @@ export interface ReplayScenario {
   lat: number;
   lon: number;
   startsAt: string;
+  /** End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here. */
   endsAt: string;
   postCount: number;
   state: ReplayScenarioState;
@@ -894,13 +895,6 @@ scenario?: ScenarioParameter;
  * ISO timestamp. Data is evaluated as of this moment (used by replay playback). Defaults to now.
  */
 asOf?: AsOfParameter;
-};
-
-export type PrepareReplayScenarioParams = {
-/**
- * Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.
- */
-force?: boolean;
 };
 
 export type VerifySubscriptionParams = {

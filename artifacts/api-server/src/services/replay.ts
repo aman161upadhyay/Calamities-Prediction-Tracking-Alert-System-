@@ -357,6 +357,19 @@ export function isPreparing(id: string): boolean {
   return running.has(id);
 }
 
+/** Progress is written to the state row every batch; a "preparing" row older than this is an interrupted run. */
+const HEARTBEAT_STALE_MS = 3 * 60_000;
+
+/**
+ * Whether a preparation is in progress anywhere: in this process, or in another one (the replay:rebuild command)
+ * that is still writing progress. Without the second case the API would report an operator rebuild as failed and
+ * a visitor's retry would start a second, concurrent rebuild.
+ */
+export function preparationInProgress(id: string, st: ReplayScenarioState | undefined): boolean {
+  if (running.has(id)) return true;
+  return st?.state === "preparing" && Date.now() - st.updatedAt.getTime() < HEARTBEAT_STALE_MS;
+}
+
 /** After a restart, finish any scenario that was still being prepared. Runs them one at a time in the background. */
 export async function resumeInterruptedScenarios(): Promise<void> {
   const rows = await db.select({ id: replayScenarioStateTable.id, state: replayScenarioStateTable.state }).from(replayScenarioStateTable);

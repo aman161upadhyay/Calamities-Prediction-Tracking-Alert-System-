@@ -59,7 +59,6 @@ export * from './placeListItem';
 export * from './placeRef';
 export * from './placeSignal';
 export * from './postPlace';
-export * from './prepareReplayScenarioParams';
 export * from './pretrainedModelInfo';
 export * from './replayMoment';
 export * from './replayScenario';

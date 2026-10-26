@@ -40,7 +40,7 @@ export default function Home() {
       </div>
       <Board mode={{}} status={status.data} poll />
 
-      <Section id="how" title="How it works" lead="Six stages run every few minutes. The counts are from the live pipeline over the last 24 hours, not estimates.">
+      <Section id="how" title="How it works" lead="The pipeline runs every few minutes; the official feeds are read alongside it. The counts are from the live pipeline over the last 24 hours, not estimates.">
         {status.isLoading && <LoadingRows rows={3} />}
         {status.isError && !status.data && <ErrorState what="pipeline counts" onRetry={() => status.refetch()} />}
         {status.data && <PipelineList stages={status.data.pipeline} asOf={utcDateTime(status.data.now)} />}

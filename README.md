@@ -61,6 +61,8 @@ Optional environment: `X_BEARER_TOKEN` (X recent search; Bluesky is used without
 
 Training data is not in this repository. `services/ml/scripts/prepare_data.py` downloads HumAID, TweetEval, the Kaggle disaster-tweets set and GeoNames and builds the training and replay files; `train_stage_one.py` retrains and rewrites `metrics.json`. HumAID text is used only for training and local scoring and is never served by the API.
 
+After a model, detector or gazetteer change, rebuild the replays with `pnpm --filter @workspace/api-server run replay:rebuild` (all scenarios, or named ones; `--live` re-resolves places for recent live posts). It runs against the API's model service, so keep the API up. A rebuild renumbers that scenario's alert ids; the public API cannot trigger one.
+
 ## Not an official warning source
 
 Calamity Watch is an experimental research system. It does not replace national meteorological, geological or civil-protection services. Every alert in the interface carries this notice.

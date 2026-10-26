@@ -18,6 +18,7 @@ export interface ReplayScenario {
   lat: number;
   lon: number;
   startsAt: Date;
+  /** End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here. */
   endsAt: Date;
   postCount: number;
   state: ReplayScenarioState;

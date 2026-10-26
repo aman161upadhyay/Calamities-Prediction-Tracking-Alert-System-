@@ -26,6 +26,7 @@ import type {
   BoardSnapshot,
   Classification,
   ClassifyInput,
+  ErrorResponse,
   GetAlertParams,
   GetBoardParams,
   GetHazardParams,
@@ -45,7 +46,6 @@ import type {
   OfficialEvent,
   PlaceDetail,
   PlaceListItem,
-  PrepareReplayScenarioParams,
   ReplayScenario,
   ScoredPost,
   SubscriptionInput,
@@ -1495,29 +1495,21 @@ export function useGetReplayScenario<TData = Awaited<ReturnType<typeof getReplay
 
 
 
-export const getPrepareReplayScenarioUrl = (scenarioId: string,
-    params?: PrepareReplayScenarioParams,) => {
-  const normalizedParams = new URLSearchParams();
+export const getPrepareReplayScenarioUrl = (scenarioId: string,) => {
 
-  Object.entries(params || {}).forEach(([key, value]) => {
 
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
 
-  const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/replay/scenarios/${scenarioId}/prepare?${stringifiedParams}` : `/api/replay/scenarios/${scenarioId}/prepare`
+  return `/api/replay/scenarios/${scenarioId}/prepare`
 }
 
 /**
- * @summary Score and aggregate a scenario so it can be played (idempotent)
+ * Rebuilding a ready scenario deletes and renumbers its alerts, so that is not available here; operators run `pnpm --filter @workspace/api-server run replay:rebuild`. A `force` query parameter is refused with 403.
+ * @summary Score and aggregate a scenario so it can be played (idempotent; a ready scenario is left untouched)
  */
-export const prepareReplayScenario = async (scenarioId: string,
-    params?: PrepareReplayScenarioParams, options?: Parameters<typeof customFetch>[1]): Promise<ReplayScenario> => {
+export const prepareReplayScenario = async (scenarioId: string, options?: Parameters<typeof customFetch>[1]): Promise<ReplayScenario> => {
 
-  return customFetch<ReplayScenario>(getPrepareReplayScenarioUrl(scenarioId,params),
+  return customFetch<ReplayScenario>(getPrepareReplayScenarioUrl(scenarioId),
   {
     ...options,
     method: 'POST'
@@ -1532,7 +1524,7 @@ export const prepareReplayScenario = async (scenarioId: string,
 
 export const getPrepareReplayScenarioMutationKey = () => ['prepareReplayScenario'] as const;
 
-export const getPrepareReplayScenarioMutationOptions = <TError = ErrorType<NotFoundResponse>,
+export const getPrepareReplayScenarioMutationOptions = <TError = ErrorType<ErrorResponse | NotFoundResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof prepareReplayScenario>>, TError,PrepareReplayScenarioMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof prepareReplayScenario>>, TError,PrepareReplayScenarioMutationVariables, TContext> => {
 
@@ -1547,9 +1539,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof prepareReplayScenario>>, PrepareReplayScenarioMutationVariables> = (props) => {
-          const {scenarioId,params} = props ?? {};
+          const {scenarioId} = props ?? {};
 
-          return  prepareReplayScenario(scenarioId,params,requestOptions)
+          return  prepareReplayScenario(scenarioId,requestOptions)
         }
 
 
@@ -1561,13 +1553,13 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type PrepareReplayScenarioMutationResult = NonNullable<Awaited<ReturnType<typeof prepareReplayScenario>>>
 
-    export type PrepareReplayScenarioMutationError = ErrorType<NotFoundResponse>
-    export type PrepareReplayScenarioMutationVariables = {scenarioId: string;params?: PrepareReplayScenarioParams}
+    export type PrepareReplayScenarioMutationError = ErrorType<ErrorResponse | NotFoundResponse>
+    export type PrepareReplayScenarioMutationVariables = {scenarioId: string}
 
     /**
- * @summary Score and aggregate a scenario so it can be played (idempotent)
+ * @summary Score and aggregate a scenario so it can be played (idempotent; a ready scenario is left untouched)
  */
-export const usePrepareReplayScenario = <TError = ErrorType<NotFoundResponse>,
+export const usePrepareReplayScenario = <TError = ErrorType<ErrorResponse | NotFoundResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof prepareReplayScenario>>, TError,PrepareReplayScenarioMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof prepareReplayScenario>>,

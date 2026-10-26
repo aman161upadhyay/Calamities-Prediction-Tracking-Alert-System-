@@ -18,14 +18,29 @@ export interface Scope {
   isReplay: boolean;
 }
 
-export function parseScope(query: Record<string, unknown>): Scope {
-  const scenario = typeof query.scenario === "string" && query.scenario !== "" ? query.scenario : "";
-  if (scenario && !scenarioById(scenario)) throw new ApiError(400, `Unknown replay scenario "${scenario}"`);
-  let asOf = new Date();
-  if (typeof query.asOf === "string" && query.asOf !== "") {
-    asOf = new Date(query.asOf);
-    if (Number.isNaN(asOf.getTime())) throw new ApiError(400, "asOf must be an ISO 8601 timestamp");
+/** A query parameter that must be a single string when present; repeated or bracketed forms are refused, not ignored. */
+export function singleParam(query: Record<string, unknown>, name: string): string | undefined {
+  const v = query[name];
+  // With the plain query parser, "scenario[]=x" arrives under the key "scenario[]"; it is a malformed scenario, not
+  // an unrelated parameter, so it is refused rather than silently falling back to the live scope.
+  const bracketed = Object.keys(query).some((k) => k.startsWith(`${name}[`));
+  if (bracketed || Array.isArray(v) || (v !== undefined && typeof v !== "string")) {
+    throw new ApiError(400, `${name} must be given once, as a plain string`);
   }
+  return v as string | undefined;
+}
+
+export function parseAsOf(value: string | undefined): Date | undefined {
+  if (value === undefined || value === "") return undefined;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) throw new ApiError(400, "asOf must be an ISO 8601 timestamp");
+  return d;
+}
+
+export function parseScope(query: Record<string, unknown>): Scope {
+  const scenario = singleParam(query, "scenario") ?? "";
+  if (scenario && !scenarioById(scenario)) throw new ApiError(400, `Unknown replay scenario "${scenario}"`);
+  const asOf = parseAsOf(singleParam(query, "asOf")) ?? new Date();
   return { scenario, asOf, isReplay: scenario !== "" };
 }
 
@@ -123,8 +138,9 @@ export async function asOfAdjustments(alerts: AlertRow[], scope: Scope): Promise
   const rows = res.rows.map((r) => ({ ...r, hour: new Date(r.hour_utc).getTime(), place_id: Number(r.place_id) }));
   for (const a of needs) {
     const mine = rows.filter((r) => r.place_id === a.placeId && r.hazard === a.hazard && r.hour >= a.openedAt.getTime() - 2 * HOUR_MS);
-    const complete = mine.filter((r) => r.hour <= upto.getTime() - HOUR_MS);
-    const latest = complete[complete.length - 1] ?? mine[mine.length - 1];
+    // The level at the playhead is the level of the latest known hour, exactly as the detector reads it: the row for
+    // that hour, or "insufficient" when no post fell in it. Borrowing an earlier row would show the previous hour.
+    const atKnown = mine.find((r) => r.hour === upto.getTime());
     let peakZ = 0;
     let peakAt = a.openedAt;
     let peakN = 0;
@@ -139,7 +155,7 @@ export async function asOfAdjustments(alerts: AlertRow[], scope: Scope): Promise
     }
     const closed = a.closedAt && a.closedAt.getTime() <= scope.asOf.getTime();
     out.set(a.id, {
-      currentLevel: closed ? (a.currentLevel as RiskLevel) : latest && latest.hour >= upto.getTime() - HOUR_MS ? (latest.level as RiskLevel) : "low",
+      currentLevel: closed ? (a.currentLevel as RiskLevel) : atKnown ? (atKnown.level as RiskLevel) : "insufficient",
       peakZ: closed ? a.peakZ : Math.max(peakZ, 0),
       peakAt: closed ? a.peakAt : peakAt,
       peakN: closed ? (a.peakN ?? peakN) : peakN,

@@ -185,6 +185,9 @@ export function Board({ mode, status, poll }: { mode: Mode; status?: SystemStatu
             <MapLegend />
             {sel && <Readout sel={sel} onClose={() => setSel(null)} color={sel.kind === "place" ? colors[sel.signal.hazard] : "#5EEAD4"} scope={params} />}
           </div>
+          <p className="sm:hidden text-[12px] leading-4 text-muted-foreground px-0.5" data-testid="text-map-legend-compact">
+            size = relevant posts per hour · fill = hazard · <span className="text-fear">ring</span> = fear z-score · <span className="text-official">outline</span> = official event, 72 h
+          </p>
           <div className="xl:hidden">
             <div role="tablist" aria-label="Board panels" className="flex gap-1 border-b border-line" onKeyDown={onTabKey}>
               {TABS.map((t) => (

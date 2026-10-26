@@ -878,7 +878,7 @@ export const ListReplayScenariosResponseItem = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "startsAt": zod.coerce.date(),
-  "endsAt": zod.coerce.date(),
+  "endsAt": zod.coerce.date().describe('End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here.'),
   "postCount": zod.number().int(),
   "state": zod.enum(['not_prepared', 'preparing', 'ready', 'failed']),
   "progress": zod.number().nullish().describe('0 to 1 while preparing'),
@@ -910,7 +910,7 @@ export const GetReplayScenarioResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "startsAt": zod.coerce.date(),
-  "endsAt": zod.coerce.date(),
+  "endsAt": zod.coerce.date().describe('End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here.'),
   "postCount": zod.number().int(),
   "state": zod.enum(['not_prepared', 'preparing', 'ready', 'failed']),
   "progress": zod.number().nullish().describe('0 to 1 while preparing'),
@@ -926,14 +926,11 @@ export const GetReplayScenarioResponse = zod.object({
 
 
 /**
- * @summary Score and aggregate a scenario so it can be played (idempotent)
+ * Rebuilding a ready scenario deletes and renumbers its alerts, so that is not available here; operators run `pnpm --filter @workspace/api-server run replay:rebuild`. A `force` query parameter is refused with 403.
+ * @summary Score and aggregate a scenario so it can be played (idempotent; a ready scenario is left untouched)
  */
 export const PrepareReplayScenarioParams = zod.object({
   "scenarioId": zod.coerce.string()
-})
-
-export const PrepareReplayScenarioQueryParams = zod.object({
-  "force": zod.coerce.boolean().optional().describe('Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.')
 })
 
 export const PrepareReplayScenarioResponse = zod.object({
@@ -945,7 +942,7 @@ export const PrepareReplayScenarioResponse = zod.object({
   "lat": zod.number(),
   "lon": zod.number(),
   "startsAt": zod.coerce.date(),
-  "endsAt": zod.coerce.date(),
+  "endsAt": zod.coerce.date().describe('End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here.'),
   "postCount": zod.number().int(),
   "state": zod.enum(['not_prepared', 'preparing', 'ready', 'failed']),
   "progress": zod.number().nullish().describe('0 to 1 while preparing'),

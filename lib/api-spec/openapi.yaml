@@ -415,22 +415,23 @@ paths:
     post:
       operationId: prepareReplayScenario
       tags: [replay]
-      summary: Score and aggregate a scenario so it can be played (idempotent)
+      summary: Score and aggregate a scenario so it can be played (idempotent; a ready scenario is left untouched)
+      description: Rebuilding a ready scenario deletes and renumbers its alerts, so that is not available here; operators run `pnpm --filter @workspace/api-server run replay:rebuild`. A `force` query parameter is refused with 403.
       parameters:
         - $ref: "#/components/parameters/ScenarioIdPath"
-        - name: force
-          in: query
-          required: false
-          description: Rebuild signals and alerts even when the scenario is already ready, for example after a detector change. Scoring is reused.
-          schema:
-            type: boolean
       responses:
-        "200":
+        "202":
           description: Scenario state after the request
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReplayScenario"
+        "403":
+          description: A forced rebuild was requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -1531,6 +1532,7 @@ components:
         endsAt:
           type: string
           format: date-time
+          description: End of the replay clock, the hour boundary after the last post; the detector reads that final hour as complete, so the last alert can open exactly here.
         postCount:
           type: integer
         state:

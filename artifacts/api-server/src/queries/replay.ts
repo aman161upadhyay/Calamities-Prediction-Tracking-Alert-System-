@@ -1,5 +1,6 @@
 import { ApiError } from "./common";
-import { SCENARIOS, isPreparing, prepareScenario, scenarioById, scenarioSpan, scenarioStates, type ScenarioDefinition } from "../services/replay";
+import { HOUR_MS, floorHour } from "../lib/time";
+import { SCENARIOS, preparationInProgress, prepareScenario, scenarioById, scenarioSpan, scenarioStates, type ScenarioDefinition } from "../services/replay";
 
 const spanCache = new Map<string, { startsAt: Date; endsAt: Date; postCount: number }>();
 
@@ -10,7 +11,7 @@ async function describe(def: ScenarioDefinition, states: Awaited<ReturnType<type
     span = await scenarioSpan(def);
     if (st?.state === "ready") spanCache.set(def.id, span);
   }
-  const state = isPreparing(def.id) ? "preparing" : (st?.state as "not_prepared" | "preparing" | "ready" | "failed" | undefined) ?? "not_prepared";
+  const state = preparationInProgress(def.id, st) ? "preparing" : st?.state === "preparing" ? "failed" : (st?.state as "not_prepared" | "ready" | "failed" | undefined) ?? "not_prepared";
   return {
     id: def.id,
     name: def.name,
@@ -20,9 +21,11 @@ async function describe(def: ScenarioDefinition, states: Awaited<ReturnType<type
     lat: def.lat,
     lon: def.lon,
     startsAt: span.startsAt.toISOString(),
-    endsAt: span.endsAt.toISOString(),
+    // The replay clock runs to the hour boundary after the last post: the detector reads that final hour as complete,
+    // so an alert can open exactly there and the player must be able to reach it.
+    endsAt: new Date(floorHour(span.endsAt).getTime() + HOUR_MS).toISOString(),
     postCount: span.postCount,
-    state: state === "preparing" && !isPreparing(def.id) ? "failed" : state,
+    state,
     progress: state === "preparing" ? st?.progress ?? 0 : state === "ready" ? 1 : null,
     description: def.description,
     datasetSource: def.datasetSource,
@@ -43,11 +46,12 @@ export async function getScenario(id: string) {
   return describe(def, await scenarioStates());
 }
 
-export async function startScenario(id: string, force = false) {
+export async function startScenario(id: string) {
   const def = scenarioById(id);
   if (!def) throw new ApiError(404, "Scenario not found");
   const states = await scenarioStates();
   const st = states.get(id);
-  if ((force || st?.state !== "ready") && !isPreparing(id)) void prepareScenario(id, { force });
+  // Idempotent for a ready scenario: nothing is deleted or rebuilt from this path.
+  if (st?.state !== "ready" && !preparationInProgress(id, st)) void prepareScenario(id);
   return describe(def, await scenarioStates());
 }

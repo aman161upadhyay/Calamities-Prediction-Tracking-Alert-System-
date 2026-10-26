@@ -35,7 +35,10 @@ export function StatusBar({ status, isLoading, isError, onRetry, replayLabel }: 
       </div>
     );
   }
-  const okFeeds = status?.officialFeeds.filter((f) => f.state === "ok").length ?? 0;
+  // Open-Meteo is weather context, not a hazard record feed, so it is not counted with the feeds that corroborate alerts.
+  const hazardFeeds = status?.officialFeeds.filter((f) => f.name !== "openmeteo") ?? [];
+  const okFeeds = hazardFeeds.filter((f) => f.state === "ok").length;
+  const weather = status?.officialFeeds.find((f) => f.name === "openmeteo");
   const problems = status ? [...status.sources, ...status.officialFeeds].filter((s) => s.state !== "ok" && s.state !== "idle") : [];
   return (
     <div className="border-b border-line bg-surface text-[13px] leading-5" data-testid="status-bar">
@@ -59,7 +62,7 @@ export function StatusBar({ status, isLoading, isError, onRetry, replayLabel }: 
             </span>
             <span className="hidden lg:contents">
               {status.sources.map((s) => <SourceChip key={s.name} s={s} />)}
-              <span className="text-muted-foreground whitespace-nowrap" data-testid="text-official-feeds">{okFeeds} of {status.officialFeeds.length} official feeds ok</span>
+              <span className="text-muted-foreground whitespace-nowrap" data-testid="text-official-feeds">{okFeeds} of {hazardFeeds.length} hazard feeds ok{weather && <> · weather {weather.state === "ok" ? "ok" : weather.state.replace(/_/g, " ")}</>}</span>
               <span className="text-muted-foreground whitespace-nowrap">model <span className="num text-foreground">{status.modelVersion}</span>{status.modelReady === false && " (loading)"}</span>
             </span>
             <span className="ml-auto text-muted-foreground whitespace-nowrap">Experimental, not an official source</span>

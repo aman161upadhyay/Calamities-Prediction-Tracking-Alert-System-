@@ -12,7 +12,7 @@ import {
 } from "@workspace/api-zod";
 import healthRouter from "./health";
 import { handle, intParam, parseQuery, parseWith } from "./helpers";
-import { ApiError, parseHazard, parseScope } from "../queries/common";
+import { ApiError, parseAsOf, parseHazard, parseScope, singleParam } from "../queries/common";
 import { boardSnapshot, hazardSummaries } from "../queries/board";
 import { hazardDetail } from "../queries/hazards";
 import { buildTimeline, officialEventsInScope } from "../queries/series";
@@ -78,11 +78,7 @@ router.get(
 router.get(
   "/alerts/:alertId",
   handle(async (req) => {
-    let asOf: Date | null = null;
-    if (typeof req.query.asOf === "string" && req.query.asOf !== "") {
-      asOf = new Date(req.query.asOf);
-      if (Number.isNaN(asOf.getTime())) throw new ApiError(400, "asOf must be an ISO 8601 timestamp");
-    }
+    const asOf = parseAsOf(singleParam(req.query as Record<string, unknown>, "asOf")) ?? null;
     return alertDetail(intParam(String(req.params.alertId), "alertId"), asOf);
   }),
 );
@@ -103,7 +99,9 @@ router.post(
   rateLimit({ windowMs: 60_000, max: 30, what: "classification requests" }),
   handle(async (req) => {
     const body = parseWith(ClassifyTextBody, req.body);
-    return classifyText(body.text.trim());
+    const text = body.text.trim();
+    if (text === "") throw new ApiError(400, "text must contain something other than whitespace");
+    return classifyText(text);
   }),
 );
 
@@ -116,7 +114,12 @@ router.get("/replay/scenarios/:scenarioId", handle(async (req) => getScenario(St
 router.post(
   "/replay/scenarios/:scenarioId/prepare",
   handle(async (req, res) => {
-    const data = await startScenario(String(req.params.scenarioId), req.query.force === "true");
+    // A visitor can ask for a scenario to be prepared once; rebuilding a ready scenario deletes and renumbers its
+    // alerts, which would break other readers' evidence links, so that is an operator command (replay:rebuild).
+    if (req.query.force !== undefined) {
+      throw new ApiError(403, "Forced rebuilds are an operator action: pnpm --filter @workspace/api-server run replay:rebuild");
+    }
+    const data = await startScenario(String(req.params.scenarioId));
     res.status(202).json(data);
     return undefined;
   }),
